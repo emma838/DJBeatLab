@@ -4,6 +4,7 @@ const mongoose = require('mongoose');
 const dotenv = require('dotenv');
 const authRoutes = require('./routes/auth');  // Trasy dla autoryzacji
 const cookieParser = require('cookie-parser');  // Jeśli używasz tokenów CSRF
+const cors = require('cors');
 
 dotenv.config(); // Wczytanie zmiennych środowiskowych z .env
 
@@ -25,6 +26,13 @@ mongoose.connect(process.env.MONGODB_URI, {
 // Middleware do parsowania JSON i ciasteczek
 app.use(express.json());
 app.use(cookieParser());
+
+// Middleware CORS - pozwala na żądania z innego portu (np. frontend React na localhost:3000)
+app.use(cors({
+    //origin: 'http://localhost:3000', // Zezwala na żądania tylko z tego adresu
+    //methods: 'GET,POST',             // Ograniczenie do metod GET i POST
+    //allowedHeaders: 'Content-Type,Authorization' // Zezwalanie na konkretne nagłówki
+  }));
 
 // Trasy autoryzacyjne
 app.use('/api/auth', authRoutes);
