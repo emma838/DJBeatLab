@@ -2,7 +2,7 @@
 const express = require('express');
 const mongoose = require('mongoose');
 const dotenv = require('dotenv');
-const authRoutes = require('./routes/auth');  // Trasy dla autoryzacji
+const api = require('./app/routes/api');  // Trasy dla autoryzacji
 const cookieParser = require('cookie-parser');  // Jeśli używasz tokenów CSRF
 const cors = require('cors');
 
@@ -35,9 +35,12 @@ app.use(cors({
   }));
 
 // Trasy autoryzacyjne
-app.use('/api/auth', authRoutes);
+app.use('/api/auth', api);
 
 // Uruchomienie serwera
 app.listen(PORT, () => {
     console.log(`Serwer działa na porcie ${PORT}`);
 });
+
+// Udostępnianie plików w katalogu uploads
+app.use('/uploads', express.static('uploads'));
