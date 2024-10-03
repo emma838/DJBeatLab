@@ -1,9 +1,10 @@
+@import '../../styles/variables.scss';
 
 /* Stylizacja sekcji pośredniej */
 .intermediateSection {
   padding: 20px;
-  background-color: #2a2a2a;
-  color: white;
+  background-color: $semi-grey;
+  color: $white;
   text-align: center;
   height: 20vh;
   margin-top: 10px;
@@ -13,7 +14,7 @@
 .toolbar {
   display: flex;
   justify-content: space-between;
-  background-color: black;
+  background-color:  $black;
   height: 45vh;
   margin: 10px 0;
 }
@@ -26,12 +27,12 @@
 .leftSection,
 .rightSection {
   width: 35%;
-  background-color: #333;
+  background-color: $semi-grey;
 }
 
 .middleSection {
   width: 30%;
-  background-color: #444;
+  background-color: $light-grey;
   margin: 0 10px;
 }
 
@@ -39,12 +40,12 @@
 .filePreview {
   display: flex;
   height: 28vh;
-  background-color: #2a2a2a;
+  background-color: $semi-grey;
 }
 
 .fileList {
   width: 20%;
-  background-color: black;
+  background-color: $black;
   padding: 10px;
   color: white;
   margin: 10px;
@@ -52,7 +53,7 @@
 
 .fileDetails {
   width: 80%;
-  background-color: black;
+  background-color:  $black;
   padding: 10px;
   margin: 10px;
   color: white;

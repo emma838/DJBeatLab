@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
 import logoImage from '../../../assets/djbl_logo1.png';
-import styles from './HeaderWorkspace.module.css'; 
+import userIcon from '../../../assets/userIcon.png'; // Import statycznego obrazka
+import styles from './HeaderWorkspace.module.scss'; 
 import SettingsModal from '../../Settings/SettingsModal'; // Import nowego komponentu
 
-const Header = ({ username: initialUsername, avatar, onUsernameChange }) => { // Zmieniona nazwa "username" z props na "initialUsername"
+const Header = ({ username: initialUsername, onUsernameChange }) => { // Zmieniona nazwa "username" z props na "initialUsername"
   const [localUsername, setLocalUsername] = useState(''); // Stan dla loginu użytkownika
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
@@ -48,8 +49,8 @@ const Header = ({ username: initialUsername, avatar, onUsernameChange }) => { //
           <img src={logoImage} alt="Logo" />
         </div>
         <div className={styles.userInfo}>
-          <img src={avatar} alt="User Avatar" className={styles.avatar} />
           <span className={styles.username}>{localUsername}</span>
+          <img src={userIcon} alt="User Icon" className={styles.avatar} />
           <div className={styles.dropdownMenu}>
             <ul>
               <li onClick={toggleSettings}>Ustawienia</li>

@@ -1,6 +1,6 @@
 import React from 'react';
 import Header from '../../components/Headers/HeaderWorkspace/HeaderWorkspace.js';
-import styles from './Workspace.module.css'; // Importowanie modułów CSS jako obiekt
+import styles from './Workspace.module.scss'; // Importowanie modułów CSS jako obiekt
 
 const Workspace = () => {
   const username = "DJ_Example";

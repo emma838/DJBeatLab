@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import styles from './Register.module.css'; // Zmodyfikowana ścieżka do pliku stylów
+import styles from './Register.module.scss'; // Zmodyfikowana ścieżka do pliku stylów
 //import logoImage from '../../../assets/djbl_logo1.png'; // Upewnij się, że masz obraz logo w odpowiednim folderze
 
 const Register = () => {

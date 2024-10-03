@@ -6,6 +6,7 @@ const api = require('./app/routes/api');  // Trasy dla autoryzacji
 const cookieParser = require('cookie-parser');  // Jeśli używasz tokenów CSRF
 const cors = require('cors');
 
+
 dotenv.config(); // Wczytanie zmiennych środowiskowych z .env
 
 const app = express();
@@ -22,6 +23,10 @@ mongoose.connect(process.env.MONGODB_URI, {
 .catch((err) => {
     console.error('Błąd połączenia z MongoDB:', err);
 });
+
+// Konfiguracja Express do ufania proxy
+app.set('trust proxy', 1); // 1 oznacza, że ufamy pierwszemu proxy (np. Heroku, Nginx)
+
 
 // Middleware do parsowania JSON i ciasteczek
 app.use(express.json());
