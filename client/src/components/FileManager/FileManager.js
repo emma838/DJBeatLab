@@ -5,26 +5,21 @@
 import React, { useState, useEffect } from 'react';
 import axios from 'axios'; // Użycie Axios do komunikacji z backendem
 import AddFileModal from '../AddFile/AddFileModal';
-import RenameInlineEdit from '../RenameInlineEdit/RenameInlineEdit';
+import ManagePlaylist from '../ManagePlaylist/ManagePlaylist';
 import styles from './FileManager.module.scss';
 
 const FileManager = () => {
   const [directories, setDirectories] = useState({
     uploaded: [],
-    playlists: [],
     recorded: []
   });
 
+  const [playlists, setPlaylists] = useState([]);
   const [isUploadedOpen, setIsUploadedOpen] = useState(true);
-  const [isPlaylistsOpen, setIsPlaylistsOpen] = useState(true);
-  const [isRecordedOpen, setIsRecordedOpen] = useState(true);
   const [isAddFileOpen, setIsAddFileOpen] = useState(false);
 
   const toggleUploaded = () => setIsUploadedOpen(!isUploadedOpen);
-  const togglePlaylists = () => setIsPlaylistsOpen(!isPlaylistsOpen);
-  const toggleRecorded = () => setIsRecordedOpen(!isRecordedOpen);
 
-  // Otwieranie i zamykanie modala do wgrywania plików
   const openAddFile = () => setIsAddFileOpen(true);
   const closeAddFile = () => setIsAddFileOpen(false);
 
@@ -47,39 +42,33 @@ const FileManager = () => {
     }
   };
 
+  // Funkcja do pobierania playlist
+const fetchPlaylists = async () => {
+  try {
+    const response = await axios.get('/api/playlist/get-playlists', {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem('token')}`,
+      },
+    });
+    if (response.status === 200) {
+      setPlaylists(response.data.playlists); // Załóżmy, że lista playlist jest zwracana jako 'playlists'
+    } else {
+      console.error('Błąd przy pobieraniu playlist:', response.data);
+    }
+  } catch (err) {
+    console.error('Błąd serwera przy pobieraniu playlist:', err);
+  }
+};
+
   // Pobieranie listy plików i playlist przy ładowaniu komponentu
   useEffect(() => {
     fetchUploadedFiles();
+    fetchPlaylists();
   }, []);
 
   // Aktualizacja katalogów po dodaniu nowego pliku
   const updateDirectories = () => {
     fetchUploadedFiles(); // Ponowne pobranie plików po wgraniu
-  };
-
-  // Dodawanie nowej playlisty
-  const addPlaylist = async () => {
-    const playlistName = `playlist ${directories.playlists.length + 1}`; // Generuj nazwę playlisty
-
-    try {
-      const response = await axios.post('/api/files/playlists', { name: playlistName }, {
-        headers: {
-          Authorization: `Bearer ${localStorage.getItem('token')}`,
-          'Content-Type': 'application/json',
-        },
-      });
-
-      if (response.status === 201) {
-        setDirectories((prev) => ({
-          ...prev,
-          playlists: [...prev.playlists, response.data.playlist],
-        }));
-      } else {
-        console.error('Błąd tworzenia playlisty');
-      }
-    } catch (error) {
-      console.error('Błąd serwera', error);
-    }
   };
 
   return (
@@ -103,40 +92,11 @@ const FileManager = () => {
         )}
       </div>
 
-      {/* Playlists */}
-      <div className={isPlaylistsOpen ? styles.open : ''}>
-        <h3 onClick={togglePlaylists} className={styles.folderHeader}>
-          {isPlaylistsOpen ? '▼' : '►'} Playlists
-          <button onClick={addPlaylist} className={styles.addButton}>+</button> {/* Przycisk do dodawania playlist */}
-        </h3>
-        {isPlaylistsOpen && (
-          <ul className={styles.fileList}>
-            {directories.playlists.length > 0 ? (
-              directories.playlists.map((playlist, index) => (
-                <li key={playlist._id} className={styles.fileItem}>
-                  <RenameInlineEdit
-                    text={playlist.name}
-                    onSave={(newName) => {
-                      const updatedPlaylists = [...directories.playlists];
-                      updatedPlaylists[index].name = newName;
-                      setDirectories((prev) => ({
-                        ...prev,
-                        playlists: updatedPlaylists,
-                      }));
-                    }}
-                  />
-                  <button onClick={() => console.log('Usuń playlistę')} className={styles.deleteButton}>X</button>
-                </li>
-              ))
-            ) : (
-              <li className={styles.emptyItem}>Brak playlist</li>
-            )}
-          </ul>
-        )}
-      </div>
+ {/* Playlists */}
+ <ManagePlaylist playlists={playlists} setPlaylists={setPlaylists} />
 
       {/* Recorded */}
-      <div className={isRecordedOpen ? styles.open : ''}>
+      {/* <div className={isRecordedOpen ? styles.open : ''}>
         <h3 onClick={toggleRecorded} className={styles.folderHeader}>
           {isRecordedOpen ? '▼' : '►'} Recorded
         </h3>
@@ -151,7 +111,7 @@ const FileManager = () => {
             )}
           </ul>
         )}
-      </div>
+      </div> */}
 
       {/* Modal do wgrywania plików */}
       {isAddFileOpen && <AddFileModal isOpen={isAddFileOpen} onClose={closeAddFile} updateDirectories={updateDirectories} />}

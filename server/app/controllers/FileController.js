@@ -5,7 +5,7 @@ const fs = require('fs-extra');
 // Definiowanie ograniczeń plików
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
-        const userDir = `uploads/${req.user.username}/uploaded`; // Katalog użytkownika
+        const userDir = `uploads/${req.user.userId}/uploaded`; // Katalog użytkownika
         fs.ensureDirSync(userDir); // Upewnij się, że katalog istnieje
         cb(null, userDir); // Zapisz plik w katalogu użytkownika
     },
@@ -38,7 +38,7 @@ const uploadFile = (req, res) => {
 
 //pobieranie plików 
 const getFiles=  (req, res) => {
-    const userDir = path.join(__dirname, `../uploads/${req.user.username}/uploaded`);
+    const userDir = path.join(__dirname, `../uploads/${req.user.userId}/uploaded`);
     
     fs.readdir(userDir, (err, files) => {
       if (err) {
