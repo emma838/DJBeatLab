@@ -1,0 +1,73 @@
+.fileManagerContainer {
+    background-color: #1a1a1a;
+    color: white;
+    width: 100%;
+  }
+  
+  .folder {
+    margin-bottom: 1em;
+  }
+  
+  .folderHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background-color: #333;
+    padding: 10px;
+    cursor: pointer;
+    transition: background-color 0.3s ease;
+  }
+  
+  .folderHeader:hover {
+    background-color: #444;
+  }
+  
+  .addButton {
+    background-color: #FF4C1A;
+    border: none;
+    color: white;
+    padding: 5px 10px;
+    cursor: pointer;
+  }
+  
+  .addButton:hover {
+    background-color: white;
+    color: #FF4C1A;
+  }
+  
+  .deleteButton {
+    background-color: #FF4C1A;
+    border: none;
+    color: white;
+    padding: 3px 5px;
+    cursor: pointer;
+    margin-left: 10px;
+  }
+  
+  .deleteButton:hover {
+    background-color: white;
+    color: #FF4C1A;
+  }
+  
+  .fileList {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+  
+  .fileItem {
+    padding: 10px;
+    background-color: #222;
+    border-bottom: 1px solid #333;
+    transition: background-color 0.3s ease;
+  }
+  
+  .fileItem:hover {
+    background-color: white;
+    color: black;
+  }
+  
+  .open .folderHeader {
+    background-color: #444; /* Stylizacja otwartego katalogu */
+  }
+  

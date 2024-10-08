@@ -1,21 +1,20 @@
 const mongoose = require('mongoose');
+const Schema = mongoose.Schema;
 
-const UserSchema = new mongoose.Schema({
+// Sprawdzenie, czy model już istnieje, aby uniknąć błędu OverwriteModelError
+const UserSchema = new Schema({
   username: { 
     type: String, 
     required: true, 
     unique: true, 
-    minlength: 5, // Minimalna długość
-    maxlength: 15, // Maksymalna długość
-    match: /^[a-zA-Z0-9_-]+$/, // Tylko litery, cyfry, _ i -
-    trim: true // Usuwanie białych znaków z przodu i tyłu
-},
+    minlength: 5, 
+    maxlength: 15, 
+    match: /^[a-zA-Z0-9_-]+$/, 
+    trim: true 
+  },
   email: { type: String, required: true, unique: true },
   password: { type: String, required: true },
-  avatar: {
-    type: String, // Ścieżka do zdjęcia profilowego
-    default: '',  // Można ustawić domyślne zdjęcie
-  }
-});
+  playlists: [{ type: Schema.Types.ObjectId, ref: 'Playlist' }],
+}, { timestamps: true });
 
-module.exports = mongoose.model('User', UserSchema);
+module.exports = mongoose.models.User || mongoose.model('User', UserSchema);

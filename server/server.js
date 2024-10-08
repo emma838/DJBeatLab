@@ -24,8 +24,8 @@ mongoose.connect(process.env.MONGODB_URI, {
     console.error('Błąd połączenia z MongoDB:', err);
 });
 
-// Konfiguracja Express do ufania proxy
-app.set('trust proxy', 1); // 1 oznacza, że ufamy pierwszemu proxy (np. Heroku, Nginx)
+// // Konfiguracja Express do ufania proxy
+// app.set('trust proxy', 1); // 1 oznacza, że ufamy pierwszemu proxy (np. Heroku, Nginx)
 
 
 // Middleware do parsowania JSON i ciasteczek
@@ -40,12 +40,13 @@ app.use(cors({
   }));
 
 // Trasy autoryzacyjne
-app.use('/api/auth', api);
+app.use('/api/', api);
+
+// Udostępnianie plików w katalogu uploads
+app.use('/uploads', express.static('uploads'));
 
 // Uruchomienie serwera
 app.listen(PORT, () => {
     console.log(`Serwer działa na porcie ${PORT}`);
 });
 
-// Udostępnianie plików w katalogu uploads
-app.use('/uploads', express.static('uploads'));

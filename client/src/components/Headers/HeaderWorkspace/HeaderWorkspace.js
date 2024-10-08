@@ -1,10 +1,15 @@
+// HeaderWorkspace.js - Komponent nagłówka przestrzeni roboczej
+// Opis: Komponent `HeaderWorkspace` odpowiada za wyświetlanie nagłówka aplikacji, w tym logo, informacji o użytkowniku oraz opcji wylogowania.
+// Komponent zawiera także modal ustawień, w którym użytkownik może zmienić swoje dane.
+
 import React, { useState, useEffect } from 'react';
+import axios from 'axios';
 import logoImage from '../../../assets/djbl_logo1.png';
 import userIcon from '../../../assets/userIcon.png'; // Import statycznego obrazka
-import styles from './HeaderWorkspace.module.scss'; 
+import styles from './HeaderWorkspace.module.scss';
 import SettingsModal from '../../Settings/SettingsModal'; // Import nowego komponentu
 
-const Header = ({ username: initialUsername, onUsernameChange }) => { // Zmieniona nazwa "username" z props na "initialUsername"
+const Header = ({ username: initialUsername, onUsernameChange }) => {
   const [localUsername, setLocalUsername] = useState(''); // Stan dla loginu użytkownika
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
@@ -12,16 +17,16 @@ const Header = ({ username: initialUsername, onUsernameChange }) => { // Zmienio
   useEffect(() => {
     const fetchProfile = async () => {
       try {
-        const response = await fetch('/api/auth/profile', {
+        const response = await axios.get('/api/profile', {
           headers: {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
         });
-        const data = await response.json();
-        if (response.ok) {
-          setLocalUsername(data.username); // Ustaw login użytkownika
+
+        if (response.status === 200) {
+          setLocalUsername(response.data.username); // Ustaw login użytkownika
         } else {
-          console.log(data.msg || 'Błąd pobierania danych użytkownika');
+          console.log(response.data.msg || 'Błąd pobierania danych użytkownika');
         }
       } catch (err) {
         console.log('Błąd serwera: ', err);
@@ -39,7 +44,7 @@ const Header = ({ username: initialUsername, onUsernameChange }) => { // Zmienio
   // Wylogowanie
   const handleLogout = () => {
     localStorage.removeItem('token'); // Usuń token
-    window.location.href = '/login';  // Przekieruj na stronę logowania
+    window.location.href = '/login'; // Przekieruj na stronę logowania
   };
 
   return (
