@@ -1,25 +1,31 @@
 import React, { useState } from 'react';
-// import styles from './RenameInlineEdit.module.scss';
+import styles from './RenameInlineEdit.module.scss';
 
-const RenameInlineEdit = ({ initialValue, onRename }) => {
-  const [isEditing, setIsEditing] = useState(false);
+const RenameInlineEdit = ({ initialValue, onRename, onCancel, autoFocus }) => {
   const [value, setValue] = useState(initialValue);
 
   const handleRename = () => {
-    setIsEditing(false);
-    onRename(value);
+    onRename(value); // Wywołanie funkcji zmieniającej nazwę
   };
 
-  return isEditing ? (
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter') {
+      handleRename(); // Zatwierdzenie zmiany nazwy po Enter
+    } else if (e.key === 'Escape') {
+      onCancel(); // Anulowanie edycji po Escape
+    }
+  };
+
+  return (
     <input
       type="text"
       value={value}
       onChange={(e) => setValue(e.target.value)}
-      onBlur={handleRename}
-      autoFocus
+      onBlur={handleRename} // Zatwierdzenie zmiany po opuszczeniu pola
+      onKeyDown={handleKeyDown} // Obsługa Enter i Escape
+      className={styles.renameInput}
+      autoFocus={autoFocus} // Automatyczne focusowanie pola
     />
-  ) : (
-    <span onDoubleClick={() => setIsEditing(true)}>{value}</span>
   );
 };
 

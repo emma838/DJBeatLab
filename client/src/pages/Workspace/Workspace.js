@@ -1,13 +1,21 @@
-import React from 'react';
+import React, { useState } from 'react';
 import Header from '../../components/Headers/HeaderWorkspace/HeaderWorkspace.js';
-import FileManager from '../../components/FileManager/FileManager'; // Import komponentu FileManager
-import styles from './Workspace.module.scss'; // Importowanie modułów CSS jako obiekt
+import FileManager from '../../components/FileManager/FileManager'; 
+import PlaylistManager from '../../components/PlaylistManager/PlaylistManager';
+import styles from './Workspace.module.scss'; 
 
 const Workspace = () => {
+  const [selectedPlaylist, setSelectedPlaylist] = useState('uploads'); // Stan wybranej playlisty
+  const [playlistUpdateTrigger, setPlaylistUpdateTrigger] = useState(false);
+
+// Funkcja do aktualizacji stanu po dodaniu nowego utworu
+const handleSongAdded = () => {
+  setPlaylistUpdateTrigger((prev) => !prev); // Zmienia wartość, co spowoduje odświeżenie listy utworów
+};
 
   return (
-    <div className={styles.workspace}> {/* Używamy dynamicznych klas */}
-      <Header/>
+    <div className={styles.workspace}>
+      <Header />
 
       {/* Sekcja pomiędzy nagłówkiem a narzędziami */}
       <section className={styles.intermediateSection}>
@@ -23,12 +31,17 @@ const Workspace = () => {
 
       {/* Sekcja na podgląd plików */}
       <section className={styles.filePreview}>
-        <div className={styles.fileList}>
-          {/* Tutaj dodajemy nasz komponent FileManager */}
-          <FileManager /> {/* Komponent zarządzania plikami */}
+        <div className={styles.fileManager}>
+          {/* Przekazujemy wybraną playlistę oraz funkcję do odświeżania */}
+          <FileManager selectedPlaylist={selectedPlaylist} onSongAdded={handleSongAdded} />
         </div>
-        <div className={styles.fileDetails}>
-          Prawa sekcja (80%) {/* Możesz później w tej sekcji wyświetlać szczegóły wybranego pliku */}
+        <div className={styles.playlistManager}>
+          {/* Przekazujemy stan i funkcję do zmiany playlisty */}
+          <PlaylistManager 
+            selectedPlaylist={selectedPlaylist} 
+            setSelectedPlaylist={setSelectedPlaylist} 
+            playlistUpdateTrigger={playlistUpdateTrigger}
+          />
         </div>
       </section>
     </div>

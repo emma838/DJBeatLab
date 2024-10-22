@@ -1,0 +1,17 @@
+@import '../../styles/variables.scss';
+.renameInput {
+    padding: 2px;
+    margin: 0px 10px;
+    font-size: medium;
+    color: $dark-grey;
+    background-color: $white;
+    width: 200px;
+  }
+  
+  .renameInput:focus {
+    outline: none;
+    border:none;
+    background-color: $white;
+  }
+  
+  

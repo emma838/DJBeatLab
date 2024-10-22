@@ -15,11 +15,14 @@ const {
 
 const {
     uploadFile,
-    getFiles
+    getFiles,
+    deleteFile  
 } = require('../controllers/FileController');
 
 const {
     getUserPlaylists,
+    getPlaylistSongs,
+    getAllSongs,
     createPlaylist,
     addSongToPlaylist,
     removeSongFromPlaylist,
@@ -43,6 +46,9 @@ router.post('/files/upload', verifyToken, upload.single('file'), uploadFile);
 // Trasa do pobierania listy plików wgranych przez użytkownika
 router.get('/files/uploaded', verifyToken, getFiles);
 
+//usuwanie pliku
+router.delete('/files/delete/:songId', verifyToken, deleteFile);
+
 // Tworzenie playlisty
 router.post('/playlist/create', verifyToken, createPlaylist);
 
@@ -60,5 +66,11 @@ router.delete('/playlist/delete/:playlistId', verifyToken, deletePlaylist);
 
 // Trasa do zmiany nazwy playlisty
 router.put('/playlist/:playlistId/rename', verifyToken, renamePlaylist);
+
+// Trasa do pobierania utworów z playlisty
+router.get('/playlist/:playlistId/songs', verifyToken, getPlaylistSongs);
+
+// Trasa do pobierania wszytkich utworów uzytkownika do wyswietlenia jako playlista
+router.get('/playlist/all-songs', verifyToken, getAllSongs);
 
 module.exports = router;

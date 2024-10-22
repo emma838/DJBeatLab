@@ -1,0 +1,171 @@
+@import '../../styles/variables.scss';
+.playlistManagerContainer {
+    background-color: $black;
+    color: white;
+    width: 100%;
+    height: 100%; /* Zajmuje pełną wysokość kontenera */
+    display: flex;
+    flex-direction: column;
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+  }
+
+  .playlistContainer{
+    width: 90%;
+  }
+
+  .settingsContainer {
+    display: flex;
+    flex-direction: column;
+    background-color: $semi-grey;
+    padding: 0px 10px;
+  }
+  
+  .topBar {
+    display: flex;
+    justify-content: flex-start;
+    align-items: center;
+    background-color: $dark-grey;
+    padding: 5px;
+    font-size: 1rem;
+    border-bottom: 1px solid $light-grey;
+  }
+
+  .topBar p{
+    width: 20%;
+    font-size: small;
+  }
+  
+  .dropdown {
+    padding: 2px;
+    background-color: $white;
+    color: $dark-grey;
+    min-width: 200px;
+    margin: 0px 10px;
+    border: none;
+    font-size: medium;
+  }
+
+  .dropdown:focus {
+    outline: none;
+    border: none;
+    background-color: $white;
+  }
+  
+  .buttons {
+    display: flex;
+    flex-direction: column;
+    width: 50%;
+    gap: 10px;
+    margin-left: 10px;
+  }
+  
+  .editButton, .addButton, .deleteButton {
+    background-color: $light-grey;
+    color: $white;
+    border: none;
+    height: 20px;
+    padding: 5px;
+    font-weight: bolder;
+    font-size: 1rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+  }
+  
+  .deleteButton.disabled, .editButton.disabled {
+    background-color: #666;
+    cursor: not-allowed;
+  }
+  
+  .playlistContent {
+    list-style: none;
+    color: #ccc;
+      flex-grow: 1;
+      overflow-y: auto; /* Włącz przewijanie w pionie */
+      background-color: $black;
+      box-sizing: border-box;
+      height: 85%;
+  }
+
+  .songItem {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 5px;
+    border-bottom: 1px solid $light-grey;
+  }
+
+  .songInfo {
+    display: flex;
+    width: 90%;
+    gap: 10px;
+    align-items: center;
+  }
+
+  .songTitle {
+    font-size: 1rem;
+    width: 35%;
+  }
+
+  .songAuthor {
+    font-size: 1rem;
+    width: 35%;
+  }
+
+  .songDuration {
+    font-size: 1rem;
+    width: 10%;
+  }
+
+  .songBpm {
+    font-size: 1rem;
+    width: 10%;
+  }
+
+  .songKey {
+    font-size: 1rem;
+    width: 10%;
+  }
+
+  .songControls {
+    width: 5%;
+    display: flex;
+    flex-direction: row;
+    gap: 10px;
+     }
+
+  .channelBtn {
+    background-color: $black;
+    color: $white;
+    border: 2px solid $white;
+    height: 25px;
+    width: 25px;
+    font-size: large;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .channelBtn:hover {
+    background-color: $white;
+    color: $black;
+  }
+  
+  .deleteSongButton {
+    background-color: $orange;
+    color: $black;
+    border: none;
+    height: 20px;
+    width: 20px;
+    display: flex;
+    font-size: large;
+    justify-content: center;
+    align-items: center;
+    padding: 5px;
+    font-weight: bolder;
+    cursor: pointer;
+  }
+  

@@ -1,54 +1,78 @@
-const multer = require('multer');
 const path = require('path');
 const fs = require('fs-extra');
+const mm = require ('music-metadata');
+const Song = require('../models/Song'); // Importuj model Song
 
-// Definiowanie ograniczeń plików
-const storage = multer.diskStorage({
-    destination: (req, file, cb) => {
-        const userDir = `uploads/${req.user.userId}/uploaded`; // Katalog użytkownika
-        fs.ensureDirSync(userDir); // Upewnij się, że katalog istnieje
-        cb(null, userDir); // Zapisz plik w katalogu użytkownika
-    },
-    filename: (req, file, cb) => {
-        cb(null, file.originalname); // Zapisz plik pod oryginalną nazwą
-    },
-});
+const uploadFile = async (req, res) => {
+  console.log('Otrzymano plik:', req.file);
 
-// Filtr do weryfikacji typu pliku
-const fileFilter = (req, file, cb) => {
-    const filetypes = /mp3|wav/;
-    const extname = filetypes.test(path.extname(file.originalname).toLowerCase());
-    const mimetype = filetypes.test(file.mimetype);
+  if (!req.file) {
+    return res.status(400).json({ msg: 'Nie znaleziono pliku' });
+  }
 
-    if (extname && mimetype) {
-        cb(null, true);
-    } else {
-        cb(new Error('Nieprawidłowy format pliku. Dozwolone są tylko pliki MP3 i WAV.'));
-    }
-};
-const uploadFile = (req, res) => {
-    console.log('Otrzymano plik:', req.file);
+  try {
+    // Wyciągnij metadane z pliku
+    const metadata = await mm.parseFile(req.file.path);
+    const duration = metadata.format.duration;
+    const title = metadata.common.title || req.file.originalname;
+    const author = metadata.common.artist || 'Nieznany';
 
-    if (!req.file) {
-        return res.status(400).json({ msg: 'Nie znaleziono pliku' });
-    }
-
-    res.status(200).json({ msg: 'Plik wgrany pomyślnie', file: req.file.filename });
-};
-
-//pobieranie plików 
-const getFiles=  (req, res) => {
-    const userDir = path.join(__dirname, `../uploads/${req.user.userId}/uploaded`);
-    
-    fs.readdir(userDir, (err, files) => {
-      if (err) {
-        return res.status(500).json({ msg: 'Błąd przy pobieraniu plików' });
-      }
-      res.json({ files });
+    const newSong = new Song({
+      title: title,
+      author: author,
+      filename: req.file.originalname,
+      path: req.file.path,
+      duration: duration,
+      bpm: parseFloat(req.body.bpm),
+      key: req.body.key,
+      user: req.user.userId,
     });
-  };
+
+    await newSong.save();
+    res.status(200).json({ msg: 'Plik i dane zostały zapisane', song: newSong });
+  } catch (error) {
+    console.error('Błąd podczas przetwarzania pliku lub zapisu w bazie danych:', error);
+    res.status(500).json({ msg: 'Błąd serwera' });
+  }
+};
+
+// Funkcja do pobierania plików użytkownika
+const getFiles = async (req, res) => {
+  try {
+    const userId = req.user.userId; // Zakładamy, że userId pochodzi z middleware autoryzacyjnego
+    const songs = await Song.find({ user: userId }); // Pobieramy utwory użytkownika
+    res.status(200).json({ files: songs });
+  } catch (error) {
+    console.error('Błąd serwera przy pobieraniu plików:', error);
+    res.status(500).json({ msg: 'Błąd serwera przy pobieraniu plików' });
+  }
+};
+
+// Funkcja do usuwania pliku
+const deleteFile = async (req, res) => {
+  const { songId } = req.params;
+  console.log('Otrzymano songId:', songId); // Dodaj logi
+  try {
+    const song = await Song.findById(songId);
+    if (!song) {
+      return res.status(404).json({ msg: 'Plik nie został znaleziony' });
+    }
+
+    const filePath = song.path;
+    await fs.remove(filePath);
+    await Song.findByIdAndDelete(songId);
+    res.status(200).json({ msg: 'Plik został usunięty' });
+  } catch (error) {
+    console.error('Błąd podczas usuwania pliku:', error);
+    res.status(500).json({ msg: 'Błąd serwera podczas usuwania pliku' });
+  }
+};
+
+
 
 module.exports = {
-    uploadFile,
-    getFiles
+  uploadFile,
+  getFiles,
+  deleteFile
 };
+ 
