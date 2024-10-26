@@ -16,7 +16,8 @@ const {
 const {
     uploadFile,
     getFiles,
-    deleteFile  
+    deleteFile,
+    streamFile  
 } = require('../controllers/FileController');
 
 const {
@@ -72,5 +73,8 @@ router.get('/playlist/:playlistId/songs', verifyToken, getPlaylistSongs);
 
 // Trasa do pobierania wszytkich utworów uzytkownika do wyswietlenia jako playlista
 router.get('/playlist/all-songs', verifyToken, getAllSongs);
+
+// Trasa do strumieniowania pliku audio
+router.get('/audio/:userId/:filename', verifyToken, streamFile);
 
 module.exports = router;

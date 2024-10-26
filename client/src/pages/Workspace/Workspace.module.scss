@@ -1,6 +1,6 @@
 @import '../../styles/variables.scss';
 
-/* Stylizacja sekcji pośredniej */
+//sekcja na waveformy
 .intermediateSection {
   padding: 20px;
   background-color: $semi-grey;
@@ -24,12 +24,15 @@
   color: white;
 }
 
+//seckcje na deck 1 i 2 
 .leftSection,
 .rightSection {
   width: 35%;
   background-color: $semi-grey;
+  padding: 10px;
 }
 
+//sekcja na mikser po srodku
 .middleSection {
   width: 30%;
   background-color: $light-grey;

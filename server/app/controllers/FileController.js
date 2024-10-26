@@ -68,11 +68,28 @@ const deleteFile = async (req, res) => {
   }
 };
 
+// Funkcja do strumieniowania pliku audio
+const streamFile = (req, res) => {
+  const { userId, filename } = req.params;
+  const filePath = path.join(__dirname, '../uploads', userId, 'uploaded',filename);
+  console.log('Oczekiwana ścieżka pliku:', filePath); // Logowanie ścieżki do pliku
+
+  if (!fs.existsSync(filePath)) {
+    console.error("Plik nie znaleziony:", filePath);
+    return res.status(404).json({ msg: 'Plik nie znaleziony' });
+  }
+
+  res.sendFile(filePath);
+};
+
+
+
 
 
 module.exports = {
   uploadFile,
   getFiles,
-  deleteFile
+  deleteFile,
+  streamFile
 };
  

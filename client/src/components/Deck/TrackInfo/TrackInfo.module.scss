@@ -1,0 +1,81 @@
+@import '../../../styles/variables.scss';
+
+// Mixin do ucinania tekstu z wielokropkiem
+@mixin ellipsis {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.trackInfo {
+  display: flex;
+  flex-direction: column;
+  background-color: $black;
+  color: $white;
+  width: 60%;
+  
+  .Info {
+    display: flex;
+    align-items: center; // Centruje zawartość w pionie
+    width: 100%;
+    height: 70px;
+    border: solid 1px $white;
+    padding: 5px;
+    overflow: hidden; // Zapobiega wykraczaniu elementów poza obszar
+
+    .cover {
+      width: 20%; // Ustalony rozmiar kwadratowy
+      overflow: hidden;
+      border: solid 1px $white;
+
+      .coverImage {
+        width: 60px;
+        height: 60px;
+        object-fit: cover;
+      }
+    }
+
+    .songInfo {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-evenly;
+      padding-left: 5px;
+      overflow: hidden;
+      width: 70%; // Ustalona szerokość, aby zmieścić się z lewej i prawej strony
+
+      .title {
+        font-size: 0.9rem;
+        font-weight: bold;
+        margin: 0;
+        @include ellipsis; // Ucinanie tekstu
+      }
+
+      .author {
+        font-size: 0.8rem;
+        font-weight: normal;
+        color: grey;
+        margin: 0;
+        @include ellipsis; // Ucinanie tekstu
+      }
+    }
+
+    .timeInfo {
+      font-size: 0.8rem;
+      text-align: right; // Ustawia tekst po prawej stronie
+      flex-shrink: 0; // Zapobiega zmniejszaniu sekcji z czasem
+      margin-left: auto; // Przesuwa czas na prawą stronę
+    }
+  }
+
+  .waveform {
+    width: 100%;
+    height: 50px;
+    cursor: pointer;
+  
+    canvas {
+      width: 100% !important;
+      height: 100% !important;
+    }
+  }
+  
+}

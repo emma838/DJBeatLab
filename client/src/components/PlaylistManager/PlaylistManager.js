@@ -4,7 +4,7 @@ import { addPlaylist, deletePlaylist, renamePlaylist } from '../ManagePlaylist/M
 import RenameInlineEdit from '../RenameInlineEdit/RenameInlineEdit';
 import styles from './PlaylistManager.module.scss';
 
-const PlaylistManager = ({ selectedPlaylist, setSelectedPlaylist, playlistUpdateTrigger }) => { 
+const PlaylistManager = ({ selectedPlaylist, setSelectedPlaylist, playlistUpdateTrigger, onAssignToDeck }) => { 
   const [playlists, setPlaylists] = useState([]);
   const [editing, setEditing] = useState(false); 
   const [currentPlaylistSongs, setCurrentPlaylistSongs] = useState([]); // Stan dla listy utworów
@@ -118,6 +118,11 @@ const PlaylistManager = ({ selectedPlaylist, setSelectedPlaylist, playlistUpdate
     const remainingSeconds = Math.floor(seconds % 60);
     return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`; // Dodaj zero, jeśli sekundy są mniejsze niż 10
   };
+
+    // Funkcja do przypisywania utworu do decka
+    const handleAssignToDeck = (deckNumber, song) => {
+      onAssignToDeck(deckNumber, song); // Przekazanie wybranego utworu do głównego komponentu
+    };
   
   // Pobierz listę playlist przy załadowaniu komponentu
   useEffect(() => {
@@ -151,8 +156,8 @@ const PlaylistManager = ({ selectedPlaylist, setSelectedPlaylist, playlistUpdate
           currentPlaylistSongs.map((song, index) => (
             <li key={index} className={styles.songItem}>
               <div className={styles.songControls}>
-                <button className={styles.channelBtn}>1</button> {/* Przycisk 1 */}
-                <button className={styles.channelBtn}>2</button> {/* Przycisk 2 */}
+                <button className={styles.channelBtn} onClick={() => handleAssignToDeck(1, song)}>1</button> {/* Przycisk 1 */}
+                <button className={styles.channelBtn} onClick={() => handleAssignToDeck(2, song)}>2</button> {/* Przycisk 2 */}
               </div>
               <div className={styles.songInfo}>
                 <p className={styles.songTitle}>{song.title}</p>
