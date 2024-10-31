@@ -2,11 +2,13 @@ import React, { useState, useEffect, useCallback } from 'react';
 import axios from 'axios';
 import { addPlaylist, deletePlaylist, renamePlaylist } from '../ManagePlaylist/ManagePlaylist';
 import RenameInlineEdit from '../RenameInlineEdit/RenameInlineEdit';
+// import { AudioContext } from '../AudioManager/AudioManager';
 import styles from './PlaylistManager.module.scss';
 
-const PlaylistManager = ({ selectedPlaylist, setSelectedPlaylist, playlistUpdateTrigger, onAssignToDeck }) => { 
+const PlaylistManager = ({ selectedPlaylist, setSelectedPlaylist, playlistUpdateTrigger, onAssignToDeck }) => {
+  // const { setCurrentTrack } = useContext(AudioContext);
   const [playlists, setPlaylists] = useState([]);
-  const [editing, setEditing] = useState(false); 
+  const [editing, setEditing] = useState(false);
   const [currentPlaylistSongs, setCurrentPlaylistSongs] = useState([]); // Stan dla listy utworów
 
   // Funkcja pobierająca playlisty z serwera
@@ -96,14 +98,14 @@ const PlaylistManager = ({ selectedPlaylist, setSelectedPlaylist, playlistUpdate
   const handleRemoveSong = async (songId) => {
     try {
       const response = await axios.post('/api/playlist/remove-song', {
-        playlistId: selectedPlaylist, 
-        songId: songId, 
+        playlistId: selectedPlaylist,
+        songId: songId,
       }, {
         headers: {
           Authorization: `Bearer ${localStorage.getItem('token')}`,
         },
       });
-  
+
       if (response.status === 200) {
         fetchPlaylistSongs(selectedPlaylist); // Odśwież listę utworów po usunięciu
       }
@@ -119,11 +121,12 @@ const PlaylistManager = ({ selectedPlaylist, setSelectedPlaylist, playlistUpdate
     return `${minutes}:${remainingSeconds < 10 ? '0' : ''}${remainingSeconds}`; // Dodaj zero, jeśli sekundy są mniejsze niż 10
   };
 
-    // Funkcja do przypisywania utworu do decka
-    const handleAssignToDeck = (deckNumber, song) => {
-      onAssignToDeck(deckNumber, song); // Przekazanie wybranego utworu do głównego komponentu
-    };
-  
+  // Funkcja do przypisywania utworu do decka i ustawienia go jako aktualny utwór
+  // const handleAssignToDeck = (deckNumber, song) => {
+  //   const trackUrl = `/api/audio/${song.user}/uploaded/${encodeURIComponent(song.filename)}`;
+  //   setCurrentTrack(deckNumber, { ...song, url: trackUrl, title: song.title, author: song.author });
+  // };
+
   // Pobierz listę playlist przy załadowaniu komponentu
   useEffect(() => {
     fetchPlaylists();
@@ -139,54 +142,54 @@ const PlaylistManager = ({ selectedPlaylist, setSelectedPlaylist, playlistUpdate
   return (
     <div className={styles.playlistManagerContainer}>
       <div className={styles.playlistContainer}>
-      <div className={styles.topBar}>
-        <p>channel</p>
-        <p>title</p>
-        <p>artist</p>
-        <p>duration</p>
-        <p>bpm</p>
-        <p>key</p>
-      </div>
+        <div className={styles.topBar}>
+          <p>channel</p>
+          <p>title</p>
+          <p>artist</p>
+          <p>duration</p>
+          <p>bpm</p>
+          <p>key</p>
+        </div>
 
-      {/* Zawartość wybranej playlisty */}
-      <ul className={styles.playlistContent}>
-        {currentPlaylistSongs.length === 0 ? (
-          <li>Brak utworów do wyświetlenia</li>
-        ) : (
-          currentPlaylistSongs.map((song, index) => (
-            <li key={index} className={styles.songItem}>
-              <div className={styles.songControls}>
-                <button className={styles.channelBtn} onClick={() => handleAssignToDeck(1, song)}>1</button> {/* Przycisk 1 */}
-                <button className={styles.channelBtn} onClick={() => handleAssignToDeck(2, song)}>2</button> {/* Przycisk 2 */}
-              </div>
-              <div className={styles.songInfo}>
-                <p className={styles.songTitle}>{song.title}</p>
-                <p className={styles.songAuthor}>{song.author}</p>
-                <p className={styles.songDuration}>{formatDuration(song.duration)}</p>
-                <p className={styles.songBpm}>{song.bpm}</p>
-                <p className={styles.songKey}>{song.key}</p>
-              </div>
-              <button className={styles.deleteSongButton} onClick={() => handleRemoveSong(song._id)}>x</button> {/* Przycisk usuń */}
-            </li>
-          ))
-        )}
-      </ul>
+        {/* Zawartość wybranej playlisty */}
+        <ul className={styles.playlistContent}>
+          {currentPlaylistSongs.length === 0 ? (
+            <li>Brak utworów do wyświetlenia</li>
+          ) : (
+            currentPlaylistSongs.map((song, index) => (
+              <li key={index} className={styles.songItem}>
+                <div className={styles.songControls}>
+                <button className={styles.channelBtn} onClick={() => onAssignToDeck(1, song)}>1</button>
+                <button className={styles.channelBtn} onClick={() => onAssignToDeck(2, song)}>2</button>
+                </div>
+                <div className={styles.songInfo}>
+                  <p className={styles.songTitle}>{song.title}</p>
+                  <p className={styles.songAuthor}>{song.author}</p>
+                  <p className={styles.songDuration}>{formatDuration(song.duration)}</p>
+                  <p className={styles.songBpm}>{song.bpm}</p>
+                  <p className={styles.songKey}>{song.key}</p>
+                </div>
+                <button className={styles.deleteSongButton} onClick={() => handleRemoveSong(song._id)}>x</button> {/* Przycisk usuń */}
+              </li>
+            ))
+          )}
+        </ul>
       </div>
       <div className={styles.settingsContainer}>
-      <p>Playlista: </p>
+        <p>Playlista: </p>
         {/* Lista rozwijana z playlistami */}
         {editing ? (
           <RenameInlineEdit
             initialValue={playlists.find((playlist) => playlist._id === selectedPlaylist)?.name || 'uploads'}
             onRename={handleRenamePlaylist}
-            onCancel={handleCancelEditing}  
-            autoFocus 
+            onCancel={handleCancelEditing}
+            autoFocus
           />
         ) : (
           <select
             className={styles.dropdown}
             value={selectedPlaylist}
-            onChange={(e) => setSelectedPlaylist(e.target.value)} 
+            onChange={(e) => setSelectedPlaylist(e.target.value)}
           >
             <option value="uploads">uploads</option>
             {playlists.map((playlist) => (
@@ -213,7 +216,6 @@ const PlaylistManager = ({ selectedPlaylist, setSelectedPlaylist, playlistUpdate
         </div>
       </div>
     </div>
-    
   );
 };
 

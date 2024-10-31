@@ -1,100 +1,101 @@
-import { useState, useEffect } from 'react';
+// AudioManager.js
+import React, { createContext, useState } from 'react';
 
-const AudioManager = () => {
-  const [audioContext, setAudioContext] = useState(null);
-  const [deck1, setDeck1] = useState({ source: null, gainNode: null, volumeNode: null });
-  const [deck2, setDeck2] = useState({ source: null, gainNode: null, volumeNode: null });
+export const AudioContext = createContext();
 
-  useEffect(() => {
-    // Inicjalizacja AudioContext przy montowaniu komponentu
-    const context = new (window.AudioContext || window.webkitAudioContext)();
-    setAudioContext(context);
+export function AudioProvider({ children }) {
+  const [audioCtx, setAudioCtx] = useState(null);
+  const [deck1, setDeck1] = useState({ buffer: null, source: null, gainNode: null, blobUrl: null });
+  const [deck2, setDeck2] = useState({ buffer: null, source: null, gainNode: null, blobUrl: null });
 
-    // Tworzymy i konfigurujemy kanały
-    setDeck1(createDeckChannel(context));
-    setDeck2(createDeckChannel(context));
-
-    return () => {
-      context.close();
-    };
-  }, []);
-
-  // Funkcja do tworzenia kanału audio z GainNode i VolumeNode
-  const createDeckChannel = (context) => {
-    const gainNode = context.createGain();
-    const volumeNode = context.createGain();
-    gainNode.connect(volumeNode);
-    volumeNode.connect(context.destination);
-
-    return {
-      source: null, // Utwór będzie przypisany później
-      gainNode,
-      volumeNode
-    };
+  const initializeAudioContext = () => {
+    if (!audioCtx) {
+      const context = new (window.AudioContext || window.webkitAudioContext)();
+      setAudioCtx(context);
+    }
   };
 
-  // Funkcja do ładowania utworu na dany deck
-  const loadTrack = (deckNumber, trackUrl) => {
-    const deck = deckNumber === 1 ? deck1 : deck2;
+  const loadTrack = async (deckNumber, url) => {
+    try {
+      if (!audioCtx) {
+        console.error('AudioContext is not initialized');
+        return;
+      }
 
-    // Usuwamy poprzednie źródło (jeśli istnieje)
-    if (deck.source) {
-      deck.source.stop();
-    }
-
-    const source = audioContext.createBufferSource();
-    fetch(trackUrl)
-      .then(response => response.arrayBuffer())
-      .then(data => audioContext.decodeAudioData(data))
-      .then(buffer => {
-        source.buffer = buffer;
-        source.connect(deck.gainNode); // Podłączamy źródło do GainNode
-        deck.source = source;
-        if (deckNumber === 1) setDeck1(deck);
-        else setDeck2(deck);
+      const response = await fetch(url, {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`,
+        },
       });
-  };
 
-  // Funkcje do sterowania odtwarzaniem
-  const playTrack = (deckNumber) => {
-    const deck = deckNumber === 1 ? deck1 : deck2;
-    if (deck.source) {
-      deck.source.start(0);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const arrayBuffer = await response.arrayBuffer();
+      const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
+
+      const blob = new Blob([arrayBuffer]);
+      const blobUrl = URL.createObjectURL(blob);
+
+      const gainNode = audioCtx.createGain();
+      gainNode.connect(audioCtx.destination);
+
+      if (deckNumber === 1) {
+        setDeck1({ buffer: audioBuffer, source: null, gainNode, blobUrl });
+      } else {
+        setDeck2({ buffer: audioBuffer, source: null, gainNode, blobUrl });
+      }
+    } catch (error) {
+      console.error('Error loading track:', error);
     }
   };
 
-  const pauseTrack = (deckNumber) => {
+  const playTrack = (deckNumber) => {
+    if (!audioCtx) {
+      console.error('AudioContext is not initialized');
+      return;
+    }
+
+    const deck = deckNumber === 1 ? deck1 : deck2;
+    if (deck.buffer) {
+      const source = audioCtx.createBufferSource();
+      source.buffer = deck.buffer;
+      source.connect(deck.gainNode);
+      source.start();
+      if (deckNumber === 1) {
+        setDeck1((prev) => ({ ...prev, source }));
+      } else {
+        setDeck2((prev) => ({ ...prev, source }));
+      }
+    }
+  };
+
+  const stopTrack = (deckNumber) => {
     const deck = deckNumber === 1 ? deck1 : deck2;
     if (deck.source) {
       deck.source.stop();
+      if (deckNumber === 1) {
+        setDeck1((prev) => ({ ...prev, source: null }));
+      } else {
+        setDeck2((prev) => ({ ...prev, source: null }));
+      }
     }
   };
 
-  // Funkcje ustawiania gain i volume
-  const setGain = (deckNumber, value) => {
-    const deck = deckNumber === 1 ? deck1 : deck2;
-    deck.gainNode.gain.value = value;
-  };
-
-  const setVolume = (deckNumber, value) => {
-    const deck = deckNumber === 1 ? deck1 : deck2;
-    deck.volumeNode.gain.value = value;
-  };
-
-  // Funkcja synchronizacji decków
-  const syncDecks = () => {
-    // Funkcja synchronizacji BPM i beatmatching pomiędzy deck1 i deck2
-    // np. dopasowanie `playbackRate` lub manipulacja czasem startu odtwarzania
-  };
-
-  return {
-    loadTrack,
-    playTrack,
-    pauseTrack,
-    setGain,
-    setVolume,
-    syncDecks
-  };
-};
-
-export default AudioManager;
+  return (
+    <AudioContext.Provider
+      value={{
+        audioCtx,
+        initializeAudioContext,
+        deck1,
+        deck2,
+        loadTrack,
+        playTrack,
+        stopTrack,
+      }}
+    >
+      {children}
+    </AudioContext.Provider>
+  );
+}

@@ -75,6 +75,6 @@ router.get('/playlist/:playlistId/songs', verifyToken, getPlaylistSongs);
 router.get('/playlist/all-songs', verifyToken, getAllSongs);
 
 // Trasa do strumieniowania pliku audio
-router.get('/audio/:userId/:filename', verifyToken, streamFile);
+router.get('/audio/:userId/uploaded/:filename', verifyToken, streamFile);
 
 module.exports = router;
