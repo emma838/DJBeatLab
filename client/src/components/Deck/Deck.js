@@ -2,15 +2,13 @@
 import React from 'react';
 import TrackInfo from '../TrackInfo/TrackInfo';
 import DeckControls from '../DeckControls/DeckControls';
+import JogWheel from '../JogWheel/JogWheel';
 import { useAudio } from '../../components/AudioManager/AudioManager';
 import styles from './Deck.module.scss';
 
 function Deck({ deckNumber }) {
   const { decks, playPause, handleCueMouseDown, handleCueMouseUp } = useAudio();
   const deck = decks[deckNumber];
-
-  // Log track data for debugging
-  console.log(`Deck ${deckNumber} Track Data:`, deck.track);
 
   // Determine the order of elements based on deckNumber
   const isDeckTwo = deckNumber === 2;
@@ -49,7 +47,9 @@ function Deck({ deckNumber }) {
             <div className={styles.utilsRight}>
               <div className={styles.jogpitch}>
                 <div className={styles.pitch}></div>
-                <div className={styles.jog}></div>
+                <div className={styles.jog}>
+                <JogWheel deckNumber={deckNumber} />
+                </div>
               </div>
               <div className={styles.buttons}>
                 <DeckControls
@@ -68,7 +68,9 @@ function Deck({ deckNumber }) {
             <div className={styles.utilsLeft}></div>
             <div className={styles.utilsRight}>
               <div className={styles.jogpitch}>
-                <div className={styles.jog}></div>
+                <div className={styles.jog}>
+                <JogWheel deckNumber={deckNumber} />
+                </div>
                 <div className={styles.pitch}></div>
               </div>
               <div className={styles.buttons}>

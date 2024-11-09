@@ -9,8 +9,6 @@ function TrackInfo({ track, duration, currentTime }) {
     return `${minutes}:${seconds}`;
   };
 
-  console.log(`Rendering TrackInfo - Current Time: ${currentTime}`);
-
   return (
     <div className={styles.trackInfo}>
       {track && (

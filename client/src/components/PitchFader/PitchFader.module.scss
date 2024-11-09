@@ -1,0 +1,59 @@
+/* PitchFader.module.scss */
+.pitchFaderContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin: 10px;
+  }
+  
+  .pitchLabel {
+    margin-bottom: 10px;
+    font-weight: bold;
+  }
+  
+  .pitchSlider {
+    -webkit-appearance: none;
+    width: 8px; /* Thickness of the slider */
+    height: 150px; /* Length of the slider */
+    background: #ddd;
+    outline: none;
+    border-radius: 5px;
+    transform: rotate(-90deg); /* Rotate to make it vertical */
+    margin: 10px 0;
+  }
+  
+  .pitchSlider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 20px;
+    height: 20px;
+    background: #4CAF50;
+    cursor: pointer;
+    border-radius: 50%;
+    border: none;
+    transition: background 0.3s;
+  }
+  
+  .pitchSlider::-webkit-slider-thumb:hover {
+    background: #45a049;
+  }
+  
+  .pitchSlider::-moz-range-thumb {
+    width: 20px;
+    height: 20px;
+    background: #4CAF50;
+    cursor: pointer;
+    border-radius: 50%;
+    border: none;
+    transition: background 0.3s;
+  }
+  
+  .pitchSlider::-moz-range-thumb:hover {
+    background: #45a049;
+  }
+  
+  .pitchValue {
+    margin-top: 10px;
+    font-size: 14px;
+  }
+  

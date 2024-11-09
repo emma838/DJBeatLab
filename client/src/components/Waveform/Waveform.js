@@ -165,8 +165,6 @@ function Waveform({
     updateCurrentTime(deckNumber, clampedTime);
   };
 
-  console.log(`Rendering Waveform - Current Time: ${currentTime}`);
-
   return (
     <div className={styles.waveformWrapper}>
       {/* Waveform Canvas */}

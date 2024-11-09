@@ -20,6 +20,8 @@ const initialDeckState = {
     startOffset: 0,
     cuePoint: 0,
     isCuePlaying: false,
+    bpm: 120, // Default BPM
+    wasPlaying: false, // Tracks if the deck was playing before jogging
   },
   2: {
     track: null,
@@ -33,6 +35,8 @@ const initialDeckState = {
     startOffset: 0,
     cuePoint: 0,
     isCuePlaying: false,
+    bpm: 120, // Default BPM
+    wasPlaying: false, // Tracks if the deck was playing before jogging
   },
 };
 
@@ -70,7 +74,7 @@ export function AudioProvider({ children }) {
   // References for CUE button logic
   const isHold = useRef({});
   const holdTimer = useRef({});
-  const isMouseDown = useRef({}); // Added reference
+  const isMouseDown = useRef({});
 
   useEffect(() => {
     if (!audioContexts[1].current) {
@@ -109,6 +113,8 @@ export function AudioProvider({ children }) {
               startOffset: 0,
               cuePoint: 0,
               isCuePlaying: false,
+              bpm: track.bpm || 120, // Use track BPM or default
+              wasPlaying: false, // Initialize
             },
           });
 
@@ -258,9 +264,10 @@ export function AudioProvider({ children }) {
     const deck = decksRef.current[deckNumber];
     const wasPlaying = deck.isPlaying;
 
-    console.log(`Updating currentTime on deck ${deckNumber} to ${time}`);
+    console.log(`Updating currentTime on deck ${deckNumber} to ${time}, wasPlaying: ${wasPlaying}`);
 
     if (wasPlaying) {
+      console.log(`Stopping playback on deck ${deckNumber} before updating currentTime`);
       stopPlayback(deckNumber);
     }
 
@@ -271,12 +278,23 @@ export function AudioProvider({ children }) {
     });
 
     if (wasPlaying) {
-      dispatch({
-        type: 'SET_DECK',
-        deckNumber,
-        payload: { isPlaying: true },
-      });
+      console.log(`Resuming playback and updateTime on deck ${deckNumber} after updating currentTime`);
+      startPlayback(deckNumber);
+      updateTime(deckNumber);
     }
+  };
+
+  // Function to nudge playback by a time delta
+  const nudgePlayback = (deckNumber, timeDelta) => {
+    const deck = decksRef.current[deckNumber];
+    let newTime = deck.currentTime + timeDelta;
+
+    // Clamp newTime between 0 and duration
+    newTime = Math.max(0, Math.min(deck.duration, newTime));
+
+    console.log(`Nudging playback on deck ${deckNumber} by ${timeDelta} seconds to new time ${newTime}`);
+
+    updateCurrentTime(deckNumber, newTime);
   };
 
   // Set a new cue point or stop playback if playing
@@ -344,6 +362,41 @@ export function AudioProvider({ children }) {
     }
   };
 
+  // New Functions for Jogging Control
+
+  // Called when user starts interacting with the jog wheel
+  const startJogging = (deckNumber) => {
+    const deck = decksRef.current[deckNumber];
+    if (deck.isPlaying) {
+      console.log(`Jogging started on deck ${deckNumber}, pausing playback`);
+      stopPlayback(deckNumber);
+      dispatch({
+        type: 'SET_DECK',
+        deckNumber,
+        payload: { wasPlaying: true },
+      });
+    } else {
+      dispatch({
+        type: 'SET_DECK',
+        deckNumber,
+        payload: { wasPlaying: false },
+      });
+    }
+  };
+
+  // Called when user stops interacting with the jog wheel
+  const stopJogging = (deckNumber) => {
+    const deck = decksRef.current[deckNumber];
+    if (deck.wasPlaying) {
+      console.log(`Jogging ended on deck ${deckNumber}, resuming playback from ${deck.currentTime} seconds`);
+      dispatch({
+        type: 'SET_DECK',
+        deckNumber,
+        payload: { isPlaying: true, wasPlaying: false },
+      });
+    }
+  };
+
   // Handle mouse down on CUE button
   const handleCueMouseDown = (deckNumber) => {
     isMouseDown.current[deckNumber] = true; // Set mouse down state
@@ -392,8 +445,11 @@ export function AudioProvider({ children }) {
         loadTrackData,
         playPause,
         updateCurrentTime,
+        nudgePlayback,
         handleCueMouseDown,
         handleCueMouseUp,
+        startJogging, // Expose startJogging
+        stopJogging,  // Expose stopJogging
       }}
     >
       {children}
