@@ -18,6 +18,8 @@ const initialDeckState = {
     source: null,
     playbackStartTime: 0,
     startOffset: 0,
+    cuePoint: 0,
+    isCuePlaying: false,
   },
   2: {
     track: null,
@@ -29,6 +31,8 @@ const initialDeckState = {
     source: null,
     playbackStartTime: 0,
     startOffset: 0,
+    cuePoint: 0,
+    isCuePlaying: false,
   },
 };
 
@@ -51,17 +55,22 @@ function decksReducer(state, action) {
 export function AudioProvider({ children }) {
   const [decks, dispatch] = useReducer(decksReducer, initialDeckState);
 
-  // Referencja do przechowywania najnowszego stanu decks
+  // Reference to store the latest state of decks
   const decksRef = useRef(decks);
 
-  // Inicjalizacja AudioContexts
+  // Initialize AudioContexts
   const audioContexts = {
     1: useRef(null),
     2: useRef(null),
   };
 
-  // Referencje do przechowywania ID animacji
+  // References to store animation IDs
   const animationFrameIds = useRef({});
+
+  // References for CUE button logic
+  const isHold = useRef({});
+  const holdTimer = useRef({});
+  const isMouseDown = useRef({}); // Added reference
 
   useEffect(() => {
     if (!audioContexts[1].current) {
@@ -83,7 +92,7 @@ export function AudioProvider({ children }) {
         arrayBuffer,
         (audioBuffer) => {
           const rawData = audioBuffer.getChannelData(0);
-          const samples = 6000; // Liczba próbek dla waveform
+          const samples = 6000; // Number of samples for waveform
           const waveformData = extractPeaks(rawData, samples);
 
           dispatch({
@@ -98,6 +107,8 @@ export function AudioProvider({ children }) {
               isPlaying: false,
               playbackStartTime: 0,
               startOffset: 0,
+              cuePoint: 0,
+              isCuePlaying: false,
             },
           });
 
@@ -160,7 +171,7 @@ export function AudioProvider({ children }) {
     source.start(0, startOffset);
 
     source.onended = () => {
-      console.log(`Playback ended on deck ${deckNumber}`); 
+      console.log(`Playback ended on deck ${deckNumber}`);
       dispatch({
         type: 'SET_DECK',
         deckNumber,
@@ -168,6 +179,7 @@ export function AudioProvider({ children }) {
           isPlaying: false,
           currentTime: deck.duration,
           source: null,
+          isCuePlaying: false,
         },
       });
     };
@@ -192,10 +204,10 @@ export function AudioProvider({ children }) {
     console.log(`Stopping playback on deck ${deckNumber}`);
 
     if (deck.source) {
-      deck.source.onended = null; // Zapobiega wywołaniu onended
+      deck.source.onended = null; // Prevent onended from firing
       deck.source.stop();
 
-      const currentTime = (audioCtx.currentTime - deck.playbackStartTime) + deck.startOffset;
+      const currentTime = audioCtx.currentTime - deck.playbackStartTime + deck.startOffset;
 
       dispatch({
         type: 'SET_DECK',
@@ -204,11 +216,12 @@ export function AudioProvider({ children }) {
           currentTime,
           isPlaying: false,
           source: null,
+          isCuePlaying: false,
         },
       });
     }
 
-    // Anulowanie animacji
+    // Cancel animation
     if (animationFrameIds.current[deckNumber]) {
       cancelAnimationFrame(animationFrameIds.current[deckNumber]);
       delete animationFrameIds.current[deckNumber];
@@ -223,7 +236,7 @@ export function AudioProvider({ children }) {
     }
 
     const audioCtx = audioContexts[deckNumber].current;
-    const currentTime = (audioCtx.currentTime - deck.playbackStartTime) + deck.startOffset;
+    const currentTime = audioCtx.currentTime - deck.playbackStartTime + deck.startOffset;
 
     console.log(`Updating currentTime for deck ${deckNumber}: ${currentTime}`);
 
@@ -266,7 +279,96 @@ export function AudioProvider({ children }) {
     }
   };
 
-  // Połączone useEffect
+  // Set a new cue point or stop playback if playing
+  const handleSetCuePoint = (deckNumber) => {
+    const deck = decksRef.current[deckNumber];
+    if (!deck.audioBuffer) return;
+
+    if (!deck.isPlaying) {
+      const currentPos = deck.currentTime;
+      dispatch({
+        type: 'SET_DECK',
+        deckNumber,
+        payload: { cuePoint: currentPos },
+      });
+      console.log(`Cue point set at ${currentPos.toFixed(2)} seconds.`);
+    } else {
+      stopPlayback(deckNumber);
+      dispatch({
+        type: 'SET_DECK',
+        deckNumber,
+        payload: { currentTime: deck.cuePoint },
+      });
+      console.log(`Playback stopped and returned to cue point at ${deck.cuePoint.toFixed(2)} seconds.`);
+    }
+  };
+
+  // Play from the cue point
+  const playFromCue = (deckNumber) => {
+    const deck = decksRef.current[deckNumber];
+    if (!deck.audioBuffer) return;
+    const cuePoint = deck.cuePoint;
+
+    if (cuePoint >= 0 && cuePoint <= deck.duration) {
+      dispatch({
+        type: 'SET_DECK',
+        deckNumber,
+        payload: {
+          currentTime: cuePoint,
+          isPlaying: true,
+          isCuePlaying: true,
+        },
+      });
+      console.log(`Playing from cue point at ${cuePoint.toFixed(2)} seconds.`);
+    } else {
+      console.warn('Cue point is out of bounds.');
+    }
+  };
+
+  // Stop playback and return to cue point
+  const stopFromCue = (deckNumber) => {
+    const deck = decksRef.current[deckNumber];
+    if (!deck.audioBuffer) return;
+
+    if (deck.isCuePlaying) {
+      stopPlayback(deckNumber);
+      dispatch({
+        type: 'SET_DECK',
+        deckNumber,
+        payload: {
+          currentTime: deck.cuePoint,
+          isCuePlaying: false,
+        },
+      });
+      console.log(`Playback stopped and returned to cue point at ${deck.cuePoint.toFixed(2)} seconds.`);
+    }
+  };
+
+  // Handle mouse down on CUE button
+  const handleCueMouseDown = (deckNumber) => {
+    isMouseDown.current[deckNumber] = true; // Set mouse down state
+    isHold.current[deckNumber] = false;
+    holdTimer.current[deckNumber] = setTimeout(() => {
+      isHold.current[deckNumber] = true;
+      playFromCue(deckNumber);
+    }, 200); // 200ms threshold for hold
+  };
+
+  // Handle mouse up on CUE button
+  const handleCueMouseUp = (deckNumber) => {
+    if (!isMouseDown.current[deckNumber]) {
+      // Mouse was not pressed down on this deck, so ignore
+      return;
+    }
+    isMouseDown.current[deckNumber] = false; // Reset mouse down state
+    clearTimeout(holdTimer.current[deckNumber]);
+    if (isHold.current[deckNumber]) {
+      stopFromCue(deckNumber);
+    } else {
+      handleSetCuePoint(deckNumber);
+    }
+  };
+
   useEffect(() => {
     decksRef.current = decks;
     Object.keys(decks).forEach((deckNumber) => {
@@ -276,7 +378,7 @@ export function AudioProvider({ children }) {
         startPlayback(deckNumber);
         updateTime(deckNumber);
       }
-      // Opcjonalnie: zatrzymaj odtwarzanie, jeśli isPlaying zmieniło się na false
+      // Stop playback if isPlaying changed to false
       if (!deck.isPlaying && deck.source) {
         stopPlayback(deckNumber);
       }
@@ -290,6 +392,8 @@ export function AudioProvider({ children }) {
         loadTrackData,
         playPause,
         updateCurrentTime,
+        handleCueMouseDown,
+        handleCueMouseUp,
       }}
     >
       {children}

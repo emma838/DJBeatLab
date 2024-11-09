@@ -1,3 +1,5 @@
+@import '../../styles/variables.scss';
+
 /* DeckControls.module.scss */
 .deckControls {
   display: flex;
@@ -5,8 +7,24 @@
   align-items: center;
 }
 
-.controlButton {
+.play {
   margin: 0 5px;
-  padding: 10px;
+  background-color: $black;
+  color: $orange;
+  font-weight: 700;
+  border: 2px solid $orange;
+  padding: 5px;
+  width: 60px;
+  cursor: pointer;
+}
+
+.cue {
+  margin: 0 5px;
+  background-color: $black;
+  color: $green;
+  font-weight: 700;
+  border: 2px solid $green;
+  padding: 5px;
+  width: 60px;
   cursor: pointer;
 }
