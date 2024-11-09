@@ -1,22 +1,30 @@
-/* LargeWaveform.module.scss */
-.largeWaveform {
-    width: 100%;
-    height: 100px; /* Adjust the height as needed */
-    background-color: #000;
+/* Waveform.module.scss */
+@import '../../styles/variables.scss';
+.waveformWrapper {
     position: relative;
+    width: 100%;
+    height: 70px; /* Zwiększenie wysokości dla większej szczegółowości */
     overflow: hidden;
-  
-    /* Center vertical line */
-    &:before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 50%;
-      width: 2px;
-      height: 100%;
-      background-color: #ff0000;
-      transform: translateX(-50%);
-      z-index: 10;
+    background-color: black; /* Możesz dostosować */
+    border-bottom: 1px solid $light-grey;
+    
+    @media (max-width: 600px) {
+      height: 150px; /* Mniejsza wysokość na małych ekranach */
     }
   }
-  
+
+.waveform {
+  width: 100%;
+  height: 100%;
+  cursor: grab; /* Zmiana kursora na 'grab' */
+  transition: transform 0.2s ease-in-out; /* Płynne przejścia */
+}
+
+.waveform:active {
+  cursor: grabbing; /* Zmiana kursora na 'grabbing' podczas przeciągania */
+}
+
+/* Opcjonalnie: Dodanie efektów podświetlenia */
+.waveform:hover {
+  opacity: 0.9;
+}

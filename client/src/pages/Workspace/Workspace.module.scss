@@ -1,13 +1,9 @@
 @import '../../styles/variables.scss';
 
 //sekcja na waveformy
-.intermediateSection {
-  padding: 20px;
-  background-color: $semi-grey;
-  color: $white;
-  text-align: center;
-  height: 20vh;
-  margin-top: 10px;
+.waveforms {
+border-top: 3px solid $light-grey;
+border-bottom: 2px solid $light-grey;
 }
 
 /* Stylizacja paska narzędzi */

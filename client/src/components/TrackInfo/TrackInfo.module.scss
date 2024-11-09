@@ -1,11 +1,30 @@
 @import '../../styles/variables.scss';
 
 /* TrackInfo.module.scss */
+
 .trackInfo {
-  /* your styles */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100%;
+  height: 100%;
+padding: 10px;
 }
 
-.waveform {
-  width: 100%;
-  height: 80px; /* Ensure the height is set */
+.title{
+    color: $white;
+    font-weight: 700;
+    font-size: 0.8rem;
+}
+
+.author{
+    color: $light-grey;
+    font-weight: 700;
+    font-size: 0.7rem;
+}
+
+.time{
+    color: $white;
+    font-weight: 700;
+    font-size: 0.8rem;
 }

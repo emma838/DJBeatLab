@@ -4,22 +4,19 @@ import Header from '../../components/Headers/HeaderWorkspace/HeaderWorkspace';
 import FileManager from '../../components/FileManager/FileManager';
 import PlaylistManager from '../../components/PlaylistManager/PlaylistManager';
 import Deck from '../../components/Deck/Deck';
+import Waveform from '../../components/Waveform/Waveform';
+import { useAudio } from '../../components/AudioManager/AudioManager';
 import styles from './Workspace.module.scss';
 
 const Workspace = () => {
+  const { loadTrackData } = useAudio();
   const [selectedPlaylist, setSelectedPlaylist] = useState('uploads');
   const [playlistUpdateTrigger, setPlaylistUpdateTrigger] = useState(false);
-  const [deck1Track, setDeck1Track] = useState(null);
-  const [deck2Track, setDeck2Track] = useState(null);
 
   const handleAssignToDeck = (deckNumber, song) => {
     const trackUrl = `/api/audio/${song.user}/uploaded/${encodeURIComponent(song.filename)}`;
     const track = { ...song, url: trackUrl };
-    if (deckNumber === 1) {
-      setDeck1Track(track);
-    } else {
-      setDeck2Track(track);
-    }
+    loadTrackData(deckNumber, track);
   };
 
   const handleSongAdded = () => setPlaylistUpdateTrigger((prev) => !prev);
@@ -27,18 +24,19 @@ const Workspace = () => {
   return (
     <div className={styles.workspace}>
       <Header />
-      <section className={styles.intermediateSection}>
-        <h2>Waveform Section</h2>
-      </section>
+      <div  className={styles.waveforms}>
+        <Waveform deckNumber={1} waveformColor="#FF4C1A"  playheadColor="#e4dbdb"/>
+        <Waveform deckNumber={2} waveformColor="#00DD51"  playheadColor="#e4dbdb"/>
+      </div>
       <section className={styles.toolbar}>
         <div className={styles.leftSection}>
-          <Deck deckNumber={1} track={deck1Track} />
+          <Deck deckNumber={1} />
         </div>
         <div className={styles.middleSection}>
           <h2>Mixer (Example)</h2>
         </div>
         <div className={styles.rightSection}>
-          <Deck deckNumber={2} track={deck2Track} />
+          <Deck deckNumber={2} />
         </div>
       </section>
       <section className={styles.filePreview}>
