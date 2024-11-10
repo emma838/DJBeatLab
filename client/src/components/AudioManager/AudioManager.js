@@ -21,6 +21,7 @@ const initialDeckState = {
     cuePoint: 0,
     isCuePlaying: false,
     bpm: 120, // Default BPM
+    defaultBpm: 120, // Default BPM
     wasPlaying: false, // Tracks if the deck was playing before jogging
   },
   2: {
@@ -36,6 +37,7 @@ const initialDeckState = {
     cuePoint: 0,
     isCuePlaying: false,
     bpm: 120, // Default BPM
+    defaultBpm: 120, // Default BPM
     wasPlaying: false, // Tracks if the deck was playing before jogging
   },
 };
@@ -43,7 +45,7 @@ const initialDeckState = {
 function decksReducer(state, action) {
   switch (action.type) {
     case 'SET_DECK':
-      console.log(`Dispatching SET_DECK for deck ${action.deckNumber}:`, action.payload);
+      // console.log(`Dispatching SET_DECK for deck ${action.deckNumber}:`, action.payload);
       return {
         ...state,
         [action.deckNumber]: {
@@ -86,48 +88,55 @@ export function AudioProvider({ children }) {
   }, []);
 
   const loadTrackData = async (deckNumber, track) => {
-    console.log(`Loading track on deck ${deckNumber}:`, track);
+    console.log(`Loading track on deck ${deckNumber}:`, track); // Log track information and deckNumber
+
     try {
-      const response = await fetch(track.url, {
-        headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
-      });
-      const arrayBuffer = await response.arrayBuffer();
-      audioContexts[deckNumber].current.decodeAudioData(
-        arrayBuffer,
-        (audioBuffer) => {
-          const rawData = audioBuffer.getChannelData(0);
-          const samples = 6000; // Number of samples for waveform
-          const waveformData = extractPeaks(rawData, samples);
+        const response = await fetch(track.url, {
+            headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
+        });
+        const arrayBuffer = await response.arrayBuffer();
+        audioContexts[deckNumber].current.decodeAudioData(
+            arrayBuffer,
+            (audioBuffer) => {
+                const rawData = audioBuffer.getChannelData(0);
+                const samples = 6000; // Number of samples for waveform
+                const waveformData = extractPeaks(rawData, samples);
 
-          dispatch({
-            type: 'SET_DECK',
-            deckNumber,
-            payload: {
-              track,
-              audioBuffer,
-              waveformData,
-              duration: audioBuffer.duration,
-              currentTime: 0,
-              isPlaying: false,
-              playbackStartTime: 0,
-              startOffset: 0,
-              cuePoint: 0,
-              isCuePlaying: false,
-              bpm: track.bpm || 120, // Use track BPM or default
-              wasPlaying: false, // Initialize
+                // Log BPM values before dispatch
+                console.log(`Setting defaultBpm for deck ${deckNumber}:`, track.bpm || 0);
+                console.log(`Setting bpm for deck ${deckNumber}:`, track.bpm || 0);
+
+                dispatch({
+                    type: 'SET_DECK',
+                    deckNumber,
+                    payload: {
+                        track,
+                        audioBuffer,
+                        waveformData,
+                        duration: audioBuffer.duration,
+                        currentTime: 0,
+                        isPlaying: false,
+                        playbackStartTime: 0,
+                        startOffset: 0,
+                        cuePoint: 0,
+                        isCuePlaying: false,
+                        defaultBpm: track.bpm || 0, // Use track BPM or default
+                        bpm: track.bpm || 0,
+                        wasPlaying: false, // Initialize
+                    },
+                });
+
+                console.log(`Track loaded on deck ${deckNumber}`);
             },
-          });
-
-          console.log(`Track loaded on deck ${deckNumber}`);
-        },
-        (error) => {
-          console.error('Error decoding audio data:', error);
-        }
-      );
+            (error) => {
+                console.error('Error decoding audio data:', error);
+            }
+        );
     } catch (error) {
-      console.error('Error loading track data:', error);
+        console.error('Error loading track data:', error);
     }
-  };
+};
+
 
   const extractPeaks = (data, samples) => {
     const blockSize = Math.floor(data.length / samples);
@@ -159,23 +168,24 @@ export function AudioProvider({ children }) {
   const startPlayback = (deckNumber) => {
     const deck = decksRef.current[deckNumber];
     const audioCtx = audioContexts[deckNumber].current;
-
+  
     console.log(`Starting playback on deck ${deckNumber}`);
-
+  
     if (audioCtx.state === 'suspended') {
       audioCtx.resume();
     }
-
+  
     let startOffset = deck.currentTime;
     if (startOffset >= deck.duration) {
       startOffset = 0;
     }
-
+  
     const source = audioCtx.createBufferSource();
     source.buffer = deck.audioBuffer;
+    source.playbackRate.value = deck.bpm / deck.defaultBpm || 1; // Ustaw playbackRate
     source.connect(audioCtx.destination);
     source.start(0, startOffset);
-
+  
     source.onended = () => {
       console.log(`Playback ended on deck ${deckNumber}`);
       dispatch({
@@ -189,9 +199,9 @@ export function AudioProvider({ children }) {
         },
       });
     };
-
+  
     const playbackStartTime = audioCtx.currentTime;
-
+  
     dispatch({
       type: 'SET_DECK',
       deckNumber,
@@ -201,7 +211,11 @@ export function AudioProvider({ children }) {
         startOffset,
       },
     });
+  
+    // Rozpocznij aktualizację czasu
+    updateTime(deckNumber);
   };
+  
 
   const stopPlayback = (deckNumber) => {
     const deck = decksRef.current[deckNumber];
@@ -240,25 +254,27 @@ export function AudioProvider({ children }) {
       console.log(`Deck ${deckNumber} is not playing. Exiting updateTime.`);
       return;
     }
-
+  
     const audioCtx = audioContexts[deckNumber].current;
-    const currentTime = audioCtx.currentTime - deck.playbackStartTime + deck.startOffset;
-
-    console.log(`Updating currentTime for deck ${deckNumber}: ${currentTime}`);
-
+    const elapsedTime = audioCtx.currentTime - deck.playbackStartTime;
+    const playbackRate = deck.bpm / deck.defaultBpm || 1;
+    const scaledElapsedTime = elapsedTime * playbackRate;
+    const currentTime = deck.startOffset + scaledElapsedTime;
+  
     if (currentTime >= deck.duration) {
       stopPlayback(deckNumber);
       return;
     }
-
+  
     dispatch({
       type: 'SET_DECK',
       deckNumber,
       payload: { currentTime },
     });
-
+  
     animationFrameIds.current[deckNumber] = requestAnimationFrame(() => updateTime(deckNumber));
   };
+  
 
   const updateCurrentTime = (deckNumber, time) => {
     const deck = decksRef.current[deckNumber];
@@ -422,12 +438,55 @@ export function AudioProvider({ children }) {
     }
   };
 
+  const updateBpm = (deckNumber, newBpm) => {
+    const deck = decksRef.current[deckNumber];
+    
+    if (!deck) {
+      console.error(`Deck ${deckNumber} is undefined.`);
+      return;
+    }
+  
+    if (!deck.defaultBpm) {
+      console.error(`defaultBpm is undefined for deck ${deckNumber}.`);
+      return;
+    }
+  
+    const oldPlaybackRate = deck.bpm / deck.defaultBpm || 1;
+    const newPlaybackRate = newBpm / deck.defaultBpm || 1;
+  
+    if (deck.isPlaying && deck.source) {
+      const audioCtx = audioContexts[deckNumber].current;
+      const elapsedTime = audioCtx.currentTime - deck.playbackStartTime;
+      const currentTime = deck.startOffset + elapsedTime * oldPlaybackRate;
+  
+      // Aktualizuj playbackRate na źródle audio
+      deck.source.playbackRate.value = newPlaybackRate;
+  
+      // Ustaw nowy startOffset i playbackStartTime, aby currentTime pozostało ciągłe
+      const newStartOffset = currentTime;
+      const newPlaybackStartTime = audioCtx.currentTime;
+  
+      dispatch({
+        type: 'SET_DECK',
+        deckNumber,
+        payload: { bpm: newBpm, startOffset: newStartOffset, playbackStartTime: newPlaybackStartTime },
+      });
+    } else {
+      // Jeśli nie odtwarzamy, po prostu zaktualizuj BPM
+      dispatch({
+        type: 'SET_DECK',
+        deckNumber,
+        payload: { bpm: newBpm },
+      });
+    }
+  };
+  
   useEffect(() => {
     decksRef.current = decks;
     Object.keys(decks).forEach((deckNumber) => {
       const deck = decks[deckNumber];
       if (deck.isPlaying && !deck.source && deck.audioBuffer) {
-        console.log(`Starting playback and updateTime for deck ${deckNumber}`);
+        // console.log(`Starting playback and updateTime for deck ${deckNumber}`);
         startPlayback(deckNumber);
         updateTime(deckNumber);
       }
@@ -450,6 +509,7 @@ export function AudioProvider({ children }) {
         handleCueMouseUp,
         startJogging, // Expose startJogging
         stopJogging,  // Expose stopJogging
+        updateBpm,    // Expose updateBpm
       }}
     >
       {children}

@@ -1,4 +1,3 @@
-// Waveform.js
 import React, { useEffect, useRef, useMemo } from 'react';
 import { useAudio } from '../../components/AudioManager/AudioManager';
 import styles from './Waveform.module.scss';
@@ -21,6 +20,8 @@ function Waveform({
   const duration = deck?.duration;
   const currentTime = deck?.currentTime;
   const cuePoint = deck?.cuePoint || 0;
+  const bpm = deck?.bpm;
+  const defaultBpm = deck?.defaultBpm || 120;
 
   // Normalize peaks so the maximum value is 1
   const normalizedPeaks = useMemo(() => {
@@ -50,8 +51,9 @@ function Waveform({
         const totalWidth = totalBars * (barWidth + barSpacing);
 
         const centerX = width / 2;
+        const playbackRate = bpm / defaultBpm;
         const timeRatio = currentTime / duration;
-        const shift = timeRatio * totalWidth - centerX;
+        const shift = timeRatio * totalWidth - centerX ;
 
         // Set color for the waveform
         ctx.fillStyle = waveformColor;
@@ -76,7 +78,7 @@ function Waveform({
         // Draw CUE point indicator
         if (cuePoint >= 0 && cuePoint <= duration) {
           const cueTimeRatio = cuePoint / duration;
-          const xCue = cueTimeRatio * totalWidth;
+          const xCue = cueTimeRatio * totalWidth * playbackRate;
           const xCueOnCanvas = xCue - shift;
 
           if (xCueOnCanvas >= 0 && xCueOnCanvas <= width) {
@@ -110,6 +112,8 @@ function Waveform({
     barSpacing,
     deckNumber,
     decks,
+    bpm,
+    defaultBpm,
   ]);
 
   const adjustCanvasForDPR = (canvas) => {
@@ -151,7 +155,8 @@ function Waveform({
     const centerX = width / 2;
 
     const totalWidth = waveformData.length * (barWidth + barSpacing);
-    const timePerPixel = duration / totalWidth;
+    const playbackRate = bpm / defaultBpm;
+    const timePerPixel = (duration / totalWidth) / playbackRate;
 
     // Calculate time difference based on cursor movement relative to the center
     const timeOffset = (x - centerX) * timePerPixel;

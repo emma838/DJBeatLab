@@ -1,4 +1,3 @@
-// JogWheel.js
 import React, { useRef, useEffect, useState } from 'react';
 import styles from './JogWheel.module.scss';
 import { useAudio } from '../../components/AudioManager/AudioManager';
@@ -12,12 +11,13 @@ function JogWheel({ deckNumber }) {
   const isDragging = useRef(false);
   const lastAngle = useRef(0);
 
-  const { currentTime, duration, bpm } = deck;
+  const { currentTime, duration, bpm, defaultBpm } = deck;
 
   // Calculate duration of 4 bars
   const secondsPerBeat = 60 / bpm;
   const durationOfBar = secondsPerBeat * 4; // Duration of 1 bar
-  const durationOfFullRotation = durationOfBar * 4; // Duration of 4 bars
+  const playbackRate = bpm / (defaultBpm || 120);// Fallback to 120 BPM if defaultBpm is not set
+  const durationOfFullRotation = durationOfBar * 4 * playbackRate; // Duration of 4 bars, scaled by playback rate
 
   useEffect(() => {
     if (!duration) return;
