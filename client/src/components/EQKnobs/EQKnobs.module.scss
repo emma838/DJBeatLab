@@ -1,0 +1,14 @@
+/* EQ.module.scss */
+.eq {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .knobs {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 100%;
+  }
+  

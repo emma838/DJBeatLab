@@ -1,0 +1,77 @@
+/* src/components/LoopHandler.module.scss */
+
+.loopHandler {
+    display: flex;
+    flex-direction: row;
+}
+  
+  .buttons {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    margin-bottom: 10px;
+    width: 40%;
+
+    .predefinedLoops{
+        width: 60%;
+    }
+
+    .inout{
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 10px;
+        margin-right: 5px;
+    }
+  
+    button {
+    width: 40px;
+    height: 30px;
+      font-size: 13px;
+      cursor: pointer;
+      border: none;
+      border-radius: 4px;
+      background-color: #007bff;
+      color: white;
+      transition: background-color 0.3s ease;
+  
+      &:hover {
+        background-color: #0056b3;
+      }
+  
+      &:disabled {
+        background-color: #cccccc;
+        cursor: not-allowed;
+      }
+    }
+  }
+  
+    .loopButtons {
+        display: flex;
+        justify-content: center;
+        flex-wrap: wrap;
+      
+        button {
+          font-size: 13px;
+          width: 50px;
+          height: 30px;
+          margin: 5px;
+          cursor: pointer;
+          border: none;
+          border-radius: 4px;
+          background-color: #28a745;
+          color: white;
+          transition: background-color 0.3s ease;
+      
+          &:hover {
+            background-color: #1e7e34;
+          }
+      
+          &:disabled {
+            background-color: #cccccc;
+            cursor: not-allowed;
+          }
+        }
+      }
+
+  

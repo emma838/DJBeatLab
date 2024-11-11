@@ -1,0 +1,16 @@
+/* Knob.module.scss */
+.knobContainer {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+  
+  .label {
+    font-size: 14px;
+    color: #fff;
+  }
+  
+  .knob {
+    cursor: pointer;
+  }
+  

@@ -5,11 +5,13 @@ import DeckControls from '../DeckControls/DeckControls';
 import JogWheel from '../JogWheel/JogWheel';
 import BpmSlider from '../BpmSlider/BpmSlider';
 import BpmControl from '../BpmControl/BpmControl';
+import LoopHandler from '../LoopHandler/LoopHandler';
+import FXHandler from '../FXHandler/FXHandler';
 import { useAudio } from '../../components/AudioManager/AudioManager';
 import styles from './Deck.module.scss';
 
 function Deck({ deckNumber }) {
-  const { decks, playPause, handleCueMouseDown, handleCueMouseUp, changePitch, updateBpm } = useAudio();
+  const { decks, playPause, handleCueMouseDown, handleCueMouseUp, updateBpm } = useAudio();
   const deck = decks[deckNumber];
 
   // Sprawdzenie, czy deck jest zainicjalizowany, zanim użyjemy jego właściwości
@@ -83,11 +85,17 @@ function Deck({ deckNumber }) {
                 />
               </div>
             </div>
-            <div className={styles.utilsLeft}></div>
+            <div className={styles.utilsLeft}>
+            <LoopHandler deckNumber={deckNumber} />
+            <FXHandler deckNumber={deckNumber} />
+            </div>
           </>
         ) : (
           <>
-            <div className={styles.utilsLeft}></div>
+            <div className={styles.utilsLeft}>
+            <LoopHandler deckNumber={deckNumber} />
+            <FXHandler deckNumber={deckNumber} />
+            </div>
             <div className={styles.utilsRight}>
               <div className={styles.jogpitch}>
                 <div className={styles.jog}>

@@ -7,6 +7,7 @@ import Deck from '../../components/Deck/Deck';
 import Waveform from '../../components/Waveform/Waveform';
 import { useAudio } from '../../components/AudioManager/AudioManager';
 import styles from './Workspace.module.scss';
+import EQKnobs from '../../components/EQKnobs/EQKnobs';
 
 const Workspace = () => {
   const { loadTrackData } = useAudio();
@@ -33,7 +34,8 @@ const Workspace = () => {
           <Deck deckNumber={1} />
         </div>
         <div className={styles.middleSection}>
-          <h2>Mixer (Example)</h2>
+          <EQKnobs deckNumber={1} />
+          <EQKnobs deckNumber={2} />
         </div>
         <div className={styles.rightSection}>
           <Deck deckNumber={2} />

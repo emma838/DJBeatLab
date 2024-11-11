@@ -1,3 +1,4 @@
+// src/components/Waveform/Waveform.js
 import React, { useEffect, useRef, useMemo } from 'react';
 import { useAudio } from '../../components/AudioManager/AudioManager';
 import styles from './Waveform.module.scss';
@@ -6,6 +7,10 @@ function Waveform({
   deckNumber,
   waveformColor = '#007bff',
   playheadColor = '#007bff',
+  loopColor = 'rgba(255, 0, 0, 0.3)', // Półprzezroczysty czerwony dla pętli
+  cueColor = '#FF0000', // Czerwony dla CUE
+  loopLineColor = '#FF0000', // Czerwony dla linii pętli
+  loopLineWidth = 2, // Grubość linii pętli
   barWidth = 3,
   barSpacing = 1,
 }) {
@@ -22,6 +27,9 @@ function Waveform({
   const cuePoint = deck?.cuePoint || 0;
   const bpm = deck?.bpm;
   const defaultBpm = deck?.defaultBpm || 120;
+  const loopStart = deck?.loopStart;
+  const loopEnd = deck?.loopEnd;
+  const isLooping = deck?.isLooping;
 
   // Normalize peaks so the maximum value is 1
   const normalizedPeaks = useMemo(() => {
@@ -53,7 +61,37 @@ function Waveform({
         const centerX = width / 2;
         const playbackRate = bpm / defaultBpm;
         const timeRatio = currentTime / duration;
-        const shift = timeRatio * totalWidth - centerX ;
+        const shift = timeRatio * totalWidth - centerX;
+
+        // Draw loop range if looping is active
+        if (isLooping && loopStart !== null && loopEnd !== null) {
+          // Calculate x positions for loopStart and loopEnd
+          const xLoopStart = (loopStart / duration) * totalWidth * playbackRate - shift;
+          const xLoopEnd = (loopEnd / duration) * totalWidth * playbackRate - shift;
+
+          // Ensure xLoopStart and xLoopEnd are within canvas bounds
+          const xStart = Math.max(0, xLoopStart);
+          const xEnd = Math.min(width, xLoopEnd);
+
+          if (xStart < width && xEnd > 0 && xEnd > xStart) {
+            // Draw semi-transparent loop area
+            ctx.fillStyle = loopColor;
+            ctx.fillRect(xStart, 0, xEnd - xStart, height);
+
+            // Draw vertical lines at loopStart and loopEnd
+            ctx.strokeStyle = loopLineColor;
+            ctx.lineWidth = loopLineWidth;
+            ctx.beginPath();
+            ctx.moveTo(xStart, 0);
+            ctx.lineTo(xStart, height);
+            ctx.stroke();
+
+            ctx.beginPath();
+            ctx.moveTo(xEnd, 0);
+            ctx.lineTo(xEnd, height);
+            ctx.stroke();
+          }
+        }
 
         // Set color for the waveform
         ctx.fillStyle = waveformColor;
@@ -82,7 +120,7 @@ function Waveform({
           const xCueOnCanvas = xCue - shift;
 
           if (xCueOnCanvas >= 0 && xCueOnCanvas <= width) {
-            ctx.fillStyle = '#FF0000'; // Choose your CUE point color
+            ctx.fillStyle = cueColor; // Use predefined cue color
             ctx.fillRect(xCueOnCanvas - 1, 0, 2, height);
           }
         }
@@ -106,8 +144,14 @@ function Waveform({
     duration,
     currentTime,
     cuePoint,
+    loopStart,
+    loopEnd,
+    isLooping,
     waveformColor,
     playheadColor,
+    loopColor,
+    loopLineColor,
+    loopLineWidth,
     barWidth,
     barSpacing,
     deckNumber,
@@ -151,12 +195,13 @@ function Waveform({
     const rect = canvas.getBoundingClientRect();
     const x = event.clientX - rect.left;
 
+      // Dodaj logowanie kliknięcia na waveform
+  console.log(`Waveform clicked on deck ${deckNumber} at x: ${x}`);
     const width = canvas.clientWidth;
     const centerX = width / 2;
 
     const totalWidth = waveformData.length * (barWidth + barSpacing);
-    const playbackRate = bpm / defaultBpm;
-    const timePerPixel = (duration / totalWidth) / playbackRate;
+    const timePerPixel = duration / totalWidth;
 
     // Calculate time difference based on cursor movement relative to the center
     const timeOffset = (x - centerX) * timePerPixel;
