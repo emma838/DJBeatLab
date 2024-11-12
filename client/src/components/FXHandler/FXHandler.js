@@ -1,61 +1,73 @@
-// FXHandler.js
 import React, { useState } from 'react';
 import { useAudio } from '../AudioManager/AudioManager';
+import Knob from '../Knob/Knob';
 import styles from './FXHandler.module.scss';
 
 const FXHandler = ({ deckNumber }) => {
-  const { updateReverbIntensity, updateDryGain } = useAudio();
-  const [reverbIntensity, setReverbIntensity] = useState(0.5);
-  const [dryGain, setDryGain] = useState(1);
-  const [isReverbEnabled, setIsReverbEnabled] = useState(true);
+  const { updateReverbIntensity, updateDryGain, updateDelayIntensity, updateDelayTime, updateFlangerStrength } = useAudio();
+  const [effectType, setEffectType] = useState('reverb'); // Domyślnie reverb
+  const [effectIntensity, setEffectIntensity] = useState(0);
+  const [delayTime, setDelayTime] = useState(0.3); // Domyślny czas opóźnienia dla delay
 
-  const handleReverbChange = (e) => {
-    const intensity = parseFloat(e.target.value);
-    setReverbIntensity(intensity);
-    updateReverbIntensity(deckNumber, intensity);
+  const handleEffectChange = (e) => {
+    setEffectType(e.target.value);
+    setEffectIntensity(0); // Reset intensywności przy zmianie efektu
+    setDelayTime(0.3); // Reset czasu opóźnienia dla delay
   };
 
-  const handleDryGainChange = (e) => {
-    const gain = parseFloat(e.target.value);
-    setDryGain(gain);
-    updateDryGain(deckNumber, gain);
+  const handleEffectIntensityChange = (intensity) => {
+    setEffectIntensity(intensity);
+    if (effectType === 'reverb') {
+      updateReverbIntensity(deckNumber, intensity);
+    } else if (effectType === 'dryGain') {
+      updateDryGain(deckNumber, intensity);
+    } else if (effectType === 'delay') {
+      updateDelayIntensity(deckNumber, intensity);
+    } else if (effectType === 'flanger') {
+      updateFlangerStrength(deckNumber, intensity);
+    }
   };
 
-  const toggleReverb = () => {
-    const newState = !isReverbEnabled;
-    setIsReverbEnabled(newState);
-    if (newState) {
-      updateReverbIntensity(deckNumber, reverbIntensity);
-    } else {
-      updateReverbIntensity(deckNumber, 0); // Wyłączenie reverbu
+  const handleDelayTimeChange = (time) => {
+    setDelayTime(time);
+    if (effectType === 'delay') {
+      updateDelayTime(deckNumber, time);
     }
   };
 
   return (
     <div className={styles.fxHandler}>
-      <label>
-        <input
-          type="checkbox"
-          checked={isReverbEnabled}
-          onChange={toggleReverb}
-        />
-        Enable Reverb
-      </label>
-      {isReverbEnabled && (
+      <label>Choose Effect</label>
+      <select value={effectType} onChange={handleEffectChange} className={styles.select}>
+        <option value="reverb">Reverb</option>
+        <option value="dryGain">Dry Gain</option>
+        <option value="delay">Delay</option>
+        <option value="flanger">Flanger</option>
+      </select>
+
+      <label>{`${effectType.charAt(0).toUpperCase() + effectType.slice(1)} Intensity`}</label>
+      <Knob
+        value={effectIntensity}
+        min={0}
+        max={1}
+        step={0.01}
+        onChange={handleEffectIntensityChange}
+        label={effectType.charAt(0).toUpperCase() + effectType.slice(1)}
+      />
+
+      {effectType === 'delay' && (
         <>
-          <label>Reverb Intensity</label>
-          <input
-            type="range"
-            min="0"
-            max="1"
-            step="0.01"
-            value={reverbIntensity}
-            onChange={handleReverbChange}
-            className={styles.slider}
+          <label>Delay Time</label>
+          <Knob
+            value={delayTime}
+            min={0}
+            max={1}
+            step={0.01}
+            onChange={handleDelayTimeChange}
+            label="Time"
           />
         </>
       )}
-      
     </div>
   );
 };

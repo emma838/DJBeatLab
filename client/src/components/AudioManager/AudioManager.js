@@ -35,6 +35,12 @@ const initialDeckState = {
     lowShelf: null,
     midPeak: null,
     highShelf: null,
+    delayGain: null,
+    delayNode: null,
+    flangerDelay: null,
+    flangerGain: null,
+    flangerLFO: null,
+    volumeGain: null, // GainNode dla głośności decka 1
   },
   2: {
     track: null,
@@ -60,6 +66,12 @@ const initialDeckState = {
     lowShelf: null,
     midPeak: null,
     highShelf: null,
+    delayGain: null,
+    delayNode: null,
+    flangerDelay: null,
+    flangerGain: null,
+    flangerLFO: null,
+    volumeGain: null, // GainNode dla głośności decka 2
   },
 };
 
@@ -166,69 +178,146 @@ export function AudioProvider({ children }) {
     }
   };
 
-  // Funkcja do ładowania danych ścieżki audio
+   // Tworzenie i inicjalizacja GainNode dla głośności każdego decka
+   useEffect(() => {
+    Object.keys(audioContexts).forEach((deckNumber) => {
+      if (!audioContexts[deckNumber].current) {
+        audioContexts[deckNumber].current = new (window.AudioContext || window.webkitAudioContext)();
+      }
+
+      // GainNode dla głośności decka
+      const volumeGain = audioContexts[deckNumber].current.createGain();
+      volumeGain.gain.value = 1; // Domyślnie 100% głośności
+
+      // Przypisz GainNode do stanu decka
+      dispatch({
+        type: 'SET_DECK',
+        deckNumber: parseInt(deckNumber, 10),
+        payload: { volumeGain },
+      });
+    });
+  }, []);
+
+   // Funkcja do ustawiania głośności
+   const setVolume = (deckNumber, volume) => {
+    const deck = decks[deckNumber];
+    if (deck && deck.volumeGain) {
+      deck.volumeGain.gain.value = volume;
+      console.log(`Volume for deck ${deckNumber} set to ${volume}`);
+    } else {
+      console.warn(`Volume gain node not found for deck ${deckNumber}`);
+    }
+  };
+
   const loadTrackData = async (deckNumber, track) => {
     console.log(`Loading track on deck ${deckNumber}:`, track);
-
+  
     try {
       const audioCtx = audioContexts[deckNumber].current;
-
+  
+      // Pobieranie pliku audio
       const response = await fetch(track.url, {
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` },
       });
       const arrayBuffer = await response.arrayBuffer();
       const audioBuffer = await audioCtx.decodeAudioData(arrayBuffer);
-
-      // Ładowanie impulse response dla efektu reverb
-      const convolver = await loadImpulseResponse(audioCtx);
-      const dryGain = audioCtx.createGain();
-      dryGain.gain.value = 1; // Sygnał suchy
-      const wetGain = audioCtx.createGain();
-      wetGain.gain.value = 0.5; // Efekt reverb, początkowa wartość
-
-      // Tworzenie źródła audio
+  
+      // Przygotowanie decka
+      const deck = decksRef.current[deckNumber];
+  
+      // Inicjalizacja węzłów audio
       const source = audioCtx.createBufferSource();
       source.buffer = audioBuffer;
-
-// Definiowanie węzłów EQ dla 'hi', 'mid', 'low' oraz filtra typu low-pass/hi-pass
-const highShelf = audioCtx.createBiquadFilter();
-highShelf.type = 'highshelf';
-highShelf.frequency.value = 5000; // Można dostosować częstotliwość dla wysokich tonów
-highShelf.gain.value = 0;
-
-const midPeak = audioCtx.createBiquadFilter();
-midPeak.type = 'peaking';
-midPeak.frequency.value = 1000; // Można dostosować częstotliwość dla średnich tonów
-midPeak.gain.value = 0;
-
-const lowShelf = audioCtx.createBiquadFilter();
-lowShelf.type = 'lowshelf';
-lowShelf.frequency.value = 150; // Można dostosować częstotliwość dla niskich tonów
-lowShelf.gain.value = 0;
-
-const filter = audioCtx.createBiquadFilter();
-filter.type = 'allpass'; // Początkowo neutralny filtr
-filter.frequency.value = 1000; // Częstotliwość początkowa
-
-// Łączenie źródła z filtrami
-source.connect(lowShelf).connect(midPeak).connect(highShelf).connect(filter).connect(audioCtx.destination);
-
-      // Połączenie EQ z dryGain i destination
-      highShelf.connect(dryGain).connect(audioCtx.destination);
-
-      // Połączenie EQ z convolver (reverb) i wetGain
+  
+      // GainNode dla głośności (jeśli jeszcze nie istnieje)
+      if (!deck.volumeGain) {
+        deck.volumeGain = audioCtx.createGain();
+        deck.volumeGain.gain.value = 1; // Ustawienie domyślnej głośności
+      }
+  
+      // Dodanie AnalyserNode do monitorowania poziomu głośności
+      const analyser = audioCtx.createAnalyser();
+      analyser.fftSize = 512; // Ustaw fftSize, aby odpowiednio analizować poziom sygnału
+      deck.volumeGain.connect(analyser); // Podłącz analyser do volumeGain
+      analyser.connect(audioCtx.destination); // Podłącz analyser do wyjścia audio
+  
+      // Reverb
+      const convolver = await loadImpulseResponse(audioCtx);
+      const dryGain = audioCtx.createGain();
+      dryGain.gain.value = 1;
+      const wetGain = audioCtx.createGain();
+      wetGain.gain.value = 0.5;
+  
+      // EQ nodes (high, mid, low)
+      const highShelf = audioCtx.createBiquadFilter();
+      highShelf.type = 'highshelf';
+      highShelf.frequency.value = 5000;
+      highShelf.gain.value = 0;
+  
+      const midPeak = audioCtx.createBiquadFilter();
+      midPeak.type = 'peaking';
+      midPeak.frequency.value = 1000;
+      midPeak.gain.value = 0;
+  
+      const lowShelf = audioCtx.createBiquadFilter();
+      lowShelf.type = 'lowshelf';
+      lowShelf.frequency.value = 150;
+      lowShelf.gain.value = 0;
+  
+      // Delay
+      const delayNode = audioCtx.createDelay();
+      delayNode.delayTime.value = 0.1;
+      const delayGain = audioCtx.createGain();
+      delayGain.gain.value = 0;
+  
+      // Flanger
+      const flangerDelay = audioCtx.createDelay();
+      flangerDelay.delayTime.value = 0.05;
+      const flangerWetGain = audioCtx.createGain();
+      flangerWetGain.gain.value = 0;
+  
+      const flangerLFO = audioCtx.createOscillator();
+      const flangerLFOGain = audioCtx.createGain();
+      flangerLFOGain.gain.value = 0.002;
+      flangerLFO.type = 'sine';
+      flangerLFO.frequency.value = 0.8;
+      flangerLFO.connect(flangerLFOGain).connect(flangerDelay.delayTime);
+      flangerLFO.start();
+  
+      // Filter for effects
+      const filter = audioCtx.createBiquadFilter();
+      filter.type = 'allpass';
+      filter.frequency.value = 1000;
+  
+      // Podłączenie węzłów
+      source
+        .connect(lowShelf)
+        .connect(midPeak)
+        .connect(highShelf)
+        .connect(filter)
+        .connect(dryGain)
+        .connect(deck.volumeGain)
+        .connect(audioCtx.destination);
+  
+      // Podłączenie efektów reverb
       if (convolver) {
-        highShelf.connect(convolver).connect(wetGain).connect(audioCtx.destination);
+        filter.connect(convolver).connect(wetGain).connect(deck.volumeGain);
         console.log(`Convolver loaded and connected for deck ${deckNumber}`);
       } else {
         console.warn(`Convolver could not be loaded for deck ${deckNumber}`);
       }
-
+  
+      // Podłączenie delay
+      filter.connect(delayNode).connect(delayGain).connect(deck.volumeGain);
+  
+      // Podłączenie flangera
+      source.connect(flangerDelay).connect(flangerWetGain).connect(deck.volumeGain);
+  
       // Przetwarzanie danych waveforma
       const rawData = audioBuffer.getChannelData(0);
       const samples = 6000;
       const waveformData = extractPeaks(rawData, samples);
-
+  
       // Aktualizacja stanu decka
       dispatch({
         type: 'SET_DECK',
@@ -257,14 +346,25 @@ source.connect(lowShelf).connect(midPeak).connect(highShelf).connect(filter).con
           midPeak,
           highShelf,
           filter,
+          delayNode,
+          delayGain,
+          flangerDelay,
+          flangerWetGain,
+          flangerLFO,
+          flangerLFOGain,
+          volumeGain: deck.volumeGain,
+          analyser, // Dodaj analyser do stanu
         },
       });
-
+  
       console.log(`Track loaded on deck ${deckNumber}`);
     } catch (error) {
       console.error('Error loading track data:', error);
     }
   };
+  
+  
+  
 
   // Funkcja do ekstrakcji peaków z danych audio
   const extractPeaks = (data, samples) => {
@@ -841,6 +941,49 @@ const stopPlayback = (deckNumber) => {
     });
   };
   
+  const updateDelayIntensity = (deckNumber, intensity) => {
+    const deck = decksRef.current[deckNumber];
+    if (deck.delayGain) {
+      deck.delayGain.gain.value = intensity;
+      console.log(`Delay intensity updated on deck ${deckNumber}:`, intensity);
+    } else {
+      console.warn(`Delay gain node not found for deck ${deckNumber}`);
+    }
+  };
+
+  const updateDelayTime = (deckNumber, time) => {
+    const deck = decksRef.current[deckNumber];
+    if (deck.delayNode) {
+      deck.delayNode.delayTime.value = time;
+      console.log(`Delay time updated on deck ${deckNumber}:`, time);
+    } else {
+      console.warn(`Delay node not found for deck ${deckNumber}`);
+    }
+  };
+  
+  const updateFlangerStrength = (deckNumber, strength) => {
+    const deck = decksRef.current[deckNumber];
+    if (deck.flangerWetGain) { // Sprawdza, czy flangerWetGain istnieje
+      deck.flangerWetGain.gain.value = strength; // Ustawia intensywność flangera
+      console.log(`Flanger strength updated on deck ${deckNumber}:`, strength);
+    } else {
+      console.warn(`Flanger gain node not found for deck ${deckNumber}`);
+    }
+  };
+  
+  const setCrossfade = (position) => {
+    const deck1Volume = 1 - position; // Głośność decka 1 zmniejsza się przy przesunięciu w prawo
+    const deck2Volume = position;     // Głośność decka 2 zmniejsza się przy przesunięciu w lewo
+  
+    if (decksRef.current[1]?.volumeGain) {
+      decksRef.current[1].volumeGain.gain.value = deck1Volume;
+    }
+    if (decksRef.current[2]?.volumeGain) {
+      decksRef.current[2].volumeGain.gain.value = deck2Volume;
+    }
+    console.log(`Crossfader position: ${position}, Deck 1 Volume: ${deck1Volume}, Deck 2 Volume: ${deck2Volume}`);
+  };
+  
 
   // Synchronizacja decksRef.current z najnowszym stanem decks
   useEffect(() => {
@@ -910,6 +1053,11 @@ const stopPlayback = (deckNumber) => {
         updateReverbIntensity,
         updateDryGain,
         updateEQ,
+        updateDelayIntensity,
+        updateDelayTime,
+        updateFlangerStrength,
+        setVolume,
+        setCrossfade,
       }}
     >
       {children}

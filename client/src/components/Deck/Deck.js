@@ -28,13 +28,6 @@ function Deck({ deckNumber }) {
       <div className={styles.top}>
         {isDeckTwo ? (
           <>
-            <div className={styles.trackinfo2}>
-              <BpmControl
-                deckNumber={deckNumber} // Przekazujemy deckNumber do BpmControl
-                baseBpm={deck.defaultBpm} // Zakładam, że defaultBpm jest właściwością ustawioną w stanie deck
-                onBpmChange={(newBpm) => updateBpm(deckNumber, newBpm)}
-              />
-            </div>
             <div className={styles.trackinfo}>
               <TrackInfo
                 track={deck.track}
@@ -52,13 +45,6 @@ function Deck({ deckNumber }) {
                 currentTime={deck.currentTime}
               />
             </div>
-            <div className={styles.trackinfo2}>
-              <BpmControl
-                deckNumber={deckNumber}
-                baseBpm={deck.defaultBpm}
-                onBpmChange={(newBpm) => updateBpm(deckNumber, newBpm)}
-              />
-            </div>
           </>
         )}
       </div>
@@ -70,6 +56,11 @@ function Deck({ deckNumber }) {
               <div className={styles.jogpitch}>
                 <div className={styles.pitch}>
                 <BpmSlider deckNumber={deckNumber} />
+                <BpmControl
+                deckNumber={deckNumber}
+                baseBpm={deck.defaultBpm}
+                onBpmChange={(newBpm) => updateBpm(deckNumber, newBpm)}
+              />
                 </div>
                 <div className={styles.jog}>
                   <JogWheel deckNumber={deckNumber} />
@@ -103,6 +94,11 @@ function Deck({ deckNumber }) {
                 </div>
                 <div className={styles.pitch}>
                 <BpmSlider deckNumber={deckNumber} />
+                <BpmControl
+                deckNumber={deckNumber}
+                baseBpm={deck.defaultBpm}
+                onBpmChange={(newBpm) => updateBpm(deckNumber, newBpm)}
+              />
                 </div>
               </div>
               <div className={styles.buttons}>

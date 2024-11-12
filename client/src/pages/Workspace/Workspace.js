@@ -5,12 +5,15 @@ import FileManager from '../../components/FileManager/FileManager';
 import PlaylistManager from '../../components/PlaylistManager/PlaylistManager';
 import Deck from '../../components/Deck/Deck';
 import Waveform from '../../components/Waveform/Waveform';
+import VolumeSlider from '../../components/VolumeSlider/VolumeSlider';
+import CrossFader from '../../components/CrossFader/CrossFader';
+import GainMeter from '../../components/GainMeter/GainMeter';
 import { useAudio } from '../../components/AudioManager/AudioManager';
 import styles from './Workspace.module.scss';
 import EQKnobs from '../../components/EQKnobs/EQKnobs';
 
 const Workspace = () => {
-  const { loadTrackData } = useAudio();
+  const { loadTrackData,setVolume,setCrossfade   } = useAudio();
   const [selectedPlaylist, setSelectedPlaylist] = useState('uploads');
   const [playlistUpdateTrigger, setPlaylistUpdateTrigger] = useState(false);
 
@@ -21,6 +24,13 @@ const Workspace = () => {
   };
 
   const handleSongAdded = () => setPlaylistUpdateTrigger((prev) => !prev);
+
+   // Funkcje zmiany głośności dla obu decków
+   const handleVolumeChangeDeck1 = (newVolume) => setVolume(1, newVolume);
+   const handleVolumeChangeDeck2 = (newVolume) => setVolume(2, newVolume);
+
+   const handleCrossfadeChange = (newPosition) => setCrossfade(newPosition);
+
 
   return (
     <div className={styles.workspace}>
@@ -35,7 +45,12 @@ const Workspace = () => {
         </div>
         <div className={styles.middleSection}>
           <EQKnobs deckNumber={1} />
+          <VolumeSlider initialValue={1} onVolumeChange={handleVolumeChangeDeck1} />
+          {/* <GainMeter deckNumber={1} /> */}
+          <VolumeSlider initialValue={1} onVolumeChange={handleVolumeChangeDeck2} />
+          {/* <GainMeter deckNumber={2} /> */}
           <EQKnobs deckNumber={2} />
+          <CrossFader onCrossfadeChange={handleCrossfadeChange} />
         </div>
         <div className={styles.rightSection}>
           <Deck deckNumber={2} />

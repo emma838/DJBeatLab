@@ -4,27 +4,50 @@
 
 .trackInfo {
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   justify-content: space-between;
   width: 100%;
   height: 100%;
 padding: 10px;
 }
 
-.title{
+.titleauthor{
+  display: flex;
+  flex-direction: column;
+  justify-content: space-around;
+  width: 75%;
+  height: 100%;
+  border-right: 1px solid $white;
+  padding-right: 10px;
+
+  .title{
     color: $white;
     font-weight: 700;
-    font-size: 0.8rem;
+    font-size: 1.1rem;
+    white-space: nowrap;         // Zapobiega przechodzeniu tekstu do nowej linii
+    overflow: hidden;            // Ukrywa nadmiarowy tekst
+    text-overflow: ellipsis;     // Dodaje trzy kropeczki na końcu
 }
 
 .author{
-    color: $light-grey;
+    color: #555555;
     font-weight: 700;
-    font-size: 0.7rem;
+    font-size: 1rem;
+    white-space: nowrap;         // Zapobiega przechodzeniu tekstu do nowej linii
+    overflow: hidden;            // Ukrywa nadmiarowy tekst
+    text-overflow: ellipsis;     // Dodaje trzy kropeczki na końcu
+}
 }
 
 .time{
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding-left: 10px;
     color: $white;
+    width: 25%;
+    height: 100%;
     font-weight: 700;
-    font-size: 0.8rem;
+    font-size: 1rem;
 }

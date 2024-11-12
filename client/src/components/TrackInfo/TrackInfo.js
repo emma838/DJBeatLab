@@ -13,8 +13,10 @@ function TrackInfo({ track, duration, currentTime }) {
     <div className={styles.trackInfo}>
       {track && (
         <>
-          <div className={styles.title}>{track.title}</div>
-          <div className={styles.author}>{track.author}</div>
+        <div  className={styles.titleauthor}>
+        <div className={styles.title}>{track.title}</div>
+        <div className={styles.author}>{track.author}</div>
+        </div>
           <div className={styles.time}>
             {formatTime(currentTime)} / {formatTime(duration)}
           </div>

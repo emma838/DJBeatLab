@@ -40,12 +40,25 @@ const Knob = ({ value = 0, min = 0, max = 100, step = 1, onChange, label = '' })
   };
 
   const handleWheel = (e) => {
-    e.preventDefault();
+    // Usuń e.preventDefault(), aby uniknąć problemów z pasywnym zdarzeniem
     const delta = e.deltaY < 0 ? step : -step;
     let newValue = validatedValue + delta;
     newValue = Math.min(max, Math.max(min, newValue));
     onChange(newValue);
   };
+
+  // Dodajemy i usuwamy nasłuchiwanie dla `wheel` jako zdarzenie pasywne
+  useEffect(() => {
+    const knobElement = knobRef.current;
+    if (knobElement) {
+      knobElement.addEventListener("wheel", handleWheel, { passive: true });
+    }
+    return () => {
+      if (knobElement) {
+        knobElement.removeEventListener("wheel", handleWheel);
+      }
+    };
+  }, [handleWheel]);
 
   useEffect(() => {
     if (isDragging) {
@@ -71,7 +84,6 @@ const Knob = ({ value = 0, min = 0, max = 100, step = 1, onChange, label = '' })
         width="100"
         height="100"
         onMouseDown={handleMouseDown}
-        onWheel={handleWheel}
       >
         <circle cx="50" cy="50" r="15" stroke="#ccc" strokeWidth="5" fill="#fff" />
         <line
