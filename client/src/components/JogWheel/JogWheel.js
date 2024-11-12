@@ -12,6 +12,8 @@ function JogWheel({ deckNumber }) {
   const lastAngle = useRef(0);
 
   const { currentTime, duration, bpm, defaultBpm } = deck;
+  
+  const currentTimeRef = useRef(deck.currentTime);
 
   // Calculate duration of 4 bars
   const secondsPerBeat = 60 / bpm;
@@ -21,6 +23,7 @@ function JogWheel({ deckNumber }) {
 
   useEffect(() => {
     if (!duration) return;
+    currentTimeRef.current = deck.currentTime;
 
     // Calculate rotation based on currentTime
     const rotationDegrees = (currentTime / durationOfFullRotation) * 360;
@@ -36,22 +39,24 @@ function JogWheel({ deckNumber }) {
 
   const handleMouseMove = (e) => {
     if (!isDragging.current) return;
-
+  
     const angle = getAngle(e);
     let angleDelta = angle - lastAngle.current;
-
+  
     // Handle angle wrapping
     if (angleDelta > 180) angleDelta -= 360;
     if (angleDelta < -180) angleDelta += 360;
-
+  
     lastAngle.current = angle;
-
+  
     // Calculate time delta
     const timeDelta = (angleDelta / 360) * durationOfFullRotation;
-
-    // Nudge playback position
-    nudgePlayback(deckNumber, timeDelta);
-
+  
+    // Update local currentTimeRef
+    let newTime = currentTimeRef.current + timeDelta;
+    newTime = Math.max(0, Math.min(deck.duration, newTime));
+    currentTimeRef.current = newTime;
+  
     // Update rotation immediately
     setRotation((prevRotation) => prevRotation + angleDelta);
   };

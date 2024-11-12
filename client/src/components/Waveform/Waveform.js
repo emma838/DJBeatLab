@@ -1,4 +1,3 @@
-// src/components/Waveform/Waveform.js
 import React, { useEffect, useRef, useMemo } from 'react';
 import { useAudio } from '../../components/AudioManager/AudioManager';
 import styles from './Waveform.module.scss';
@@ -14,10 +13,13 @@ function Waveform({
   barWidth = 3,
   barSpacing = 1,
 }) {
-  const { decks, updateCurrentTime } = useAudio();
+  const { decks, updateCurrentTime, startPlayback, stopPlayback } = useAudio();
   const canvasRef = useRef(null);
   const isSeeking = useRef(false);
   const animationFrameRef = useRef(null);
+  const wasPlayingRef = useRef(false);
+  const lastSeekTimeRef = useRef(0);
+
 
   // Extract necessary data from the deck
   const deck = decks[deckNumber];
@@ -25,11 +27,14 @@ function Waveform({
   const duration = deck?.duration;
   const currentTime = deck?.currentTime;
   const cuePoint = deck?.cuePoint || 0;
-  const bpm = deck?.bpm;
+  const bpm = deck?.bpm || 120;
   const defaultBpm = deck?.defaultBpm || 120;
   const loopStart = deck?.loopStart;
   const loopEnd = deck?.loopEnd;
   const isLooping = deck?.isLooping;
+
+  const pixelsPerSecond = 100; // Stała prędkość przesuwania waveforma
+  const scaleFactor = defaultBpm / bpm; // Współczynnik skalowania
 
   // Normalize peaks so the maximum value is 1
   const normalizedPeaks = useMemo(() => {
@@ -54,74 +59,88 @@ function Waveform({
         const height = canvas.clientHeight;
         const peaks = normalizedPeaks;
 
-        // Calculate total width of the waveform including spacing
-        const totalBars = peaks.length;
-        const totalWidth = totalBars * (barWidth + barSpacing);
+        // W funkcji drawWaveform, przed obliczeniem shift:
+const currentTimeToUse = isSeeking.current ? lastSeekTimeRef.current : currentTime;
 
         const centerX = width / 2;
-        const playbackRate = bpm / defaultBpm;
-        const timeRatio = currentTime / duration;
-        const shift = timeRatio * totalWidth - centerX;
+// Następnie użyj currentTimeToUse zamiast currentTime:
+const shift = currentTimeToUse * pixelsPerSecond * scaleFactor - centerX;
 
-        // Draw loop range if looping is active
+        const timePerSample = duration / peaks.length;
+
+        // Rysowanie zakresu pętli (jeśli aktywna)
         if (isLooping && loopStart !== null && loopEnd !== null) {
-          // Calculate x positions for loopStart and loopEnd
-          const xLoopStart = (loopStart / duration) * totalWidth * playbackRate - shift;
-          const xLoopEnd = (loopEnd / duration) * totalWidth * playbackRate - shift;
+          const xLoopStart = loopStart * pixelsPerSecond * scaleFactor - shift;
+          const xLoopEnd = loopEnd * pixelsPerSecond * scaleFactor - shift;
 
-          // Ensure xLoopStart and xLoopEnd are within canvas bounds
           const xStart = Math.max(0, xLoopStart);
           const xEnd = Math.min(width, xLoopEnd);
 
           if (xStart < width && xEnd > 0 && xEnd > xStart) {
-            // Draw semi-transparent loop area
             ctx.fillStyle = loopColor;
             ctx.fillRect(xStart, 0, xEnd - xStart, height);
 
-            // Draw vertical lines at loopStart and loopEnd
             ctx.strokeStyle = loopLineColor;
             ctx.lineWidth = loopLineWidth;
             ctx.beginPath();
-            ctx.moveTo(xStart, 0);
-            ctx.lineTo(xStart, height);
+            ctx.moveTo(xLoopStart, 0);
+            ctx.lineTo(xLoopStart, height);
             ctx.stroke();
 
             ctx.beginPath();
-            ctx.moveTo(xEnd, 0);
-            ctx.lineTo(xEnd, height);
+            ctx.moveTo(xLoopEnd, 0);
+            ctx.lineTo(xLoopEnd, height);
             ctx.stroke();
           }
         }
 
-        // Set color for the waveform
+        // Ustawienie koloru waveforma
         ctx.fillStyle = waveformColor;
 
         for (let i = 0; i < peaks.length; i++) {
           const peak = peaks[i];
-          const x = i * (barWidth + barSpacing) - shift;
+          const time = i * timePerSample;
+          const x = time * pixelsPerSecond * scaleFactor - shift;
 
           const y = ((1 - peak) * height) / 2;
           const barHeight = peak * height;
 
-          // Draw only visible bars
+          // Rysuj tylko widoczne słupki
           if (x + barWidth >= 0 && x <= width) {
             ctx.fillRect(x, y, barWidth, barHeight);
           }
         }
 
-        // Draw the playhead (center line)
+        // Rysowanie beat grid
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.lineWidth = 1;
+
+        const timePerBeat = 60 / defaultBpm; // Użyj defaultBpm zamiast bpm
+        const totalBeats = duration / timePerBeat;
+
+        for (let i = 0; i <= totalBeats; i++) {
+          const beatTime = i * timePerBeat;
+          const xBeat = beatTime * pixelsPerSecond * scaleFactor - shift;
+
+          if (xBeat >= 0 && xBeat <= width) {
+            ctx.beginPath();
+            ctx.moveTo(xBeat, 0);
+            ctx.lineTo(xBeat, height);
+            ctx.stroke();
+          }
+        }
+
+        // Rysowanie głowicy odtwarzania (linia środkowa)
         ctx.fillStyle = playheadColor;
         ctx.fillRect(centerX - 1, 0, 2, height);
 
-        // Draw CUE point indicator
+        // Rysowanie wskaźnika punktu CUE
         if (cuePoint >= 0 && cuePoint <= duration) {
-          const cueTimeRatio = cuePoint / duration;
-          const xCue = cueTimeRatio * totalWidth * playbackRate;
-          const xCueOnCanvas = xCue - shift;
+          const xCue = cuePoint * pixelsPerSecond * scaleFactor - shift;
 
-          if (xCueOnCanvas >= 0 && xCueOnCanvas <= width) {
-            ctx.fillStyle = cueColor; // Use predefined cue color
-            ctx.fillRect(xCueOnCanvas - 1, 0, 2, height);
+          if (xCue >= 0 && xCue <= width) {
+            ctx.fillStyle = cueColor;
+            ctx.fillRect(xCue - 1, 0, 2, height);
           }
         }
       } catch (error) {
@@ -155,9 +174,9 @@ function Waveform({
     barWidth,
     barSpacing,
     deckNumber,
-    decks,
     bpm,
     defaultBpm,
+    pixelsPerSecond,
   ]);
 
   const adjustCanvasForDPR = (canvas) => {
@@ -171,6 +190,13 @@ function Waveform({
   const handleMouseDown = (event) => {
     event.preventDefault();
     isSeeking.current = true;
+
+    // Sprawdź, czy utwór był odtwarzany
+    wasPlayingRef.current = deck.isPlaying;
+
+    if (deck.isPlaying) {
+      stopPlayback(deckNumber);
+    }
     handleSeek(event);
   };
 
@@ -185,6 +211,10 @@ function Waveform({
     if (isSeeking.current) {
       event.preventDefault();
       isSeeking.current = false;
+      // Jeśli utwór był odtwarzany wcześniej, wznow odtwarzanie
+      if (wasPlayingRef.current) {
+        updateCurrentTime(deckNumber, lastSeekTimeRef.current, true);
+      }
     }
   };
 
@@ -195,24 +225,17 @@ function Waveform({
     const rect = canvas.getBoundingClientRect();
     const x = event.clientX - rect.left;
 
-      // Dodaj logowanie kliknięcia na waveform
-  console.log(`Waveform clicked on deck ${deckNumber} at x: ${x}`);
     const width = canvas.clientWidth;
     const centerX = width / 2;
 
-    const totalWidth = waveformData.length * (barWidth + barSpacing);
-    const timePerPixel = duration / totalWidth;
+    const shift = currentTime * pixelsPerSecond * scaleFactor - centerX;
 
-    // Calculate time difference based on cursor movement relative to the center
-    const timeOffset = (x - centerX) * timePerPixel;
+    const newTime = (x + shift) / (pixelsPerSecond * scaleFactor);
 
-    // New time is the current time plus the offset
-    const newTime = currentTime + timeOffset;
-
-    // Clamp time between 0 and the duration of the track
     const clampedTime = Math.max(0, Math.min(duration, newTime));
 
-    updateCurrentTime(deckNumber, clampedTime);
+    lastSeekTimeRef.current = clampedTime;
+    updateCurrentTime(deckNumber, clampedTime, false);
   };
 
   return (

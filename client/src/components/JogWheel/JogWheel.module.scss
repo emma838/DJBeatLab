@@ -1,19 +1,21 @@
 /* JogWheel.module.scss */
+@import '../../styles/variables.scss';
+
 .jogWheelContainer {
     position: relative;
-    width: 150px;
-    height: 150px;
+    width: 180px;
+    height: 180px;
     cursor: pointer;
   }
   
   .jogWheel {
     width: 100%;
     height: 100%;
-    border: 4px solid #ccc;
+    border: 6px solid $white;
     border-radius: 50%;
     position: relative;
     transition: transform 0.05s linear;
-    background: radial-gradient(circle at center, #999, #555);
+    background: $black;
     overflow: hidden; /* Ensure child elements don't overflow */
   }
   
@@ -24,18 +26,17 @@
     transform: translate(-50%, -50%);
     width: 30%;
     height: 30%;
-    background-color: #333;
+    background-color: $white;
     border-radius: 50%;
-    box-shadow: inset 0 0 5px #000;
   }
   
   .jogWheelIndicator {
     position: absolute;
     top: 0;
     left: 50%;
-    width: 2px; /* Width of the line */
+    width: 10px; /* Width of the line */
     height: 50%; /* Length of the line from center to edge */
-    background-color: #fff; /* Color of the line */
+    background-color: $white; /* Color of the line */
     transform: translateX(-50%);
   }
   

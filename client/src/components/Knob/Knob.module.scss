@@ -1,16 +1,27 @@
 /* Knob.module.scss */
+@import '../../styles/variables.scss';
+
 .knobContainer {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-  }
-  
-  .label {
-    font-size: 14px;
-    color: #fff;
-  }
-  
-  .knob {
-    cursor: pointer;
-  }
-  
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.label {
+  font-size: 0.9rem;
+  color: $white;
+}
+
+.knob {
+  cursor: pointer;
+}
+
+.valueDisplay {
+  font-size: 0.9rem;
+  color: $orange;
+  background-color: $black;
+  width: 40px;
+  text-align: center;
+  border-radius: 5px;
+}
+

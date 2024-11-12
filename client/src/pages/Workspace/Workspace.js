@@ -44,13 +44,33 @@ const Workspace = () => {
           <Deck deckNumber={1} />
         </div>
         <div className={styles.middleSection}>
+          <div className={styles.eqleft}>
           <EQKnobs deckNumber={1} />
-          <VolumeSlider initialValue={1} onVolumeChange={handleVolumeChangeDeck1} />
+          </div>
+          <div className={styles.centerpanel}>
+          <div className={styles.volfilter}>
+          <div className={styles.volfilterleft}>
+          <VolumeSlider
+  deckNumber={1} // Lub 2, w zależności od decka
+  initialValue={1}
+  onVolumeChange={handleVolumeChangeDeck1}
+/>
           {/* <GainMeter deckNumber={1} /> */}
-          <VolumeSlider initialValue={1} onVolumeChange={handleVolumeChangeDeck2} />
+          </div>
+          <div className={styles.volfilterright}>
+          <VolumeSlider
+  deckNumber={1} // Lub 2, w zależności od decka
+  initialValue={1}
+  onVolumeChange={handleVolumeChangeDeck2}
+/>
           {/* <GainMeter deckNumber={2} /> */}
-          <EQKnobs deckNumber={2} />
+          </div>
+          </div>
           <CrossFader onCrossfadeChange={handleCrossfadeChange} />
+          </div>
+          <div className={styles.eqright}>
+          <EQKnobs deckNumber={2} />
+          </div>
         </div>
         <div className={styles.rightSection}>
           <Deck deckNumber={2} />

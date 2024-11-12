@@ -42,7 +42,6 @@
 .bottom{
   display: flex;
   flex-direction: row;
-  border: 1px solid $black;
   width: 100%;
   height: 80%;
   padding-top: 10px;
@@ -54,7 +53,47 @@
   flex-direction: column;
   width: 50%;
   height: 100%;
-  border: 1px solid $black;
+  gap: 10px;
+}
+
+.loops{
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100%;
+  height: 50%;
+  border-radius: 5px;
+  background-color: $semi-grey;
+
+  h3{
+    text-align: center;
+    color: $white;
+    background-color: $light-grey;
+    font-size: 1rem;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+  }
+
+}
+
+.fxs{
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  width: 100%;
+  height: 50%;
+  border-radius: 5px;
+  background-color: $semi-grey;
+
+  h3{
+    text-align: center;
+    color: $white;
+    background-color: $light-grey;
+    font-size: 1rem;
+    border-top-left-radius: 5px;
+    border-top-right-radius: 5px;
+  }
+
 }
 
 .utilsRight{
@@ -63,7 +102,6 @@
   justify-content: flex-end;
   width: 48%;
   height: 100%;
-  border: 1px solid $black;
 }
 
 .jogpitch{
@@ -72,24 +110,36 @@
   justify-content: space-between;
   width: 100%;
   height: 80%;
-  border: 1px solid $black;
 }
 
 .jog{
-  width: 80%;
-  border: 1px solid $black;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  width: 70%;
 }
 
 .pitch{
-  width: 20%;
-  border: 1px solid $black;
+  width: 30%;
 }
 
-.buttons{
+.buttonsBpm{
   display: flex;
   flex-direction: row;
   justify-content: space-between;
   width: 100%;
   height: 20%;
-  border: 1px solid $black;
+
+  .buttons{
+    width: 70%;
+    display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  }
+
+  .bpm{
+    width: 30%;
+  }
 }

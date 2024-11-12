@@ -1,4 +1,3 @@
-// src/components/LoopHandler.js
 import React from 'react';
 import { useAudio } from '../AudioManager/AudioManager';
 import styles from './LoopHandler.module.scss';
@@ -16,31 +15,41 @@ const LoopHandler = ({ deckNumber }) => {
 
   return (
     <div className={styles.loopHandler}>
-      <div className={styles.predefinedLoops}>
-        <div className={styles.loopButtons}>
-          {[1, 2, 4, 8, 16, 32].map((bits) => (
-            <button key={bits} onClick={() => handlePredefinedLoop(deckNumber, bits)}>
-              {bits} bit
-            </button>
-          ))}
-        </div>
+      <div className={styles.loopButtons}>
+        {[1, 2, 4, 8, 16, 32].map((bits) => (
+          <button
+            key={bits}
+            onClick={() => handlePredefinedLoop(deckNumber, bits)}
+            disabled={deck.isLooping && deck.activePredefinedLoop !== bits}
+            className={deck.activePredefinedLoop === bits ? styles.activeButton : ''}
+          >
+            {bits} bit
+          </button>
+        ))}
       </div>
       <div className={styles.buttons}>
         <div className={styles.inout}>
-        <button onClick={() => setLoopStart(deckNumber)}>In</button>
-        <button onClick={() => setLoopEnd(deckNumber)}>Out</button>
+          <button
+            onClick={() => setLoopStart(deckNumber)}
+            disabled={deck.isLooping}
+          >
+            IN
+          </button>
+          <button
+            onClick={() => setLoopEnd(deckNumber)}
+            disabled={deck.loopStart === null || deck.loopEnd !== null || deck.activePredefinedLoop !== null}
+          >
+            OUT
+          </button>
         </div>
-        <button onClick={() => exitLoop(deckNumber)}>Exit</button>
+        <button
+          className={styles.exit}
+          onClick={() => exitLoop(deckNumber)}
+          disabled={!deck.isLooping || deck.activePredefinedLoop !== null}
+        >
+          EXIT
+        </button>
       </div>
-      {/* <div className={styles.loopInfo}>
-        {deck.isLooping && deck.loopStart !== null && deck.loopEnd !== null ? (
-          <p>
-            Looping from {deck.loopStart.toFixed(2)}s to {deck.loopEnd.toFixed(2)}s
-          </p>
-        ) : (
-          <p>Loop is not active.</p>
-        )}
-      </div> */}
     </div>
   );
 };

@@ -56,15 +56,18 @@ function Deck({ deckNumber }) {
               <div className={styles.jogpitch}>
                 <div className={styles.pitch}>
                 <BpmSlider deckNumber={deckNumber} />
-                <BpmControl
-                deckNumber={deckNumber}
-                baseBpm={deck.defaultBpm}
-                onBpmChange={(newBpm) => updateBpm(deckNumber, newBpm)}
-              />
                 </div>
                 <div className={styles.jog}>
                   <JogWheel deckNumber={deckNumber} />
                 </div>
+              </div>
+              <div className={styles.buttonsBpm}>
+              <div className={styles.bpm}>
+              <BpmControl
+                deckNumber={deckNumber}
+                baseBpm={deck.defaultBpm}
+                onBpmChange={(newBpm) => updateBpm(deckNumber, newBpm)}
+              />
               </div>
               <div className={styles.buttons}>
                 <DeckControls
@@ -75,17 +78,30 @@ function Deck({ deckNumber }) {
                   handleCueMouseUp={handleCueMouseUp}
                 />
               </div>
+              </div>
             </div>
             <div className={styles.utilsLeft}>
-            <LoopHandler deckNumber={deckNumber} />
-            <FXHandler deckNumber={deckNumber} />
+              <div className={styles.loops}>
+              <h3>LOOPS</h3>
+              <LoopHandler deckNumber={deckNumber} />
+              </div>
+              <div className={styles.fxs}>
+              <h3>FX</h3>
+              <FXHandler deckNumber={deckNumber} />
+              </div>
             </div>
           </>
         ) : (
           <>
             <div className={styles.utilsLeft}>
-            <LoopHandler deckNumber={deckNumber} />
-            <FXHandler deckNumber={deckNumber} />
+              <div className={styles.loops}>
+                <h3>LOOPS</h3>
+              <LoopHandler deckNumber={deckNumber} />
+              </div>
+              <div className={styles.fxs}>
+              <h3>FX</h3>
+              <FXHandler deckNumber={deckNumber} />
+              </div>
             </div>
             <div className={styles.utilsRight}>
               <div className={styles.jogpitch}>
@@ -94,13 +110,10 @@ function Deck({ deckNumber }) {
                 </div>
                 <div className={styles.pitch}>
                 <BpmSlider deckNumber={deckNumber} />
-                <BpmControl
-                deckNumber={deckNumber}
-                baseBpm={deck.defaultBpm}
-                onBpmChange={(newBpm) => updateBpm(deckNumber, newBpm)}
-              />
+                
                 </div>
               </div>
+              <div className={styles.buttonsBpm}>
               <div className={styles.buttons}>
                 <DeckControls
                   playPause={() => playPause(deckNumber)}
@@ -109,6 +122,14 @@ function Deck({ deckNumber }) {
                   handleCueMouseDown={handleCueMouseDown}
                   handleCueMouseUp={handleCueMouseUp}
                 />
+              </div>
+              <div className={styles.bpm}>
+              <BpmControl
+                deckNumber={deckNumber}
+                baseBpm={deck.defaultBpm}
+                onBpmChange={(newBpm) => updateBpm(deckNumber, newBpm)}
+              />
+              </div>
               </div>
             </div>
           </>

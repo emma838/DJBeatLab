@@ -13,7 +13,6 @@ const Crossfader = ({ onCrossfadeChange }) => {
 
   return (
     <div className={styles.crossfader}>
-      <label>Crossfader</label>
       <input
         type="range"
         min="0"

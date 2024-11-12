@@ -24,7 +24,7 @@ border-bottom: 2px solid $light-grey;
 .leftSection,
 .rightSection {
   width: 35%;
-  background-color: $semi-grey;
+  background-color: $dark-grey;
   padding: 10px;
 }
 
@@ -36,7 +36,44 @@ border-bottom: 2px solid $light-grey;
   padding: 10px;
   display: flex;
   flex-direction: row;
-  justify-content: space-between;
+
+  .eqleft{
+    border: 1px solid $black;
+    width: 20%;
+    height: 100%;
+  }
+
+  .eqright{
+    border: 1px solid $black;
+    width: 20%;
+    height: 100%;
+  }
+
+  .centerpanel{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 60%;
+    height: 100%;
+    border: 1px solid $black;
+
+    .volfilter{
+      display: flex;
+      flex-direction: row;;
+      width: 100%;
+      height: 85%;
+    }
+
+    .volfilterleft, .volfilterright{
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      width: 50%;
+      height: 100%;
+      border: 1px solid $black;
+    }
+
+  }
 }
 
 /* Stylizacja sekcji na podgląd plików */

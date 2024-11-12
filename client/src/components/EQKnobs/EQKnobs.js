@@ -1,4 +1,6 @@
-import React from 'react';
+// src/components/EQKnobs/EQKnobs.js
+
+import React, { useState } from 'react'; // Dodajemy useState do importów
 import PropTypes from 'prop-types';
 import Knob from '../Knob/Knob';
 import styles from './EQKnobs.module.scss';
@@ -8,24 +10,36 @@ const EQKnobs = ({ deckNumber }) => {
   const { updateEQ, decks } = useAudio();
   const deck = decks[deckNumber];
 
-  if (!deck || !deck.lowShelf || !deck.midPeak || !deck.highShelf) {
-    return <div className={styles.eq}>EQ nie jest dostępny</div>;
-  }
+  // Stan lokalny do przechowywania wartości EQ przed załadowaniem utworu
+  const [lowValue, setLowValue] = useState(0);
+  const [midValue, setMidValue] = useState(0);
+  const [highValue, setHighValue] = useState(0);
 
   const handleLowChange = (value) => {
-    updateEQ(deckNumber, 'low', value);
+    setLowValue(value);
+    if (deck && deck.lowShelf) {
+      updateEQ(deckNumber, 'low', value);
+    } else {
+      console.warn(`Deck ${deckNumber}: lowShelf node not available yet.`);
+    }
   };
 
   const handleMidChange = (value) => {
-    updateEQ(deckNumber, 'mid', value);
+    setMidValue(value);
+    if (deck && deck.midPeak) {
+      updateEQ(deckNumber, 'mid', value);
+    } else {
+      console.warn(`Deck ${deckNumber}: midPeak node not available yet.`);
+    }
   };
 
   const handleHighChange = (value) => {
-    updateEQ(deckNumber, 'hi', value);
-  };
-
-  const handleFilterChange = (value) => {
-    updateEQ(deckNumber, 'filter', value);
+    setHighValue(value);
+    if (deck && deck.highShelf) {
+      updateEQ(deckNumber, 'hi', value);
+    } else {
+      console.warn(`Deck ${deckNumber}: highShelf node not available yet.`);
+    }
   };
 
   return (
@@ -33,35 +47,57 @@ const EQKnobs = ({ deckNumber }) => {
       <div className={styles.knobs}>
         <Knob
           label="Low"
-          value={deck.lowShelf.gain.value}
+          value={deck?.lowShelf?.gain?.value ?? lowValue}
           min={-12}
           max={12}
           step={1}
           onChange={handleLowChange}
+          defaultValue={0}
+          numTicks={25}
+          tickSize={2}
+          tickColor="#888"
+          tickOffset={4}
+          pointerLength={15}
+          pointerColor="#333"
+          pointerWidth={4}
+          pointerLinecap="round"
+          showScale={true}
         />
         <Knob
           label="Mid"
-          value={deck.midPeak.gain.value}
+          value={deck?.midPeak?.gain?.value ?? midValue}
           min={-12}
           max={12}
           step={1}
           onChange={handleMidChange}
+          defaultValue={0}
+          numTicks={25}
+          tickSize={2}
+          tickColor="#888"
+          tickOffset={4}
+          pointerLength={15}
+          pointerColor="#333"
+          pointerWidth={4}
+          pointerLinecap="round"
+          showScale={true}
         />
         <Knob
           label="High"
-          value={deck.highShelf.gain.value}
+          value={deck?.highShelf?.gain?.value ?? highValue}
           min={-12}
           max={12}
           step={1}
           onChange={handleHighChange}
-        />
-        <Knob
-          label="Filter"
-          value={deck.filter.frequency.value}
-          min={-100}
-          max={100}
-          step={1}
-          onChange={handleFilterChange}
+          defaultValue={0}
+          numTicks={25}
+          tickSize={2}
+          tickColor="#888"
+          tickOffset={4}
+          pointerLength={15}
+          pointerColor="#333"
+          pointerWidth={4}
+          pointerLinecap="round"
+          showScale={true}
         />
       </div>
     </div>

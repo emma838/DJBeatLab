@@ -41,6 +41,8 @@ const initialDeckState = {
     flangerGain: null,
     flangerLFO: null,
     volumeGain: null, // GainNode dla głośności decka 1
+    activePredefinedLoop: null, // Dodane pole
+
   },
   2: {
     track: null,
@@ -72,6 +74,8 @@ const initialDeckState = {
     flangerGain: null,
     flangerLFO: null,
     volumeGain: null, // GainNode dla głośności decka 2
+    activePredefinedLoop: null, // Dodane pole
+
   },
 };
 
@@ -187,7 +191,7 @@ export function AudioProvider({ children }) {
 
       // GainNode dla głośności decka
       const volumeGain = audioContexts[deckNumber].current.createGain();
-      volumeGain.gain.value = 1; // Domyślnie 100% głośności
+      volumeGain.gain.value = 0.2; // Domyślnie 100% głośności
 
       // Przypisz GainNode do stanu decka
       dispatch({
@@ -241,12 +245,13 @@ export function AudioProvider({ children }) {
       deck.volumeGain.connect(analyser); // Podłącz analyser do volumeGain
       analyser.connect(audioCtx.destination); // Podłącz analyser do wyjścia audio
   
+      
       // Reverb
       const convolver = await loadImpulseResponse(audioCtx);
       const dryGain = audioCtx.createGain();
       dryGain.gain.value = 1;
       const wetGain = audioCtx.createGain();
-      wetGain.gain.value = 0.5;
+      wetGain.gain.value = 0;
   
       // EQ nodes (high, mid, low)
       const highShelf = audioCtx.createBiquadFilter();
@@ -270,48 +275,57 @@ export function AudioProvider({ children }) {
       const delayGain = audioCtx.createGain();
       delayGain.gain.value = 0;
   
-      // Flanger
-      const flangerDelay = audioCtx.createDelay();
-      flangerDelay.delayTime.value = 0.05;
-      const flangerWetGain = audioCtx.createGain();
-      flangerWetGain.gain.value = 0;
-  
-      const flangerLFO = audioCtx.createOscillator();
-      const flangerLFOGain = audioCtx.createGain();
-      flangerLFOGain.gain.value = 0.002;
-      flangerLFO.type = 'sine';
-      flangerLFO.frequency.value = 0.8;
-      flangerLFO.connect(flangerLFOGain).connect(flangerDelay.delayTime);
-      flangerLFO.start();
+     // Flanger
+  const flangerDelay = audioCtx.createDelay();
+  flangerDelay.delayTime.value = 0.005; // Bazowy czas opóźnienia (5 ms)
+  const flangerWetGain = audioCtx.createGain();
+  flangerWetGain.gain.value = 0; // Początkowo brak efektu
+
+  const flangerFeedbackGain = audioCtx.createGain();
+  flangerFeedbackGain.gain.value = 0.5; // Ustawienie feedbacku
+
+  const flangerLFO = audioCtx.createOscillator();
+  const flangerLFOGain = audioCtx.createGain();
+  flangerLFOGain.gain.value = 0.002; // Głębokość modulacji
+  flangerLFO.type = 'sine';
+  flangerLFO.frequency.value = 0.25; // Częstotliwość modulacji (0.25 Hz)
+  flangerLFO.connect(flangerLFOGain).connect(flangerDelay.delayTime);
+  flangerLFO.start();
   
       // Filter for effects
       const filter = audioCtx.createBiquadFilter();
       filter.type = 'allpass';
       filter.frequency.value = 1000;
   
-      // Podłączenie węzłów
-      source
-        .connect(lowShelf)
-        .connect(midPeak)
-        .connect(highShelf)
-        .connect(filter)
-        .connect(dryGain)
-        .connect(deck.volumeGain)
-        .connect(audioCtx.destination);
-  
-      // Podłączenie efektów reverb
-      if (convolver) {
-        filter.connect(convolver).connect(wetGain).connect(deck.volumeGain);
-        console.log(`Convolver loaded and connected for deck ${deckNumber}`);
-      } else {
-        console.warn(`Convolver could not be loaded for deck ${deckNumber}`);
-      }
-  
-      // Podłączenie delay
-      filter.connect(delayNode).connect(delayGain).connect(deck.volumeGain);
-  
-      // Podłączenie flangera
-      source.connect(flangerDelay).connect(flangerWetGain).connect(deck.volumeGain);
+// Połączenie źródła z EQ nodes
+source.connect(lowShelf);
+lowShelf.connect(midPeak);
+midPeak.connect(highShelf);
+highShelf.connect(filter);
+
+// Dry path
+filter.connect(dryGain);
+dryGain.connect(deck.volumeGain);
+
+// Reverb path
+if (convolver) {
+  filter.connect(convolver);
+  convolver.connect(wetGain);
+  wetGain.connect(deck.volumeGain);
+}
+
+// Delay path
+filter.connect(delayNode);
+delayNode.connect(delayGain);
+delayGain.connect(deck.volumeGain);
+
+// Flanger path
+filter.connect(flangerDelay);
+flangerDelay.connect(flangerWetGain);
+flangerWetGain.connect(deck.volumeGain);
+
+// Final output
+deck.volumeGain.connect(audioCtx.destination);
   
       // Przetwarzanie danych waveforma
       const rawData = audioBuffer.getChannelData(0);
@@ -346,6 +360,7 @@ export function AudioProvider({ children }) {
           midPeak,
           highShelf,
           filter,
+          filterValue: 0,
           delayNode,
           delayGain,
           flangerDelay,
@@ -404,7 +419,7 @@ export function AudioProvider({ children }) {
 
   // Funkcja do rozpoczęcia odtwarzania
  // Funkcja do rozpoczęcia odtwarzania
-const startPlayback = (deckNumber) => {
+ const startPlayback = (deckNumber, startOffset) => {
   const deck = decksRef.current[deckNumber];
   const audioCtx = audioContexts[deckNumber].current;
 
@@ -414,7 +429,11 @@ const startPlayback = (deckNumber) => {
     audioCtx.resume();
   }
 
-  let startOffset = deck.currentTime;
+  // Użycie przekazanego startOffset lub deck.currentTime
+  if (startOffset === undefined) {
+    startOffset = deck.currentTime;
+  }
+
   if (startOffset >= deck.duration) {
     startOffset = 0;
   }
@@ -473,10 +492,8 @@ const startPlayback = (deckNumber) => {
       isPlaying: true,
     },
   });
-
-  // Uruchomienie aktualizacji czasu
-  updateTime(deckNumber);
 };
+
 
 
   // Funkcja do restartowania odtwarzania (używana przy zmianach pętli)
@@ -576,28 +593,29 @@ const stopPlayback = (deckNumber) => {
   };
 
   // Funkcja do aktualizacji bieżącego czasu (seek)
-  const updateCurrentTime = (deckNumber, time) => {
+  const updateCurrentTime = (deckNumber, time, resumePlayback = true) => {
     const deck = decksRef.current[deckNumber];
     const wasPlaying = deck.isPlaying;
-
+  
     console.log(`Updating currentTime on deck ${deckNumber} to ${time}, wasPlaying: ${wasPlaying}`);
-
+  
     if (wasPlaying) {
       console.log(`Stopping playback on deck ${deckNumber} before updating currentTime`);
       stopPlayback(deckNumber);
     }
-
+  
     dispatch({
       type: 'SET_DECK',
       deckNumber,
       payload: { currentTime: time },
     });
-
-    if (wasPlaying) {
-      console.log(`Resuming playback and updateTime on deck ${deckNumber} after updating currentTime`);
-      startPlayback(deckNumber);
+  
+    if (wasPlaying && resumePlayback) {
+      console.log(`Resuming playback on deck ${deckNumber} after updating currentTime`);
+      startPlayback(deckNumber, time);
     }
   };
+  
 
   // Funkcja do delikatnego przesuwania odtwarzania
   const nudgePlayback = (deckNumber, timeDelta) => {
@@ -811,6 +829,13 @@ const stopPlayback = (deckNumber) => {
       type: 'EXIT_LOOP',
       deckNumber,
     });
+    dispatch({
+      type: 'SET_DECK',
+      deckNumber,
+      payload: {
+        activePredefinedLoop: null,
+      },
+    });
     console.log(`Exited loop on deck ${deckNumber}`);
     // Jeśli deck jest odtwarzany, wznowienie normalnego odtwarzania od loopEnd
     const deck = decksRef.current[deckNumber];
@@ -823,6 +848,7 @@ const stopPlayback = (deckNumber) => {
       startPlayback(deckNumber);
     }
   };
+  
 
   // Funkcja do rozpoczęcia pętli
   const startLoop = (deckNumber) => {
@@ -852,20 +878,41 @@ const stopPlayback = (deckNumber) => {
       console.warn(`No audio buffer loaded on deck ${deckNumber}.`);
       return;
     }
-
+  
+    // Sprawdź, czy ta sama predefiniowana pętla jest już aktywna
+    if (deck.activePredefinedLoop === bits) {
+      // Wyjście z pętli
+      exitLoop(deckNumber);
+      dispatch({
+        type: 'SET_DECK',
+        deckNumber,
+        payload: {
+          activePredefinedLoop: null,
+        },
+      });
+      console.log(`Exited predefined loop of ${bits} bits on deck ${deckNumber}`);
+      return;
+    }
+  
+    // Jeśli inna pętla jest aktywna, nie pozwalaj na ustawienie nowej predefiniowanej pętli
+    if (deck.isLooping) {
+      console.warn('Cannot set a new predefined loop while another loop is active.');
+      return;
+    }
+  
     // Obliczenie długości jednego bitu na podstawie BPM
     const bitDuration = 60 / deck.bpm; // sekundy na bit
     const loopLength = bits * bitDuration;
-
+  
     const currentPoint = deck.currentTime;
     const newLoopEnd = currentPoint + loopLength;
-
+  
     if (newLoopEnd > deck.duration) {
       console.warn('Predefined loop exceeds track duration.');
       return;
     }
-
-    // Ustawienie pętli w jednym akcji
+  
+    // Ustawienie pętli
     dispatch({
       type: 'SET_LOOP',
       deckNumber,
@@ -874,9 +921,19 @@ const stopPlayback = (deckNumber) => {
         loopEnd: newLoopEnd,
       },
     });
-
+  
+    // Ustawienie aktywnej predefiniowanej pętli
+    dispatch({
+      type: 'SET_DECK',
+      deckNumber,
+      payload: {
+        activePredefinedLoop: bits,
+      },
+    });
+  
     console.log(`Predefined loop set to ${bits} bits (${loopLength.toFixed(2)} seconds) on deck ${deckNumber}`);
   };
+  
 
   // Funkcje do obsługi efektów
   const updateReverbIntensity = (deckNumber, intensity) => {
@@ -918,18 +975,21 @@ const stopPlayback = (deckNumber) => {
         deck.lowShelf.gain.value = value;
         updatedBand = { lowShelf: deck.lowShelf };
         break;
-      case 'filter':
-        if (value === 0) {
-          deck.filter.type = 'allpass';
-        } else if (value < 0) {
-          deck.filter.type = 'lowpass';
-          deck.filter.frequency.value = 1000 + value * -10;
-        } else {
-          deck.filter.type = 'highpass';
-          deck.filter.frequency.value = 1000 + value * 10;
-        }
-        updatedBand = { filter: deck.filter };
-        break;
+        case 'filter':
+          if (value === 0) {
+            deck.filter.type = 'allpass';
+          } else if (value < 0) {
+            deck.filter.type = 'highpass';
+            // Mapowanie wartości od -10 do 0 na częstotliwość od 20000Hz do 20Hz
+            deck.filter.frequency.value = 20 * Math.pow(10, ((-value ) / 10) * 3);
+          } else {
+            deck.filter.type = 'lowpass';
+            // Mapowanie wartości od 0 do 10 na częstotliwość od 20000Hz do 20Hz
+            deck.filter.frequency.value = 20000 / Math.pow(10, (value / 10) * 3);
+          }
+          updatedBand = { filter: deck.filter, filterValue: value };
+          break;
+        
       default:
         console.warn(`Unknown EQ band: ${band}`);
     }
@@ -961,15 +1021,30 @@ const stopPlayback = (deckNumber) => {
     }
   };
   
-  const updateFlangerStrength = (deckNumber, strength) => {
+  const updateFlangerStrength = (deckNumber, value) => {
     const deck = decksRef.current[deckNumber];
-    if (deck.flangerWetGain) { // Sprawdza, czy flangerWetGain istnieje
-      deck.flangerWetGain.gain.value = strength; // Ustawia intensywność flangera
-      console.log(`Flanger strength updated on deck ${deckNumber}:`, strength);
+    if (deck.flangerWetGain) {
+      const maxGain = 1; // Maksymalna wartość gain
+      const normalizedValue = Math.abs(value) / 10; // Normalizacja wartości do zakresu 0 - 1
+      if (value === 0) {
+        // Wyłącz efekt Flanger
+        deck.flangerWetGain.gain.value = 0;
+      } else if (value > 0) {
+        // Ustaw efekty dla wartości dodatnich
+        deck.flangerWetGain.gain.value = normalizedValue * maxGain;
+        // Możesz dostosować inne parametry flangera dla wartości dodatnich
+      } else {
+        // Ustaw efekty dla wartości ujemnych
+        deck.flangerWetGain.gain.value = normalizedValue * maxGain;
+        // Możesz dostosować inne parametry flangera dla wartości ujemnych
+      }
+      console.log(`Flanger strength updated on deck ${deckNumber}:`, value);
     } else {
       console.warn(`Flanger gain node not found for deck ${deckNumber}`);
     }
   };
+  
+  
   
   const setCrossfade = (position) => {
     const deck1Volume = 1 - position; // Głośność decka 1 zmniejsza się przy przesunięciu w prawo
@@ -1025,10 +1100,20 @@ const stopPlayback = (deckNumber) => {
   useEffect(() => {
     Object.keys(decks).forEach((deckNumber) => {
       const deck = decks[deckNumber];
-      if (deck.isPlaying && !animationFrameIds.current[deckNumber]) {
+      const isAnimating = animationFrameIds.current[deckNumber] != null;
+  
+      if (deck.isPlaying && !isAnimating) {
+        // Start the updateTime loop
         updateTime(deckNumber);
+      } else if (!deck.isPlaying && isAnimating) {
+        // Stop the updateTime loop
+        cancelAnimationFrame(animationFrameIds.current[deckNumber]);
+        delete animationFrameIds.current[deckNumber];
       }
     });
+  
+    // Synchronizuj decksRef.current z najnowszym stanem decks
+    decksRef.current = decks;
   }, [decks]);
 
   return (
@@ -1037,6 +1122,8 @@ const stopPlayback = (deckNumber) => {
         decks,
         loadTrackData,
         playPause,
+        startPlayback,
+      stopPlayback,
         updateCurrentTime,
         nudgePlayback,
         handleCueMouseDown,
