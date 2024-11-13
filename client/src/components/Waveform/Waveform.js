@@ -211,12 +211,20 @@ const shift = currentTimeToUse * pixelsPerSecond * scaleFactor - centerX;
     if (isSeeking.current) {
       event.preventDefault();
       isSeeking.current = false;
-      // Jeśli utwór był odtwarzany wcześniej, wznow odtwarzanie
+  
+      // Update current time and ensure it's applied before playback resumes
+      updateCurrentTime(deckNumber, lastSeekTimeRef.current, false);
+  
+      // If the track was playing before, resume playback after currentTime is updated
       if (wasPlayingRef.current) {
-        updateCurrentTime(deckNumber, lastSeekTimeRef.current, true);
+        // Use a timeout to ensure currentTime is updated before starting playback
+        setTimeout(() => {
+          startPlayback(deckNumber);
+        }, 0);
       }
     }
   };
+  
 
   const handleSeek = (event) => {
     if (!waveformData || !duration) return;

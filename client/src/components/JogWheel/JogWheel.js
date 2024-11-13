@@ -3,7 +3,7 @@ import styles from './JogWheel.module.scss';
 import { useAudio } from '../../components/AudioManager/AudioManager';
 
 function JogWheel({ deckNumber }) {
-  const { decks, nudgePlayback, startJogging, stopJogging } = useAudio();
+  const { decks, nudgePlayback, startJogging, stopJogging, updateCurrentTime } = useAudio();
   const deck = decks[deckNumber];
 
   const wheelRef = useRef(null);
@@ -59,7 +59,11 @@ function JogWheel({ deckNumber }) {
   
     // Update rotation immediately
     setRotation((prevRotation) => prevRotation + angleDelta);
+  
+    // Update the deck's currentTime
+    updateCurrentTime(deckNumber, newTime, false);
   };
+  
 
   const handleMouseUp = () => {
     if (isDragging.current) {
