@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import AddFileModal from '../AddFile/AddFileModal';
 import styles from './FileManager.module.scss';
+//materialsymbols:
+import AddBox from '@mui/icons-material/AddBox';
+import Delete from '@mui/icons-material/DeleteForever';
 
 const FileManager = ({ selectedPlaylist, onSongAdded }) => {
   const [directories, setDirectories] = useState({
@@ -10,6 +13,7 @@ const FileManager = ({ selectedPlaylist, onSongAdded }) => {
   });
   const [isAddFileOpen, setIsAddFileOpen] = useState(false);
 
+  axios.defaults.headers.common['Accept-Charset'] = 'utf-8';
   const openAddFile = () => setIsAddFileOpen(true);
   const closeAddFile = () => setIsAddFileOpen(false);
 
@@ -97,9 +101,10 @@ const deleteFile = async (songId) => {
       {/* Uploaded Files */}
       <div className={styles.headerContainer}>
         <h3 className={styles.folderHeader}>
-          <div className={styles.folderHeaderLeft}>Uploads</div>
+          <div className={styles.folderHeaderLeft}>Biblioteka utworów</div>
           <div className={styles.folderHeaderRight}>
-            <button onClick={openAddFile} className={styles.fileButton}>+</button>
+            <button onClick={openAddFile} className={styles.fileButton}><AddBox  /> Dodaj</button>
+            
           </div>
         </h3>
       </div>
@@ -118,7 +123,7 @@ const deleteFile = async (songId) => {
                   onClick={() => deleteFile(file._id)}
                   className={styles.deleteButton}
                 >
-                  X
+                  <Delete />
                 </button>
               </li>
             ))

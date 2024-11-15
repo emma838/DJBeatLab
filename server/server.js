@@ -24,6 +24,11 @@ mongoose.connect(process.env.MONGODB_URI, {
     console.error('Błąd połączenia z MongoDB:', err);
 });
 
+// Middleware: Ustawianie nagłówków dla każdej odpowiedzi
+app.use((req, res, next) => {
+    res.setHeader('Content-Type', 'application/json; charset=utf-8');
+    next();
+  });
 // // Konfiguracja Express do ufania proxy
 // app.set('trust proxy', 1); // 1 oznacza, że ufamy pierwszemu proxy (np. Heroku, Nginx)
 

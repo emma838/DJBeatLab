@@ -38,8 +38,10 @@ const initialDeckState = {
     delayGain: null,
     delayNode: null,
     flangerDelay: null,
-    flangerGain: null,
+    flangerWetGain: null,
+    flangerFeedbackGain: null,
     flangerLFO: null,
+    flangerLFOGain: null,
     volumeGain: null, // GainNode dla głośności decka 1
     activePredefinedLoop: null, // Dodane pole
 
@@ -71,8 +73,10 @@ const initialDeckState = {
     delayGain: null,
     delayNode: null,
     flangerDelay: null,
-    flangerGain: null,
+    flangerWetGain: null,
+    flangerFeedbackGain: null,
     flangerLFO: null,
+    flangerLFOGain: null,
     volumeGain: null, // GainNode dla głośności decka 2
     activePredefinedLoop: null, // Dodane pole
 
@@ -275,22 +279,23 @@ export function AudioProvider({ children }) {
       const delayGain = audioCtx.createGain();
       delayGain.gain.value = 0;
   
-     // Flanger
-  const flangerDelay = audioCtx.createDelay();
-  flangerDelay.delayTime.value = 0.005; // Bazowy czas opóźnienia (5 ms)
-  const flangerWetGain = audioCtx.createGain();
-  flangerWetGain.gain.value = 0; // Początkowo brak efektu
+ // Flanger
+ const flangerDelay = audioCtx.createDelay();
+ flangerDelay.delayTime.value = 0.002; // 2 ms
 
-  const flangerFeedbackGain = audioCtx.createGain();
-  flangerFeedbackGain.gain.value = 0.5; // Ustawienie feedbacku
+ const flangerWetGain = audioCtx.createGain();
+ flangerWetGain.gain.value = 0; // Początkowo brak efektu
 
-  const flangerLFO = audioCtx.createOscillator();
-  const flangerLFOGain = audioCtx.createGain();
-  flangerLFOGain.gain.value = 0.002; // Głębokość modulacji
-  flangerLFO.type = 'sine';
-  flangerLFO.frequency.value = 0.25; // Częstotliwość modulacji (0.25 Hz)
-  flangerLFO.connect(flangerLFOGain).connect(flangerDelay.delayTime);
-  flangerLFO.start();
+ const flangerFeedbackGain = audioCtx.createGain();
+ flangerFeedbackGain.gain.value = 0.4; // 40% feedback
+
+ const flangerLFO = audioCtx.createOscillator();
+ const flangerLFOGain = audioCtx.createGain();
+ flangerLFOGain.gain.value = 0.002; // Głębokość modulacji
+ flangerLFO.type = 'sine';
+ flangerLFO.frequency.value = 0.25; // 0.25 Hz
+ flangerLFO.connect(flangerLFOGain).connect(flangerDelay.delayTime);
+ flangerLFO.start();
   
       // Filter for effects
       const filter = audioCtx.createBiquadFilter();
@@ -320,9 +325,12 @@ delayNode.connect(delayGain);
 delayGain.connect(deck.volumeGain);
 
 // Flanger path
-filter.connect(flangerDelay);
-flangerDelay.connect(flangerWetGain);
-flangerWetGain.connect(deck.volumeGain);
+filter.connect(flangerDelay); // Łączymy z opóźnieniem
+flangerDelay.connect(flangerWetGain); // Łączymy z wet gain
+flangerWetGain.connect(flangerFeedbackGain); // Dodaj feedback
+flangerFeedbackGain.connect(flangerDelay); // Połącz feedback z powrotem do opóźnienia
+flangerWetGain.connect(deck.volumeGain); // Łączymy do głównego gainu decka
+
 
 // Final output
 deck.volumeGain.connect(audioCtx.destination);
@@ -583,7 +591,7 @@ const stopPlayback = (deckNumber) => {
       payload: { currentTime },
     });
 
-    animationFrameIds.current[deckNumber] = requestAnimationFrame(() => updateTime(deckNumber));
+    // animationFrameIds.current[deckNumber] = requestAnimationFrame(() => updateTime(deckNumber));
   };
 
   // Funkcja do aktualizacji bieżącego czasu (seek)
@@ -1048,28 +1056,31 @@ const exitLoop = (deckNumber) => {
     }
   };
   
-  const updateFlangerStrength = (deckNumber, value) => {
-    const deck = decksRef.current[deckNumber];
-    if (deck.flangerWetGain) {
-      const maxGain = 1; // Maksymalna wartość gain
-      const normalizedValue = Math.abs(value) / 10; // Normalizacja wartości do zakresu 0 - 1
-      if (value === 0) {
-        // Wyłącz efekt Flanger
-        deck.flangerWetGain.gain.value = 0;
-      } else if (value > 0) {
-        // Ustaw efekty dla wartości dodatnich
-        deck.flangerWetGain.gain.value = normalizedValue * maxGain;
-        // Możesz dostosować inne parametry flangera dla wartości dodatnich
-      } else {
-        // Ustaw efekty dla wartości ujemnych
-        deck.flangerWetGain.gain.value = normalizedValue * maxGain;
-        // Możesz dostosować inne parametry flangera dla wartości ujemnych
-      }
-      console.log(`Flanger strength updated on deck ${deckNumber}:`, value);
+const updateFlangerStrength = (deckNumber, value) => {
+  const deck = decksRef.current[deckNumber];
+  if (deck.flangerWetGain && deck.flangerFeedbackGain) {
+    const maxWetGain = 1; // Maksymalna wartość gain dla wet
+    const maxFeedbackGain = 0.5; // Maksymalna wartość gain dla feedback
+
+    // Zakładam, że 'value' jest w zakresie od -10 do 10
+    const normalizedValue = Math.abs(value) / 10; // Normalizacja do 0 - 1
+
+    if (value === 0) {
+      // Wyłącz efekt Flanger
+      deck.flangerWetGain.gain.value = 0;
+      deck.flangerFeedbackGain.gain.value = 0;
     } else {
-      console.warn(`Flanger gain node not found for deck ${deckNumber}`);
+      // Ustaw efekty
+      deck.flangerWetGain.gain.value = normalizedValue * maxWetGain;
+      deck.flangerFeedbackGain.gain.value = normalizedValue * maxFeedbackGain;
     }
-  };
+
+    console.log(`Flanger strength updated on deck ${deckNumber}:`, value);
+  } else {
+    console.warn(`Flanger gain nodes not found for deck ${deckNumber}`);
+  }
+};
+
   
   
   

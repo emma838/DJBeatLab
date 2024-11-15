@@ -1,5 +1,7 @@
 // Workspace.js
 import React, { useState } from 'react';
+
+// Importowanie komponentów
 import Header from '../../components/Headers/HeaderWorkspace/HeaderWorkspace';
 import FileManager from '../../components/FileManager/FileManager';
 import PlaylistManager from '../../components/PlaylistManager/PlaylistManager';
@@ -8,78 +10,137 @@ import Waveform from '../../components/Waveform/Waveform';
 import VolumeSlider from '../../components/VolumeSlider/VolumeSlider';
 import CrossFader from '../../components/CrossFader/CrossFader';
 import GainMeter from '../../components/GainMeter/GainMeter';
-import { useAudio } from '../../components/AudioManager/AudioManager';
-import styles from './Workspace.module.scss';
 import EQKnobs from '../../components/EQKnobs/EQKnobs';
 
+// Importowanie hooka do zarządzania audio
+import { useAudio } from '../../components/AudioManager/AudioManager';
+
+// Importowanie stylów modułowych
+import styles from './Workspace.module.scss';
+
 const Workspace = () => {
-  const { loadTrackData,setVolume,setCrossfade   } = useAudio();
+  // Destrukturyzacja funkcji z hooka useAudio
+  const { loadTrackData, setVolume, setCrossfade } = useAudio();
+
+  // Stan do przechowywania wybranej playlisty
   const [selectedPlaylist, setSelectedPlaylist] = useState('uploads');
+
+  // Stan do wyzwalania aktualizacji playlisty
   const [playlistUpdateTrigger, setPlaylistUpdateTrigger] = useState(false);
 
+  // /**
+  //  * Funkcja przypisująca wybraną piosenkę do decka
+  //  * @param {number} deckNumber - Numer decka (1 lub 2)
+  //  * @param {object} song - Obiekt piosenki
+  //  */
   const handleAssignToDeck = (deckNumber, song) => {
     const trackUrl = `/api/audio/${song.user}/uploaded/${encodeURIComponent(song.filename)}`;
     const track = { ...song, url: trackUrl };
     loadTrackData(deckNumber, track);
   };
 
-  const handleSongAdded = () => setPlaylistUpdateTrigger((prev) => !prev);
+  /**
+   * Funkcja wyzwalająca aktualizację playlisty
+   */
+  const handleSongAdded = () => {
+    setPlaylistUpdateTrigger(prev => !prev);
+  };
 
-   // Funkcje zmiany głośności dla obu decków
-   const handleVolumeChangeDeck1 = (newVolume) => setVolume(1, newVolume);
-   const handleVolumeChangeDeck2 = (newVolume) => setVolume(2, newVolume);
+  // Funkcje do zmiany głośności dla obu decków
+  const handleVolumeChangeDeck1 = (newVolume) => setVolume(1, newVolume);
+  const handleVolumeChangeDeck2 = (newVolume) => setVolume(2, newVolume);
 
-   const handleCrossfadeChange = (newPosition) => setCrossfade(newPosition);
-
+  // /**
+  //  * Funkcja obsługująca zmianę pozycji crossfadera
+  //  * @param {number} newPosition - Nowa pozycja crossfadera
+  //  */
+  const handleCrossfadeChange = (newPosition) => setCrossfade(newPosition);
 
   return (
     <div className={styles.workspace}>
+      {/* Nagłówek Workspace */}
       <Header />
-      <div  className={styles.waveforms}>
-        <Waveform deckNumber={1} waveformColor="#FF4C1A"  playheadColor="#e4dbdb"/>
-        <Waveform deckNumber={2} waveformColor="#00DD51"  playheadColor="#e4dbdb"/>
+
+      {/* Sekcja z waveformami dla obu decków */}
+      <div className={styles.waveforms}>
+        <Waveform
+          deckNumber={1}
+          waveformColor="#FF4C1A"
+          playheadColor="#e4dbdb"
+        />
+        <Waveform
+          deckNumber={2}
+          waveformColor="#00DD51"
+          playheadColor="#e4dbdb"
+        />
       </div>
+
+      {/* Główna sekcja narzędzi (toolbar) */}
       <section className={styles.toolbar}>
+        {/* Lewa sekcja z Deckiem 1 */}
         <div className={styles.leftSection}>
           <Deck deckNumber={1} />
         </div>
+
+        {/* Środkowa sekcja z EQ, kontrolkami głośności i crossfaderem */}
         <div className={styles.middleSection}>
+          {/* EQ po lewej stronie */}
           <div className={styles.eqleft}>
-          <EQKnobs deckNumber={1} />
+            <EQKnobs deckNumber={1} />
           </div>
+
+          {/* Panel centralny z kontrolkami głośności i crossfaderem */}
           <div className={styles.centerpanel}>
-          <div className={styles.volfilter}>
-          <div className={styles.volfilterleft}>
-          <VolumeSlider
-  deckNumber={1} // Lub 2, w zależności od decka
-  initialValue={1}
-  onVolumeChange={handleVolumeChangeDeck1}
-/>
-          {/* <GainMeter deckNumber={1} /> */}
+            {/* Sekcja głośności i filtru */}
+            <div className={styles.volfilter}>
+              {/* Slider głośności lewego decka */}
+              <div className={styles.volfilterleft}>
+                <VolumeSlider
+                  deckNumber={1} // Możliwe: 1 lub 2, w zależności od decka
+                  initialValue={1}
+                  onVolumeChange={handleVolumeChangeDeck1}
+                />
+                {/* <GainMeter deckNumber={1} /> */}
+              </div>
+
+              {/* Slider głośności prawego decka */}
+              <div className={styles.volfilterright}>
+                <VolumeSlider
+                  deckNumber={2} // Poprawione na 2 dla prawego decka
+                  initialValue={1}
+                  onVolumeChange={handleVolumeChangeDeck2}
+                />
+                {/* <GainMeter deckNumber={2} /> */}
+              </div>
+            </div>
+
+            {/* Kontrolka crossfadera */}
+            <CrossFader onCrossfadeChange={handleCrossfadeChange} />
           </div>
-          <div className={styles.volfilterright}>
-          <VolumeSlider
-  deckNumber={1} // Lub 2, w zależności od decka
-  initialValue={1}
-  onVolumeChange={handleVolumeChangeDeck2}
-/>
-          {/* <GainMeter deckNumber={2} /> */}
-          </div>
-          </div>
-          <CrossFader onCrossfadeChange={handleCrossfadeChange} />
-          </div>
+
+          {/* EQ po prawej stronie */}
           <div className={styles.eqright}>
-          <EQKnobs deckNumber={2} />
+            <EQKnobs deckNumber={2} />
           </div>
         </div>
+
+        {/* Prawa sekcja z Deckiem 2 */}
         <div className={styles.rightSection}>
           <Deck deckNumber={2} />
         </div>
       </section>
+
+      {/* Sekcja podglądu plików */}
       <section className={styles.filePreview}>
+        {/* Menedżer plików */}
         <div className={styles.fileManager}>
-          <FileManager selectedPlaylist={selectedPlaylist} onSongAdded={handleSongAdded} />
+          <FileManager
+            selectedPlaylist={selectedPlaylist}
+            onSongAdded={handleSongAdded}
+          />
         </div>
+
+        {/* Menedżer playlist */}
         <div className={styles.playlistManager}>
           <PlaylistManager
             selectedPlaylist={selectedPlaylist}

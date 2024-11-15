@@ -4,6 +4,10 @@ import { addPlaylist, deletePlaylist, renamePlaylist } from '../ManagePlaylist/M
 import RenameInlineEdit from '../RenameInlineEdit/RenameInlineEdit';
 // import { AudioContext } from '../AudioManager/AudioManager';
 import styles from './PlaylistManager.module.scss';
+import PlaylistAdd from '@mui/icons-material/PlaylistAdd';
+import PlaylistRemove from '@mui/icons-material/PlaylistRemove';
+import Delete from '@mui/icons-material/Delete';
+import Edit from '@mui/icons-material/Edit';
 
 const PlaylistManager = ({ selectedPlaylist, setSelectedPlaylist, playlistUpdateTrigger, onAssignToDeck }) => {
   // const { setCurrentTrack } = useContext(AudioContext);
@@ -141,42 +145,9 @@ const PlaylistManager = ({ selectedPlaylist, setSelectedPlaylist, playlistUpdate
 
   return (
     <div className={styles.playlistManagerContainer}>
-      <div className={styles.playlistContainer}>
-        <div className={styles.topBar}>
-          <p>channel</p>
-          <p>title</p>
-          <p>artist</p>
-          <p>duration</p>
-          <p>bpm</p>
-          <p>key</p>
-        </div>
-
-        {/* Zawartość wybranej playlisty */}
-        <ul className={styles.playlistContent}>
-          {currentPlaylistSongs.length === 0 ? (
-            <li>Brak utworów do wyświetlenia</li>
-          ) : (
-            currentPlaylistSongs.map((song, index) => (
-              <li key={index} className={styles.songItem}>
-                <div className={styles.songControls}>
-                <button className={styles.channelBtn} onClick={() => onAssignToDeck(1, song)}>1</button>
-                <button className={styles.channelBtn} onClick={() => onAssignToDeck(2, song)}>2</button>
-                </div>
-                <div className={styles.songInfo}>
-                  <p className={styles.songTitle}>{song.title}</p>
-                  <p className={styles.songAuthor}>{song.author}</p>
-                  <p className={styles.songDuration}>{formatDuration(song.duration)}</p>
-                  <p className={styles.songBpm}>{song.bpm}</p>
-                  <p className={styles.songKey}>{song.key}</p>
-                </div>
-                <button className={styles.deleteSongButton} onClick={() => handleRemoveSong(song._id)}>x</button> {/* Przycisk usuń */}
-              </li>
-            ))
-          )}
-        </ul>
-      </div>
       <div className={styles.settingsContainer}>
-        <p>Playlista: </p>
+        <p className={styles.settingsTitle}>Playlisty</p>
+        <div className={styles.settingsContent}>
         {/* Lista rozwijana z playlistami */}
         {editing ? (
           <RenameInlineEdit
@@ -191,7 +162,7 @@ const PlaylistManager = ({ selectedPlaylist, setSelectedPlaylist, playlistUpdate
             value={selectedPlaylist}
             onChange={(e) => setSelectedPlaylist(e.target.value)}
           >
-            <option value="uploads">uploads</option>
+            <option value="uploads">wszystkie utwory</option>
             {playlists.map((playlist) => (
               <option key={playlist._id} value={playlist._id}>
                 {playlist.name}
@@ -201,19 +172,63 @@ const PlaylistManager = ({ selectedPlaylist, setSelectedPlaylist, playlistUpdate
         )}
 
         {/* Przyciski do zarządzania playlistą */}
-        <div className={styles.buttons}>
           <button className={styles.editButton} onClick={() => setEditing(true)} disabled={selectedPlaylist === 'uploads'}>
-            zmień nazwę
+            <Edit /> zmień nazwę
           </button>
-          <button className={styles.addButton} onClick={handleAddPlaylist}>dodaj</button>
+          <button className={styles.addButton} onClick={handleAddPlaylist}><PlaylistAdd /> Dodaj</button>
           <button
             className={styles.deleteButton}
             onClick={handleDeletePlaylist}
             disabled={selectedPlaylist === 'uploads'}
           >
-            usuń
+          <PlaylistRemove /> usuń
           </button>
         </div>
+      </div>
+      <div className={styles.playlistContainer}>
+        <div className={styles.topBar}>
+          <p >deck</p>
+          <p>title</p>
+          <p>artist</p>
+          <p>length</p>
+          <p>bpm</p>
+          <p>key</p>
+          <p></p>
+        </div>
+
+        {/* Zawartość wybranej playlisty */}
+        <ul className={styles.playlistContent}>
+          {currentPlaylistSongs.length === 0 ? (
+            <li>Brak utworów do wyświetlenia</li>
+          ) : (
+            currentPlaylistSongs.map((song, index) => (
+              <li key={index} className={styles.songItem}>
+                <div className={styles.songControls}>
+                <button className={styles.channelBtn} onClick={() => onAssignToDeck(1, song)}>1</button>
+                <button className={styles.channelBtn} onClick={() => onAssignToDeck(2, song)}>2</button>
+                </div>
+          
+                  <p className={styles.songTitle}>{song.title}</p>
+                  <p className={styles.songAuthor}>{song.author}</p>
+                  <p className={styles.songDuration}>{formatDuration(song.duration)}</p>
+                  <p className={styles.songBpm}>{song.bpm}</p>
+                  <p className={styles.songKey}>{song.key}</p>
+
+                {/* Renderuj pusty element zamiast przycisku, jeśli wybrano 'uploads' */}
+        {selectedPlaylist === 'uploads' ? (
+          <div className={styles.deleteSongButton}> </div>
+        ) : (
+          <button
+            className={styles.deleteSongButton}
+            onClick={() => handleRemoveSong(song._id)}
+          >
+            <Delete />
+          </button>
+        )}
+              </li>
+            ))
+          )}
+        </ul>
       </div>
     </div>
   );

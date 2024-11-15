@@ -13,27 +13,30 @@ const FXHandler = ({ deckNumber }) => {
     updateFlangerStrength,
   } = useAudio();
 
-  const [effectType, setEffectType] = useState('reverb'); // Domyślnie reverb
-  const [effectIntensity, setEffectIntensity] = useState(0);
+  // Stan przechowujący intensywności dla każdego efektu
+  const [effectIntensities, setEffectIntensities] = useState({
+    reverb: 0,
+    delay: 0,
+    flanger: 0,
+  });
+
+  // Stan przechowujący czas opóźnienia dla efektu delay
   const [delayTime, setDelayTime] = useState(0.3); // Domyślny czas opóźnienia dla delay
+
+  const [effectType, setEffectType] = useState('reverb'); // Domyślnie reverb
 
   const handleEffectChange = (e) => {
     const selectedEffect = e.target.value;
     setEffectType(selectedEffect);
-
-    // Ustawianie wartości domyślnych dla intensywności i czasu delay
-    if (selectedEffect === 'reverb') {
-      setEffectIntensity(0);
-    } else if (selectedEffect === 'delay') {
-      setEffectIntensity(0);
-      setDelayTime(0.3);
-    } else if (selectedEffect === 'flanger') {
-      setEffectIntensity(0);
-    }
+    // Nie resetujemy intensywności przy zmianie efektu
   };
 
   const handleEffectIntensityChange = (newIntensity) => {
-    setEffectIntensity(newIntensity);
+    setEffectIntensities((prevIntensities) => ({
+      ...prevIntensities,
+      [effectType]: newIntensity,
+    }));
+
     if (effectType === 'reverb') {
       updateReverbIntensity(deckNumber, newIntensity);
     } else if (effectType === 'delay') {
@@ -97,23 +100,22 @@ const FXHandler = ({ deckNumber }) => {
         <option value="flanger">Flanger</option>
       </select>
       <div className={styles.knobs}>
-      <Knob
-        value={effectIntensity}
-        min={currentEffectSettings.min}
-        max={currentEffectSettings.max}
-        step={currentEffectSettings.step}
-        defaultValue={currentEffectSettings.defaultValue}
-        onChange={handleEffectIntensityChange}
-        label={currentEffectSettings.label}
-        showScale={true}
-        numTicks={currentEffectSettings.numTicks}
-        tickLength={7}
-        tickColor="#515151"
-        tickWidth={1}
-      />
+        <Knob
+          value={effectIntensities[effectType]}
+          min={currentEffectSettings.min}
+          max={currentEffectSettings.max}
+          step={currentEffectSettings.step}
+          defaultValue={currentEffectSettings.defaultValue}
+          onChange={handleEffectIntensityChange}
+          label={currentEffectSettings.label}
+          showScale={true}
+          numTicks={currentEffectSettings.numTicks}
+          tickLength={7}
+          tickColor="#515151"
+          tickWidth={1}
+        />
 
-      {effectType === 'delay' && (
-        <>
+        {effectType === 'delay' && (
           <Knob
             value={delayTime}
             min={delayTimeSettings.min}
@@ -128,9 +130,7 @@ const FXHandler = ({ deckNumber }) => {
             tickColor="#888"
             tickWidth={1}
           />
-        </>
-        
-      )}
+        )}
       </div>
     </div>
   );
