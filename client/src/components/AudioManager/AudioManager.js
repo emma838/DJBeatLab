@@ -419,47 +419,42 @@ deck.volumeGain.connect(audioCtx.destination);
 
   // Funkcja do rozpoczęcia odtwarzania
  // Funkcja do rozpoczęcia odtwarzania
- const startPlayback = (deckNumber, startOffset) => {
+ const startPlayback = (deckNumber, startOffset = null) => {
   const deck = decksRef.current[deckNumber];
   const audioCtx = audioContexts[deckNumber].current;
 
-  console.log(`Starting playback on deck ${deckNumber}`);
+  if (!deck.audioBuffer) return;
 
   if (audioCtx.state === 'suspended') {
     audioCtx.resume();
   }
 
-  // Użycie przekazanego startOffset lub deck.currentTime
-  if (startOffset === undefined) {
-    startOffset = deck.currentTime;
+  if (startOffset === null) {
+    startOffset = deck.currentTime || deck.cuePoint || 0;
   }
 
   if (startOffset >= deck.duration) {
     startOffset = 0;
   }
 
-  console.log(`Playback starting from offset: ${startOffset.toFixed(2)} seconds`);
+  console.log(`Starting playback from offset: ${startOffset.toFixed(2)} seconds`);
 
-  // Stop any existing source to prevent overlap
   if (deck.source) {
     deck.source.onended = null;
     deck.source.stop();
   }
 
-  // Tworzenie nowego źródła audio
   const source = audioCtx.createBufferSource();
   source.buffer = deck.audioBuffer;
-  source.playbackRate.value = deck.bpm / deck.defaultBpm || 1; // Ustawienie playbackRate
+  source.playbackRate.value = deck.bpm / deck.defaultBpm || 1;
 
-  // Połączenie źródła z EQ nodes
   source.connect(deck.lowShelf).connect(deck.midPeak).connect(deck.highShelf);
 
-  // Ustawienie pętli, jeśli aktywna
   if (deck.isLooping && deck.loopStart !== null && deck.loopEnd !== null && deck.loopEnd > deck.loopStart) {
     source.loop = true;
     source.loopStart = deck.loopStart;
     source.loopEnd = deck.loopEnd;
-    console.log(`Loop enabled on deck ${deckNumber}: ${deck.loopStart.toFixed(2)}s to ${deck.loopEnd.toFixed(2)}s`);
+    console.log(`Loop enabled: ${deck.loopStart.toFixed(2)}s to ${deck.loopEnd.toFixed(2)}s`);
   } else {
     source.loop = false;
   }
@@ -467,7 +462,7 @@ deck.volumeGain.connect(audioCtx.destination);
   source.start(0, startOffset);
 
   source.onended = () => {
-    console.log(`Playback ended on deck ${deckNumber}`);
+    console.log(`Playback ended`);
     dispatch({
       type: 'SET_DECK',
       deckNumber,
@@ -480,19 +475,18 @@ deck.volumeGain.connect(audioCtx.destination);
     });
   };
 
-  const playbackStartTime = audioCtx.currentTime;
-
   dispatch({
     type: 'SET_DECK',
     deckNumber,
     payload: {
       source,
-      playbackStartTime,
+      playbackStartTime: audioCtx.currentTime,
       startOffset,
       isPlaying: true,
     },
   });
 };
+
 
 
 
@@ -633,7 +627,7 @@ const stopPlayback = (deckNumber) => {
   const handleSetCuePoint = (deckNumber) => {
     const deck = decksRef.current[deckNumber];
     if (!deck.audioBuffer) return;
-
+  
     if (!deck.isPlaying) {
       const currentPos = deck.currentTime;
       dispatch({
@@ -644,37 +638,41 @@ const stopPlayback = (deckNumber) => {
       console.log(`Cue point set at ${currentPos.toFixed(2)} seconds.`);
     } else {
       stopPlayback(deckNumber);
-      dispatch({
-        type: 'SET_DECK',
-        deckNumber,
-        payload: { currentTime: deck.cuePoint },
-      });
-      console.log(`Playback stopped and returned to cue point at ${deck.cuePoint.toFixed(2)} seconds.`);
+      setTimeout(() => {
+        dispatch({
+          type: 'SET_DECK',
+          deckNumber,
+          payload: { currentTime: deck.cuePoint },
+        });
+        console.log(`Playback stopped and returned to cue point at ${deck.cuePoint.toFixed(2)} seconds.`);
+      }, 50); // Daj czas na zsynchronizowanie stanu
     }
   };
+  
 
   // Funkcja do odtwarzania od punktu CUE
   const playFromCue = (deckNumber) => {
     const deck = decksRef.current[deckNumber];
     if (!deck.audioBuffer) return;
-    const cuePoint = deck.cuePoint;
-
+  
+    const cuePoint = deck.cuePoint || 0;
+  
     if (cuePoint >= 0 && cuePoint <= deck.duration) {
+      startPlayback(deckNumber, cuePoint);
       dispatch({
         type: 'SET_DECK',
         deckNumber,
         payload: {
-          currentTime: cuePoint,
           isPlaying: true,
           isCuePlaying: true,
         },
       });
       console.log(`Playing from cue point at ${cuePoint.toFixed(2)} seconds.`);
-      startPlayback(deckNumber);
     } else {
       console.warn('Cue point is out of bounds.');
     }
   };
+  
 
   // Funkcja do zatrzymania odtwarzania od punktu CUE
   const stopFromCue = (deckNumber) => {
@@ -743,19 +741,37 @@ const stopPlayback = (deckNumber) => {
     }, 200); // 200ms próg dla hold
   };
 
-  const handleCueMouseUp = (deckNumber) => {
-    if (!isMouseDown.current[deckNumber]) {
-      // Jeśli przycisk nie był naciśnięty na tym decku, ignoruj
-      return;
-    }
-    isMouseDown.current[deckNumber] = false; // Resetowanie stanu przycisku
-    clearTimeout(holdTimer.current[deckNumber]);
-    if (isHold.current[deckNumber]) {
-      stopFromCue(deckNumber);
-    } else {
-      handleSetCuePoint(deckNumber);
-    }
-  };
+const handleCueMouseUp = (deckNumber) => {
+  if (!isMouseDown.current[deckNumber]) {
+    // Jeśli przycisk nie był naciśnięty na tym decku, ignoruj
+    return;
+  }
+  isMouseDown.current[deckNumber] = false; // Resetowanie stanu przycisku
+  clearTimeout(holdTimer.current[deckNumber]);
+
+  const deck = decksRef.current[deckNumber];
+
+  if (isHold.current[deckNumber]) {
+    // Zatrzymaj odtwarzanie i wróć do punktu CUE
+    stopPlayback(deckNumber);
+
+    setTimeout(() => {
+      dispatch({
+        type: 'SET_DECK',
+        deckNumber,
+        payload: {
+          currentTime: deck.cuePoint,
+          isCuePlaying: false,
+        },
+      });
+      console.log(`Playback stopped and returned to cue point at ${deck.cuePoint.toFixed(2)} seconds.`);
+    }, 0); // Ustaw aktualizację stanu po zatrzymaniu odtwarzania
+  } else {
+    // Ustaw punkt CUE, jeśli nie był odtwarzany
+    handleSetCuePoint(deckNumber);
+  }
+};
+
 
   // Funkcja do aktualizacji BPM
   const updateBpm = (deckNumber, newBpm) => {
@@ -824,30 +840,41 @@ const stopPlayback = (deckNumber) => {
     console.log(`Loop end set at: ${currentPoint.toFixed(2)} seconds`);
   };
 
-  const exitLoop = (deckNumber) => {
-    dispatch({
-      type: 'EXIT_LOOP',
-      deckNumber,
-    });
-    dispatch({
-      type: 'SET_DECK',
-      deckNumber,
-      payload: {
-        activePredefinedLoop: null,
-      },
-    });
-    console.log(`Exited loop on deck ${deckNumber}`);
-    // Jeśli deck jest odtwarzany, wznowienie normalnego odtwarzania od loopEnd
-    const deck = decksRef.current[deckNumber];
-    if (deck.isPlaying) {
-      dispatch({
-        type: 'SET_DECK',
-        deckNumber,
-        payload: { currentTime: deck.loopEnd },
-      });
-      startPlayback(deckNumber);
-    }
-  };
+const exitLoop = (deckNumber) => {
+  const deck = decksRef.current[deckNumber];
+  const audioCtx = audioContexts[deckNumber].current;
+
+  if (!deck.isLooping) return;
+
+  console.log(`Exiting loop on deck ${deckNumber}`);
+
+  // Oblicz aktualny czas w obrębie pętli
+  const elapsedTime = audioCtx.currentTime - deck.playbackStartTime;
+  const playbackRate = deck.bpm / deck.defaultBpm || 1;
+  const currentTimeWithinLoop = deck.loopStart + ((elapsedTime * playbackRate) % (deck.loopEnd - deck.loopStart));
+
+  // Aktualizuj stan decka
+  dispatch({
+    type: 'EXIT_LOOP',
+    deckNumber,
+  });
+
+  dispatch({
+    type: 'SET_DECK',
+    deckNumber,
+    payload: {
+      isLooping: false,
+      loopStart: null,
+      loopEnd: null,
+      currentTime: currentTimeWithinLoop, // Ustaw czas w obrębie pętli jako nowy currentTime
+    },
+  });
+
+  // Wznowienie odtwarzania z bieżącego czasu
+  stopPlayback(deckNumber); // Zatrzymaj bieżące odtwarzanie
+  startPlayback(deckNumber, currentTimeWithinLoop); // Wznowienie od bieżącej pozycji
+};
+
   
 
   // Funkcja do rozpoczęcia pętli
