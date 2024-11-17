@@ -4,18 +4,80 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-start;
   color: $white;
   gap: 5px;
+  height: 100%;
 
-  input{
-    width: 80%;
-    background-color: $black;
-    color: $white;
+  label{
+    height: 25%;
+    width: 100%;
+    text-align: center;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .inputWrapper {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    height: 40%;
     border: 2px solid $orange;
     border-radius: 5px;
-    font-weight: 700;
-    font-size: 1rem;
-    padding: 2px;
+
+    .buttons{
+      display: flex;
+      flex-direction: column;
+      width: 30%;
+      height: 100%;
+    }
+
+    .numberInput {
+      background-color: $black;
+      color: $white;
+      font-weight: 600;
+      width: 70%;
+      height: 100%;
+      font-size: 1rem;
+      text-align: center;
+      border: none;
+      border-radius: 10px;
+
+      &:focus {
+        outline: none;
+      }
+
+      /* Ukryj natywne strzałki */
+      -moz-appearance: textfield; /* Firefox */
+      -webkit-appearance: none; /* Chrome, Safari */
+      appearance: none;
+    }
+
+    .numberInput::-webkit-inner-spin-button,
+    .numberInput::-webkit-outer-spin-button {
+      display: none; /* Ukryj natywne spin buttons */
+    }
+
+    .spinButton {
+      background-color: $orange;
+      color: $black;
+      font-weight: bold;
+      border: none;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      width: 100%;
+      height: 50%;
+      cursor: pointer;
+      font-size: 0.7rem;
+
+      &:hover {
+        background-color: lighten($orange, 10%);
+      }
+
+      &:active {
+        background-color: darken($orange, 10%);
+      }
+    }
   }
 }

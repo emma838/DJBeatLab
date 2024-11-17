@@ -12,7 +12,14 @@ const Crossfader = ({ onCrossfadeChange }) => {
   };
 
   return (
+    <div className={styles.crossfaderContent}>
+      <span>CROSSFADER</span>
     <div className={styles.crossfader}>
+      <div className={styles.scale}>
+        <div className={`${styles.scaleMark} ${styles.top}`} />
+        <div className={`${styles.scaleMark} ${styles.middle}`} />
+        <div className={`${styles.scaleMark} ${styles.bottom}`} />
+      </div>
       <input
         type="range"
         min="0"
@@ -22,6 +29,7 @@ const Crossfader = ({ onCrossfadeChange }) => {
         onChange={handleSliderChange}
         className={styles.slider}
       />
+    </div>
     </div>
   );
 };

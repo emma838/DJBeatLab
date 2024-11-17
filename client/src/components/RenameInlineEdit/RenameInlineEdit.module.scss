@@ -1,17 +1,20 @@
 @import '../../styles/variables.scss';
 .renameInput {
-    padding: 2px;
     margin: 0px 10px;
     font-size: medium;
-    color: $dark-grey;
-    background-color: $white;
-    width: 200px;
+    color: $white;
+    background-color: $black;
+    border: 1px solid $orange;
+    border-radius: 5px;
+    padding: 3px;
+    width: 90%;
   }
   
   .renameInput:focus {
     outline: none;
-    border:none;
-    background-color: $white;
+    border: 1px solid $orange;
+    border-radius: 5px;
+    background-color: $black;
   }
   
   

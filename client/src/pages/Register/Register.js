@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import styles from './Register.module.scss'; // Zmodyfikowana ścieżka do pliku stylów
+import { useNavigate } from 'react-router-dom';  // Import hooka do nawigacji
 //import logoImage from '../../../assets/djbl_logo1.png'; // Upewnij się, że masz obraz logo w odpowiednim folderze
 
 const Register = () => {
@@ -9,6 +10,7 @@ const Register = () => {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [message, setMessage]   = useState('');
   const [error, setError]       = useState('');
+  const navigate = useNavigate(); 
 
   const handleRegister = async (e) => {
     e.preventDefault();
@@ -31,12 +33,16 @@ const Register = () => {
       const data = await response.json();
 
       if (response.ok) {
-        setMessage('Rejestracja zakończona pomyślnie!');
+        setMessage('Rejestracja zakończona pomyślnie. Za chwilę zostaniesz przekierowany na stronę logowania.');
         setError(''); // Wyczyszczenie błędu
         setUsername('');
         setEmail('');
         setPassword('');
         setConfirmPassword('');
+        // Przekierowanie po 3 sekundach
+        setTimeout(() => {
+          navigate('/login');
+        }, 3000);
       } else {
         setError(data.msg || 'Wystąpił błąd rejestracji');
         setMessage(''); // Wyczyszczenie komunikatu
@@ -110,7 +116,7 @@ const Register = () => {
               <button type="submit" className={styles.button}>Utwórz konto</button>
               <div className={styles.loginContainer}>
                 <div className={styles.loginText}>
-                  <p>Masz konto? <a href="/login" className={styles.loginLink}>Zaloguj się</a></p>
+                  <p>Masz konto? <br /><a href="/login" className={styles.loginLink}>Zaloguj się</a></p>
                 </div>
               </div>
             </div>

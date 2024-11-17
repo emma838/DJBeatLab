@@ -1,8 +1,48 @@
-// Kolorystyka
+
+// Kolorystyka z odcieniami
+
+// Orange
 $orange: #ea3c0c;
-$dark-grey: #1E1E1E;
-$semi-grey: #313131;
-$light-grey: #515151;
-$white: #e4dbdb;
-$black: #050404;
+$orange-light: #ff5c2a; // Jaśniejszy odcień
+$orange-dark: #c62b0a;  // Ciemniejszy odcień
+
+// Green
 $green: #00DD51;
+$green-light: #33FF78; // Jaśniejszy odcień
+$green-dark: #00aa3c;  // Ciemniejszy odcień
+
+// Grey
+$grey: #313131;
+$grey-light: #515151;   // Jaśniejszy odcień
+$grey-dark: #1E1E1E;    // Ciemniejszy odcień
+
+// Light Grey
+$light-grey: #515151;
+$light-grey-light: #696969; // Opcjonalny dodatkowy jaśniejszy odcień
+$light-grey-dark: #3a3a3a;  // Opcjonalny dodatkowy ciemniejszy odcień
+
+// Dark Grey
+$dark-grey: #1E1E1E;
+$dark-grey-light: #333333; // Opcjonalny dodatkowy jaśniejszy odcień
+$dark-grey-dark: #0f0f0f;  // Opcjonalny dodatkowy ciemniejszy odcień
+
+// White
+$white: #e4dbdb;
+$white-light: #f5f0f0; // Jaśniejszy odcień
+$white-dark: #d1c6c6;  // Ciemniejszy odcień
+
+// Black
+$black: #050404;
+$black-light: #1a1a1a; // Jaśniejszy odcień
+$black-dark: #000000;  // Ciemniejszy odcień
+
+// Dodatkowe opcjonalne odcienie
+$orange-extra-light: #ff7f3f;
+$orange-extra-dark: #b1270a;
+$red-text: #ff3300;
+
+$green-extra-light: #66FF99;
+$green-extra-dark: #00883d;
+
+$grey-extra-light: #6a6a6a;
+$grey-extra-dark: #151515;

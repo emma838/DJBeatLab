@@ -45,44 +45,8 @@ const EQKnobs = ({ deckNumber }) => {
   return (
     <div className={styles.eq}>
       <div className={styles.knobs}>
-        <Knob
-          label="Low"
-          value={deck?.lowShelf?.gain?.value ?? lowValue}
-          min={-12}
-          max={12}
-          step={1}
-          onChange={handleLowChange}
-          defaultValue={0}
-          numTicks={25}
-          tickSize={2}
-          tickColor="#888"
-          tickOffset={4}
-          pointerLength={15}
-          pointerColor="#333"
-          pointerWidth={4}
-          pointerLinecap="round"
-          showScale={true}
-        />
-        <Knob
-          label="Mid"
-          value={deck?.midPeak?.gain?.value ?? midValue}
-          min={-12}
-          max={12}
-          step={1}
-          onChange={handleMidChange}
-          defaultValue={0}
-          numTicks={25}
-          tickSize={2}
-          tickColor="#888"
-          tickOffset={4}
-          pointerLength={15}
-          pointerColor="#333"
-          pointerWidth={4}
-          pointerLinecap="round"
-          showScale={true}
-        />
-        <Knob
-          label="High"
+      <Knob
+          label="HIGH"
           value={deck?.highShelf?.gain?.value ?? highValue}
           min={-12}
           max={12}
@@ -90,11 +54,47 @@ const EQKnobs = ({ deckNumber }) => {
           onChange={handleHighChange}
           defaultValue={0}
           numTicks={25}
-          tickSize={2}
-          tickColor="#888"
-          tickOffset={4}
+          tickSize={1}
+          tickColor="#d1c6c6"
+          tickOffset={6}
           pointerLength={15}
-          pointerColor="#333"
+          pointerColor="#ea3c0c"
+          pointerWidth={4}
+          pointerLinecap="round"
+          showScale={true}
+        />
+        <Knob
+          label="MID"
+          value={deck?.midPeak?.gain?.value ?? midValue}
+          min={-12}
+          max={12}
+          step={1}
+          onChange={handleMidChange}
+          defaultValue={0}
+          numTicks={25}
+          tickSize={1}
+          tickColor="#d1c6c6"
+          tickOffset={6}
+          pointerLength={15}
+          pointerColor="#ea3c0c"
+          pointerWidth={4}
+          pointerLinecap="round"
+          showScale={true}
+        />
+<Knob
+          label="LOW"
+          value={deck?.lowShelf?.gain?.value ?? lowValue}
+          min={-12}
+          max={12}
+          step={1}
+          onChange={handleLowChange}
+          defaultValue={0}
+          numTicks={25}
+          tickSize={1}
+          tickColor="#d1c6c6"
+          tickOffset={6}
+          pointerLength={15}
+          pointerColor="#ea3c0c"
           pointerWidth={4}
           pointerLinecap="round"
           showScale={true}

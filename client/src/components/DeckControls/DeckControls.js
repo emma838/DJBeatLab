@@ -5,7 +5,7 @@ import styles from './DeckControls.module.scss';
 function DeckControls({ playPause, isPlaying, deckNumber, handleCueMouseDown, handleCueMouseUp }) {
   return (
     <div className={styles.deckControls}>
-      <button onClick={playPause} className={styles.play}>
+      <button onClick={playPause} className={`${styles.playPause} ${isPlaying ? styles.pause : styles.play}`}>
         {isPlaying ? 'PAUSE' : 'PLAY'}
       </button>
       <button

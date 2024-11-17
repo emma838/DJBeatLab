@@ -1,5 +1,7 @@
 const express = require('express');
 const multer = require('multer');
+const bcrypt = require('bcryptjs');
+const validator = require('validator');
 const User = require('../models/User'); // Model użytkownika
 const verifyToken = require('../middlewares/authMiddleware'); // Middleware do weryfikacji JWT
 const path = require('path');
@@ -45,9 +47,34 @@ const updateUsername = async (req, res) => {
   }
 };
 
+const updatePassword = async (req, res) => {
+  const { password } = req.body;
+
+  if (!validator.isStrongPassword(password, { minLength: 8, minSymbols: 1 })) {
+    return res.status(400).json({ msg: 'Hasło musi mieć co najmniej 8 znaków i zawierać znak specjalny' });
+}
+
+  try {
+    const user = await User.findById(req.user.userId);
+    if (!user) {
+      return res.status(404).json({ msg: 'Użytkownik nie znaleziony' });
+    }
+
+    const hashedPassword = await bcrypt.hash(password, 10);
+    user.password = hashedPassword;
+    await user.save();
+
+    res.json({ msg: 'Hasło zostało zmienione' });
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ msg: 'Błąd serwera' });
+  }
+};
+
 
 
 module.exports ={
     getProfile,
-    updateUsername
+    updateUsername,
+    updatePassword
 };

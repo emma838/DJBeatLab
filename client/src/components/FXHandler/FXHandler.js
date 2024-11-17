@@ -1,5 +1,3 @@
-// src/components/FXHandler/FXHandler.js
-
 import React, { useState } from 'react';
 import { useAudio } from '../AudioManager/AudioManager';
 import Knob from '../Knob/Knob';
@@ -13,22 +11,17 @@ const FXHandler = ({ deckNumber }) => {
     updateFlangerStrength,
   } = useAudio();
 
-  // Stan przechowujący intensywności dla każdego efektu
   const [effectIntensities, setEffectIntensities] = useState({
     reverb: 0,
     delay: 0,
     flanger: 0,
   });
 
-  // Stan przechowujący czas opóźnienia dla efektu delay
-  const [delayTime, setDelayTime] = useState(0.3); // Domyślny czas opóźnienia dla delay
+  const [delayTime, setDelayTime] = useState(0.3); // Default delay time
+  const [effectType, setEffectType] = useState('reverb'); // Default effect type
 
-  const [effectType, setEffectType] = useState('reverb'); // Domyślnie reverb
-
-  const handleEffectChange = (e) => {
-    const selectedEffect = e.target.value;
+  const handleEffectTypeClick = (selectedEffect) => {
     setEffectType(selectedEffect);
-    // Nie resetujemy intensywności przy zmianie efektu
   };
 
   const handleEffectIntensityChange = (newIntensity) => {
@@ -53,52 +46,41 @@ const FXHandler = ({ deckNumber }) => {
     }
   };
 
-  // Ustawienia knobów dla różnych efektów
   const effectSettings = {
-    reverb: {
-      min: 0,
-      max: 1,
-      step: 0.1,
-      defaultValue: 0,
-      label: 'Strength',
-      numTicks: 11,
-    },
-    delay: {
-      min: 0,
-      max: 1,
-      step: 0.1,
-      defaultValue: 0,
-      label: 'Strength',
-      numTicks: 11,
-    },
-    flanger: {
-      min: 0,
-      max: 1,
-      step: 0.1,
-      defaultValue: 0,
-      label: 'Strength',
-      numTicks: 11,
-    },
+    reverb: { min: 0, max: 1, step: 0.1, defaultValue: 0, label: 'GAIN', numTicks: 11 },
+    delay: { min: 0, max: 1, step: 0.1, defaultValue: 0, label: 'GAIN', numTicks: 11 },
+    flanger: { min: 0, max: 1, step: 0.1, defaultValue: 0, label: 'GAIN', numTicks: 11 },
   };
 
   const delayTimeSettings = {
-    min: 0.05,
+    min: 0,
     max: 1,
     step: 0.1,
-    defaultValue: 0.3,
-    label: 'Time',
-    numTicks: 10,
+    defaultValue: 0,
+    label: 'TIME',
+    numTicks: 11,
   };
 
   const currentEffectSettings = effectSettings[effectType];
 
   return (
     <div className={styles.fxHandler}>
-      <select value={effectType} onChange={handleEffectChange} className={styles.select}>
-        <option value="reverb">Reverb</option>
-        <option value="delay">Delay</option>
-        <option value="flanger">Flanger</option>
-      </select>
+      {/* Lista efektów */}
+      <ul className={styles.effectList}>
+        {['reverb', 'delay', 'flanger'].map((effect) => (
+          <li
+            key={effect}
+            className={`${styles.effectItem} ${
+              effectType === effect ? styles.activeEffect : ''
+            }`}
+            onClick={() => handleEffectTypeClick(effect)}
+          >
+            {effect.charAt(0).toUpperCase() + effect.slice(1)}
+          </li>
+        ))}
+      </ul>
+
+      {/* Knobs for selected effect */}
       <div className={styles.knobs}>
         <Knob
           value={effectIntensities[effectType]}
@@ -111,8 +93,9 @@ const FXHandler = ({ deckNumber }) => {
           showScale={true}
           numTicks={currentEffectSettings.numTicks}
           tickLength={7}
-          tickColor="#515151"
-          tickWidth={1}
+          tickSize={1}
+          tickColor="#d1c6c6"
+          tickOffset={6}
         />
 
         {effectType === 'delay' && (
@@ -126,9 +109,10 @@ const FXHandler = ({ deckNumber }) => {
             label={delayTimeSettings.label}
             showScale={true}
             numTicks={delayTimeSettings.numTicks}
-            tickLength={8}
-            tickColor="#888"
-            tickWidth={1}
+            tickLength={7}
+            tickSize={1}
+          tickColor="#d1c6c6"
+          tickOffset={6}
           />
         )}
       </div>

@@ -5,28 +5,51 @@
   display: flex;
   flex-direction: row;
   align-items: center;
+  height: 100%;
 }
 
-.play {
-  margin: 0 5px;
+.playPause {
+  margin: 0 10px;
   background-color: $black;
   color: $orange;
   font-weight: 700;
+  font-size: 1rem;
   border: 2px solid $orange;
-  padding: 5px;
-  width: 60px;
+  width: 70px;
+  height: 40%;
   cursor: pointer;
   border-radius: 5px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 4px 4px 8px $black;
+
+  &:active {
+box-shadow: none;
+  }
+}
+
+.pause{
+  background-color: $orange;
+  color: $black;
 }
 
 .cue {
-  margin: 0 5px;
+  margin: 0 10px;
   background-color: $black;
   color: $green;
+  font-size: 1rem;
   font-weight: 700;
   border: 2px solid $green;
   padding: 5px;
-  width: 60px;
+  width: 70px;
+  height: 40%;
   cursor: pointer;
   border-radius: 5px;
+  box-shadow: 4px 4px 8px $black;
+  &:active {
+    background-color: $green;
+    color: $black;
+    box-shadow: none;
+      }
 }

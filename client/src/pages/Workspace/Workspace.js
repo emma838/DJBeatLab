@@ -9,7 +9,6 @@ import Deck from '../../components/Deck/Deck';
 import Waveform from '../../components/Waveform/Waveform';
 import VolumeSlider from '../../components/VolumeSlider/VolumeSlider';
 import CrossFader from '../../components/CrossFader/CrossFader';
-import GainMeter from '../../components/GainMeter/GainMeter';
 import EQKnobs from '../../components/EQKnobs/EQKnobs';
 
 // Importowanie hooka do zarządzania audio
@@ -28,12 +27,20 @@ const Workspace = () => {
   // Stan do wyzwalania aktualizacji playlisty
   const [playlistUpdateTrigger, setPlaylistUpdateTrigger] = useState(false);
 
+  //stan do zapamietywania przycisku assign to deck"
+  const [deckAssignments, setDeckAssignments] = useState({});
+
+
   // /**
   //  * Funkcja przypisująca wybraną piosenkę do decka
   //  * @param {number} deckNumber - Numer decka (1 lub 2)
   //  * @param {object} song - Obiekt piosenki
   //  */
   const handleAssignToDeck = (deckNumber, song) => {
+    setDeckAssignments((prevAssignments) => ({
+      ...prevAssignments,
+      [deckNumber]: song._id, // Przypisz ID utworu do danego decka
+    }));
     const trackUrl = `/api/audio/${song.user}/uploaded/${encodeURIComponent(song.filename)}`;
     const track = { ...song, url: trackUrl };
     loadTrackData(deckNumber, track);
@@ -65,13 +72,15 @@ const Workspace = () => {
       <div className={styles.waveforms}>
         <Waveform
           deckNumber={1}
-          waveformColor="#FF4C1A"
+          waveformColor="#c62b0a"
           playheadColor="#e4dbdb"
+          cueColor="#e4dbdb"
         />
         <Waveform
           deckNumber={2}
-          waveformColor="#00DD51"
+          waveformColor="#00aa3c"
           playheadColor="#e4dbdb"
+          cueColor="#e4dbdb"
         />
       </div>
 
@@ -147,6 +156,7 @@ const Workspace = () => {
             setSelectedPlaylist={setSelectedPlaylist}
             playlistUpdateTrigger={playlistUpdateTrigger}
             onAssignToDeck={handleAssignToDeck}
+            deckAssignments={deckAssignments}
           />
         </div>
       </section>

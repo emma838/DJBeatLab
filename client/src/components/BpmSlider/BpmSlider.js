@@ -1,4 +1,3 @@
-// BpmSlider.js
 import React from 'react';
 import { useAudio } from '../../components/AudioManager/AudioManager';
 import styles from './BpmSlider.module.scss';
@@ -9,7 +8,6 @@ const BpmSlider = ({ deckNumber }) => {
   const baseBpm = deck?.defaultBpm || 120;
   const bpm = deck?.bpm || baseBpm;
 
-  // Definiowanie zakresu BPM z uwzględnieniem ±80 BPM, minimalne BPM to 40
   const minBpm = Math.max(baseBpm - 40, 40);
   const maxBpm = baseBpm + 40;
 
@@ -20,8 +18,14 @@ const BpmSlider = ({ deckNumber }) => {
   };
 
   return (
+    <div className={styles.bpmSliderContent}>
+            <div className={styles.label}>TEMPO</div>
     <div className={styles.bpmSlider}>
-      <div className={styles.label}>TEMPO</div>
+      <div className={styles.scale}>
+        <div className={`${styles.scaleMark} ${styles.top}`} />
+        <div className={`${styles.scaleMark} ${styles.middle}`} />
+        <div className={`${styles.scaleMark} ${styles.bottom}`} />
+      </div>
       <input
         type="range"
         min={minBpm}
@@ -31,7 +35,7 @@ const BpmSlider = ({ deckNumber }) => {
         onChange={handleSliderChange}
         className={styles.slider}
       />
-      <div className={styles.bpmValue}>{bpm}</div>
+    </div>
     </div>
   );
 };

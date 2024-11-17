@@ -6,10 +6,10 @@ function Waveform({
   deckNumber,
   waveformColor = '#007bff',
   playheadColor = '#007bff',
-  loopColor = 'rgba(255, 0, 0, 0.3)', // Półprzezroczysty czerwony dla pętli
-  cueColor = '#FF0000', // Czerwony dla CUE
+  loopColor = 'rgba(180, 180, 180, 0.4)', // Półprzezroczysty czerwony dla pętli
+  cueColor = '#b1270a', // Czerwony dla CUE
   loopLineColor = '#FF0000', // Czerwony dla linii pętli
-  loopLineWidth = 2, // Grubość linii pętli
+  loopLineWidth = 4, // Grubość linii pętli
   barWidth = 3,
   barSpacing = 1,
 }) {
@@ -33,7 +33,7 @@ function Waveform({
   const loopEnd = deck?.loopEnd;
   const isLooping = deck?.isLooping;
 
-  const pixelsPerSecond = 100; // Stała prędkość przesuwania waveforma
+  const pixelsPerSecond = 150; // Stała prędkość przesuwania waveforma
   const scaleFactor = defaultBpm / bpm; // Współczynnik skalowania
 
   // Normalize peaks so the maximum value is 1
@@ -112,7 +112,7 @@ const shift = currentTimeToUse * pixelsPerSecond * scaleFactor - centerX;
         }
 
         // Rysowanie beat grid
-        ctx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
         ctx.lineWidth = 1;
 
         const timePerBeat = 60 / defaultBpm; // Użyj defaultBpm zamiast bpm
@@ -132,7 +132,7 @@ const shift = currentTimeToUse * pixelsPerSecond * scaleFactor - centerX;
 
         // Rysowanie głowicy odtwarzania (linia środkowa)
         ctx.fillStyle = playheadColor;
-        ctx.fillRect(centerX - 1, 0, 2, height);
+        ctx.fillRect(centerX - 1, 0, 4, height);
 
         // Rysowanie wskaźnika punktu CUE
         if (cuePoint >= 0 && cuePoint <= duration) {
@@ -140,7 +140,7 @@ const shift = currentTimeToUse * pixelsPerSecond * scaleFactor - centerX;
 
           if (xCue >= 0 && xCue <= width) {
             ctx.fillStyle = cueColor;
-            ctx.fillRect(xCue - 1, 0, 2, height);
+            ctx.fillRect(xCue - 1, 0, 4, height);
           }
         }
       } catch (error) {
@@ -177,6 +177,8 @@ const shift = currentTimeToUse * pixelsPerSecond * scaleFactor - centerX;
     bpm,
     defaultBpm,
     pixelsPerSecond,
+    cueColor,
+    scaleFactor,
   ]);
 
   const adjustCanvasForDPR = (canvas) => {

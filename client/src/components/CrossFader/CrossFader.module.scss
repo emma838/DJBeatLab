@@ -1,9 +1,104 @@
-.crossfader{
+@import '../../styles/variables.scss';
+.crossfaderContent{
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  height: 15%;
+  justify-content: flex-end;
+  height: 20%;
   width: 100%;
-  border: 1px solid black;
+
+  span{
+    font-weight: 600;
+    color: $white;
+    font-size: 0.8rem;
+    padding-bottom: 5px;
+  }
+}
+.crossfader{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 60%;
+}
+
+.scale {
+  position: absolute;
+  width: 178px; /* Szerokość linii */
+  height: 4px; /* Wysokość skali */
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  z-index: 1; /* Skala pod sliderem */
+}
+
+.scaleMark {
+  width: 2px; /* Długość kreski */
+  height: 26px; /* Grubość kreski */
+  background-color: $white;
+}
+
+.slider {
+  position: absolute; /* Ustawia slider nad skalą */
+  z-index: 2;
+  width: 180px; /* Szerokość suwaka wynosi 100px. */
+  // margin-top: 8px; /* Dodaje odstęp 8px powyżej suwaka. */
+
+  -webkit-appearance: none; /* Usuwa domyślne style przeglądarek opartych na Webkit (np. Chrome, Safari). */
+  height: 8px; /* Wysokość toru suwaka wynosi 4px. */
+  background: $black; /* Ustawia kolor tła toru suwaka na jasnoszary. */
+  border-radius: 4px; /* Zaokrągla krawędzie toru suwaka. */
+  outline: none; /* Usuwa domyślną obwódkę, która pojawia się po zaznaczeniu suwaka. */
+  
+  /* Stylowanie uchwytu (thumb) suwaka w przeglądarkach Webkit (Chrome, Safari). */
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none; /* Usuwa domyślne style uchwytu. */
+    appearance: none; /* Usuwa domyślne style uchwytu w nowoczesnych przeglądarkach. */
+    width: 10px; /* Szerokość uchwytu suwaka. */
+    height: 40px; /* Wysokość uchwytu suwaka. */
+    background: $orange; /* Kolor uchwytu suwaka ustawiony na ciemnoszary. */
+    cursor: pointer; /* Zmienia kursor na wskazujący (rękę) po najechaniu na uchwyt. */
+    border: none; /* Usuwa obramowanie uchwytu. */
+    border-radius: 5px; /* Dodaje lekkie zaokrąglenie krawędzi uchwytu. */
+    // margin-top: -2px; /* Wyrównuje uchwyt z torem suwaka. */
+    box-shadow: -3px 3px 3px 0 $black; /* Dodaje cień do uchwytu suwaka. */
+  }
+
+  /* Stylowanie uchwytu dla przeglądarek Firefox. */
+  &::-moz-range-thumb {
+    width: 8px; /* Szerokość uchwytu suwaka. */
+    height: 30px; /* Wysokość uchwytu suwaka. */
+    background: $white; /* Kolor uchwytu suwaka ustawiony na ciemnoszary. */
+    cursor: pointer; /* Zmienia kursor na wskazujący (rękę) po najechaniu na uchwyt. */
+    border: none; /* Usuwa obramowanie uchwytu. */
+    border-radius: 5px; /* Dodaje lekkie zaokrąglenie krawędzi uchwytu. */
+    // margin-top: -2px; /* Wyrównuje uchwyt z torem suwaka. */
+    box-shadow: -3px 3px 3px 0 $black; /* Dodaje cień do uchwytu suwaka. */
+  }
+
+  /* Stylowanie uchwytu dla przeglądarek Internet Explorer. */
+  &::-ms-thumb {
+    width: 8px; /* Szerokość uchwytu suwaka. */
+    height: 30px; /* Wysokość uchwytu suwaka. */
+    background: $white; /* Kolor uchwytu suwaka ustawiony na ciemnoszary. */
+    cursor: pointer; /* Zmienia kursor na wskazujący (rękę) po najechaniu na uchwyt. */
+    border: none; /* Usuwa obramowanie uchwytu. */
+    border-radius: 5px; /* Dodaje lekkie zaokrąglenie krawędzi uchwytu. */
+    // margin-top: -2px; /* Wyrównuje uchwyt z torem suwaka. */
+    box-shadow: -3px 3px 3px 0 $black; /* Dodaje cień do uchwytu suwaka. */
+  }
+
+  /* Stylowanie toru suwaka dla Internet Explorer, aby był przezroczysty. */
+  &::-ms-track {
+    width: 8px; /* Szerokość uchwytu suwaka. */
+    height: 30px; /* Wysokość uchwytu suwaka. */
+    background: $white; /* Kolor uchwytu suwaka ustawiony na ciemnoszary. */
+    cursor: pointer; /* Zmienia kursor na wskazujący (rękę) po najechaniu na uchwyt. */
+    border: none; /* Usuwa obramowanie uchwytu. */
+    border-radius: 5px; /* Dodaje lekkie zaokrąglenie krawędzi uchwytu. */
+    // margin-top: -2px; /* Wyrównuje uchwyt z torem suwaka. */
+    box-shadow: -3px 3px 3px 0 $black; /* Dodaje cień do uchwytu suwaka. */
+  }
 }

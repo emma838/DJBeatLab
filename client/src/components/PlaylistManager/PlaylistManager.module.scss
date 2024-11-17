@@ -1,6 +1,6 @@
 @import '../../styles/variables.scss';
 .playlistManagerContainer {
-    background-color: $black;
+  background-color: $dark-grey;
     color: white;
     width: 100%;
     height: 100%; /* Zajmuje pełną wysokość kontenera */
@@ -9,12 +9,12 @@
     display: flex;
     flex-direction: row;
     justify-content: space-between;
-    border: 2px solid $dark-grey;
     border-radius: 10px;
   }
 
   .playlistContainer{
     width: 90%;
+    border-radius: 10px;
   }
 
   .settingsContainer {
@@ -23,6 +23,7 @@
     background-color: $dark-grey;
     width: 20%;
     gap: 10px;
+    border-radius: 10px 0 0 10px;
   }
 
   .settingsTitle {
@@ -52,7 +53,6 @@
     height: 18%;
     border-radius: 5px 5px 0 0;
     font-size: 1rem;
-    border-bottom: 2px solid $dark-grey;
         text-align: center;
   }
 
@@ -61,7 +61,6 @@
     color: $white;
     font-size: 1rem;
     text-align: center;
-    font-weight: 600;
     border-right: 2px solid $white;
   }
 
@@ -69,8 +68,6 @@
     width: 35%;
     color: $white;
     font-size: 1rem;
-    padding-left: 10px;
-    font-weight: 600;
     border-right: 2px solid $white;
   }
 
@@ -78,8 +75,6 @@
     width: 28%;
     color: $white;
     font-size: 1rem;
-    padding-left: 10px;
-    font-weight: 600;
     border-right: 2px solid $white;
   }
 
@@ -87,8 +82,6 @@
     width: 8%;
     color: $white;
     font-size: 1rem;
-    padding-left: 10px;
-    font-weight: 600;
     border-right: 2px solid $white;
   }
 
@@ -96,8 +89,6 @@
     width: 8%;
     color: $white;
     font-size: 1rem;
-    padding-left: 10px;
-    font-weight: 600;
     border-right: 2px solid $white;
   }
 
@@ -105,8 +96,6 @@
     width: 8%;
     color: $white;
     font-size: 1rem;
-    padding-left: 10px;
-    font-weight: 600;
     border-right: 2px solid $white;
   }
 
@@ -114,8 +103,6 @@
     width: 5%;
     color: $white;
     font-size: 1rem;
-    padding-left: 10px;
-    font-weight: 600;
   }
 
   .dropdown {
@@ -151,7 +138,7 @@
   .editButton, .addButton, .deleteButton {
     background-color: $white;
     margin: 10px 0;
-    color: $semi-grey;
+    color: $grey;
     width: 70%;
     border: none;
     height: 25px;
@@ -186,8 +173,9 @@
       overflow-y: scroll;
       background-color: $black;
       box-sizing: border-box;
-      height: 80%;
+      height: 82%;
       border-left: 2px solid $light-grey;
+      border-radius: 0  0 10px 10px;
   }
 
   .songItem {
@@ -199,6 +187,12 @@
 
     color: white;
     font-weight: light;
+  }
+
+  .emptyPlaylist{
+  padding: 20px;
+  text-align: center;
+  color: #888;
   }
 
   .songInfo {
@@ -268,6 +262,7 @@
     width: 25px;
     border-radius: 5px;
     font-size: large;
+    font-weight: 600;
     cursor: pointer;
     display: flex;
     align-items: center;
@@ -275,6 +270,11 @@
   }
 
   .channelBtn:hover {
+    background-color: $white;
+    color: $black;
+  }
+
+  .channelBtn.active {
     background-color: $white;
     color: $black;
   }

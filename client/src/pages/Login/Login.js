@@ -50,7 +50,7 @@ const Login = () => {
         <h2 className={styles.title}>Logowanie</h2>
         <form className={styles.form} onSubmit={handleLogin}>
           <div className={styles.inputGroup}>
-            <label className={styles.label}>Email lub Nazwa użytkownika:</label>
+            <label className={styles.label}>Email lub login:</label>
             <input
               className={styles.input}
               type="text"

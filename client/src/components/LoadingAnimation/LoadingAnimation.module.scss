@@ -1,9 +1,8 @@
 /* src/components/LoadingAnimation/LoadingAnimation.module.scss */
-
+@import '../../styles/variables.scss';
 .loadingContainer {
   display: flex;
   align-items: center;
-  margin-top: 20px;
 }
 
 .spinner {
@@ -11,7 +10,7 @@
   width: 24px;
   height: 24px;
   border-radius: 50%;
-  border-left-color: #09f;
+  border-left-color: $orange;
   animation: spin 1s linear infinite;
   margin-right: 10px;
 }
@@ -23,11 +22,12 @@
 }
 
 .loadingText {
-  font-size: 16px;
+  font-size: 1rem;
+  font-weight: 600;
   position: relative;
   display: flex;
   align-items: center;
-  color: black;
+  color: $orange;
 }
 
 .dot {
@@ -36,7 +36,7 @@
   height: 8px;
   margin-left: 4px;
   border-radius: 50%;
-  background-color: #09f;
+  background-color: $orange;
   opacity: 0;
   animation: dotAnimation 1.5s infinite;
 }

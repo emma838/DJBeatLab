@@ -1,0 +1,128 @@
+/* home.module.scss */
+
+.home {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    padding: 50px 0;
+  }
+  
+  .carouselContainer {
+    position: relative;
+    width: 800px; // Dopasuj do potrzeb
+    height: 400px; // Dopasuj do potrzeb
+    margin: 0 auto;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    overflow: hidden;
+  }
+  
+  .carouselItem {
+    position: absolute;
+    width: 250px;
+    height: 250px;
+    background-color: #fff;
+    border-radius: 15px;
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.3);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+  }
+  
+  .image {
+    width: 120px;
+    height: 120px;
+    object-fit: cover;
+    border-radius: 10px;
+  }
+  
+  .title {
+    margin: 10px 0 5px 0;
+    font-size: 1.2em;
+    text-align: center;
+  }
+  
+  .text {
+    font-size: 0.9em;
+    text-align: center;
+    padding: 0 10px;
+  }
+  
+  .center {
+    opacity: 1;
+    transform: scale(1);
+    filter: none;
+    z-index: 2;
+  }
+  
+  .left,
+  .right {
+    opacity: 0.7;
+    transform: scale(0.9) translateY(20px);
+    filter: blur(2px);
+    z-index: 1;
+  }
+  
+  .left:hover,
+  .right:hover {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+    filter: none;
+  }
+  
+  /* Responsywność */
+  @media (max-width: 1024px) {
+    .carouselContainer {
+      width: 90%;
+      height: auto;
+    }
+  
+    .carouselItem {
+      width: 200px;
+      height: 200px;
+    }
+  
+    .image {
+      width: 100px;
+      height: 100px;
+    }
+  
+    .title {
+      font-size: 1em;
+    }
+  
+    .text {
+      font-size: 0.8em;
+    }
+  }
+  
+  @media (max-width: 600px) {
+    .carouselContainer {
+      width: 100%;
+      height: auto;
+    }
+  
+    .carouselItem {
+      width: 150px;
+      height: 150px;
+    }
+  
+    .image {
+      width: 80px;
+      height: 80px;
+    }
+  
+    .title {
+      font-size: 0.9em;
+    }
+  
+    .text {
+      font-size: 0.7em;
+    }
+  }
+  

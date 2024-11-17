@@ -57,7 +57,7 @@ function Deck({ deckNumber }) {
                 <div className={styles.pitch}>
                 <BpmSlider deckNumber={deckNumber} />
                 </div>
-                <div className={styles.jog}>
+                <div className={styles.jog2}>
                   <JogWheel deckNumber={deckNumber} />
                 </div>
               </div>
@@ -69,7 +69,7 @@ function Deck({ deckNumber }) {
                 onBpmChange={(newBpm) => updateBpm(deckNumber, newBpm)}
               />
               </div>
-              <div className={styles.buttons}>
+              <div className={styles.buttons2}>
                 <DeckControls
                   playPause={() => playPause(deckNumber)}
                   isPlaying={deck.isPlaying}
@@ -123,7 +123,7 @@ function Deck({ deckNumber }) {
                   handleCueMouseUp={handleCueMouseUp}
                 />
               </div>
-              <div className={styles.bpm}>
+              <div className={styles.bpm2}>
               <BpmControl
                 deckNumber={deckNumber}
                 baseBpm={deck.defaultBpm}

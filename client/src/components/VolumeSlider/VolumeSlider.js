@@ -10,6 +10,7 @@ const VolumeSlider = ({ deckNumber, initialValue = 1, onVolumeChange }) => {
 
   const { updateEQ, decks } = useAudio();
   const deck = decks[deckNumber];
+  const [filterValue, setFilterValue] = useState(0);
 
   if (!deck) {
     return <div>Deck nie jest dostępny</div>;
@@ -22,12 +23,27 @@ const VolumeSlider = ({ deckNumber, initialValue = 1, onVolumeChange }) => {
   };
 
   const handleFilterChange = (value) => {
-    updateEQ(deckNumber, 'filter', value);
+    setFilterValue(value);
+    if (deck) {
+      updateEQ(deckNumber, 'filter', value);
+    } else {
+      console.warn(`Deck ${deckNumber}: filter node not available yet.`);
+    }
   };
 
   return (
     <div className={styles.volumeSlider}>
-      <label>Volume</label>
+      <label>VOLUME</label>
+      <div className={styles.scaleLabel}>
+        <span>+</span>
+        <span>-</span>
+      </div>
+      <div className={styles.scale}>
+    {/* Kreski skali */}
+    {[...Array(11)].map((_, index) => (
+      <span key={index} className={styles.scaleMark}></span>
+    ))}
+    </div>
       <input
         type="range"
         min="0"
@@ -39,19 +55,19 @@ const VolumeSlider = ({ deckNumber, initialValue = 1, onVolumeChange }) => {
       />
       {/* Dodanie pokrętła Filter */}
       <Knob
-        label="Filter"
+        label="FILTER"
         value={deck.filterValue}
         min={-10}
         max={10}
         step={0.2}
         onChange={handleFilterChange}
         defaultValue={0}
-        numTicks={100}
-        tickSize={2}
-        tickColor="#888"
-        tickOffset={4}
-        pointerLength={15}
-        pointerColor="#333"
+        numTicks={25}
+        tickSize={1}
+          tickColor="#d1c6c6"
+          tickOffset={6}
+          pointerLength={15}
+          pointerColor="#ea3c0c"
         pointerWidth={4}
         pointerLinecap="round"
         showScale={true}

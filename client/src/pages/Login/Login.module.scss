@@ -74,6 +74,7 @@
   border: 1px solid $white;
   background-color: $white;
   font-size: 20px;
+  border-radius: 5px;
 }
 
 .button {
@@ -81,21 +82,22 @@
   width: 300px;
   color: $black;
   padding: 15px;
-  border: 3px solid $orange;
+  border: none;
   cursor: pointer;
-  font-size: 20px;
-  font-weight: 700;
+  font-size: 1.5rem;
+  font-weight: 600;
+  border-radius: 5px;
   transition: background-color 0.3s ease;
+  box-shadow: 5px 5px 8px rgba(0, 0, 0, 0.5);
 }
 
 .button:hover {
-  background-color: $black;
-  color: $orange;
+  background-color: darken($color: $orange, $amount: 10%);
+  color: $black;
 }
 
 .button:active {
-  background-color: $orange;
-  color: black;
+  box-shadow: none;
 }
 
 .errorMessage {
@@ -130,12 +132,12 @@
 .registerLink {
   color: $orange;
   text-decoration: none;
-  font-weight: bold;
-  font-size: 18px;
+  font-weight: 400;
+  font-size: 1.1rem;
 }
 
 .registerLink:hover {
-  text-decoration: underline;
+  font-weight: 600;
 }
 
 @media (max-width: 1500px) and (min-width: 1000px) {

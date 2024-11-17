@@ -10,7 +10,8 @@ const {
 
 const {
     getProfile,
-    updateUsername
+    updateUsername,
+    updatePassword
 } = require('../controllers/ProfileController');
 
 const {
@@ -40,6 +41,9 @@ router.get('/profile', verifyToken, getProfile);
 
 // Trasa do aktualizacji nazwy użytkownika
 router.post('/profile/update-username', verifyToken, updateUsername);
+
+// Trasa do aktualizacji hasła użytkownika
+router.post('/profile/update-password', verifyToken, updatePassword);
 
 // Trasa do uploadu pliku
 router.post('/files/upload', verifyToken, upload.single('file'), uploadFile);

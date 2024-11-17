@@ -1,17 +1,126 @@
-// VolumeSlider.module.scss
+@import '../../styles/variables.scss';
+
 .volumeSlider {
+  display: flex; /* Ustawia kontener jako flexbox, aby dzieci można było elastycznie układać. */
+  flex-direction: column; /* Układa dzieci (np. suwak i inne elementy) w kolumnie. */
+  align-items: center; /* Wyrównuje dzieci poziomo do środka kontenera. */
+  justify-content: space-between; /* Rozmieszcza dzieci z równymi odstępami w pionie. *//* Dodaje wewnętrzne odstępy wewnątrz kontenera. */
+  height: 100%; /* Wysokość kontenera jest ustawiona na 100% jego rodzica. */
+  width: 100%;
+
+
+
+  .scale {
+    position: absolute; /* Ustawia skalę pod suwakiem */    
+    z-index: 1;
+    margin-top: 101px;
+    width: 180px; /* Szerokość skali */
+    height: 26px; /* Wysokość całkowita */
     display: flex;
-    flex-direction: column;
-    align-items: center;
     justify-content: space-between;
-    padding: 10px;
-    border: 1px solid black;
-    height: 100%;
+    align-items: center;
+    transform: rotate(-90deg); 
+    
   }
   
-  .slider {
-    width: 100px;
-    margin-top: 8px;
-    transform: rotate(-90deg);
-  }
+  .scaleMark {
+    width: 2px; /* Szerokość kreski */
+    height: 18px; /* Wysokość kreski */
+    background: $white; /* Kolor kreski */
+    border-radius: 5px;
   
+  &:nth-of-type(1){
+    height: 32px; /* Wysokość kreski */
+  }
+
+  &:nth-last-of-type(1){
+    height: 32px; /* Wysokość kreski */
+  }
+  }
+
+  label{
+    font-weight: 600;
+    color: $white;
+    font-size: 0.8rem;
+  }
+}
+
+.scaleLabel {
+  font-size: 1rem;
+  font-weight: 600;
+  color: $white;
+  position: absolute; /* Ustawia skalę pod suwakiem */    
+  z-index: 1;
+  margin-top: 18px;
+  margin-right: 60px;
+  width: 30px; /* Szerokość skali */
+  height: 191px; /* Wysokość całkowita */
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+align-items: center;
+}
+
+.slider {
+  position: absolute; /* Ustawia slider nad skalą */
+  z-index: 2;
+  width: 180px; /* Szerokość suwaka wynosi 100px. */
+  // margin-top: 8px; /* Dodaje odstęp 8px powyżej suwaka. */
+  transform: rotate(-90deg); /* Obraca suwak o 90 stopni w kierunku przeciwnym do ruchu wskazówek zegara, zmieniając go w pionowy. */
+
+  -webkit-appearance: none; /* Usuwa domyślne style przeglądarek opartych na Webkit (np. Chrome, Safari). */
+  height: 8px; /* Wysokość toru suwaka wynosi 4px. */
+  margin-top: 110px;
+  background: $black; /* Ustawia kolor tła toru suwaka na jasnoszary. */
+  outline: none; /* Usuwa domyślną obwódkę, która pojawia się po zaznaczeniu suwaka. */
+  
+  /* Stylowanie uchwytu (thumb) suwaka w przeglądarkach Webkit (Chrome, Safari). */
+  &::-webkit-slider-thumb {
+    -webkit-appearance: none; /* Usuwa domyślne style uchwytu. */
+    appearance: none; /* Usuwa domyślne style uchwytu w nowoczesnych przeglądarkach. */
+    width: 10px; /* Szerokość uchwytu suwaka. */
+    height: 40px; /* Wysokość uchwytu suwaka. */
+    background: $orange; /* Kolor uchwytu suwaka ustawiony na ciemnoszary. */
+    cursor: pointer; /* Zmienia kursor na wskazujący (rękę) po najechaniu na uchwyt. */
+    border: none; /* Usuwa obramowanie uchwytu. */
+    border-radius: 5px; /* Dodaje lekkie zaokrąglenie krawędzi uchwytu. */
+    // margin-top: -2px; /* Wyrównuje uchwyt z torem suwaka. */
+    box-shadow: -3px 3px 3px 0 $black; /* Dodaje cień do uchwytu suwaka. */
+  }
+
+  /* Stylowanie uchwytu dla przeglądarek Firefox. */
+  &::-moz-range-thumb {
+    width: 8px; /* Szerokość uchwytu suwaka. */
+    height: 30px; /* Wysokość uchwytu suwaka. */
+    background: $white; /* Kolor uchwytu suwaka ustawiony na ciemnoszary. */
+    cursor: pointer; /* Zmienia kursor na wskazujący (rękę) po najechaniu na uchwyt. */
+    border: none; /* Usuwa obramowanie uchwytu. */
+    border-radius: 5px; /* Dodaje lekkie zaokrąglenie krawędzi uchwytu. */
+    // margin-top: -2px; /* Wyrównuje uchwyt z torem suwaka. */
+    box-shadow: -3px 3px 3px 0 $black; /* Dodaje cień do uchwytu suwaka. */
+  }
+
+  /* Stylowanie uchwytu dla przeglądarek Internet Explorer. */
+  &::-ms-thumb {
+    width: 8px; /* Szerokość uchwytu suwaka. */
+    height: 30px; /* Wysokość uchwytu suwaka. */
+    background: $white; /* Kolor uchwytu suwaka ustawiony na ciemnoszary. */
+    cursor: pointer; /* Zmienia kursor na wskazujący (rękę) po najechaniu na uchwyt. */
+    border: none; /* Usuwa obramowanie uchwytu. */
+    border-radius: 5px; /* Dodaje lekkie zaokrąglenie krawędzi uchwytu. */
+    // margin-top: -2px; /* Wyrównuje uchwyt z torem suwaka. */
+    box-shadow: -3px 3px 3px 0 $black; /* Dodaje cień do uchwytu suwaka. */
+  }
+
+  /* Stylowanie toru suwaka dla Internet Explorer, aby był przezroczysty. */
+  &::-ms-track {
+    width: 8px; /* Szerokość uchwytu suwaka. */
+    height: 30px; /* Wysokość uchwytu suwaka. */
+    background: $white; /* Kolor uchwytu suwaka ustawiony na ciemnoszary. */
+    cursor: pointer; /* Zmienia kursor na wskazujący (rękę) po najechaniu na uchwyt. */
+    border: none; /* Usuwa obramowanie uchwytu. */
+    border-radius: 5px; /* Dodaje lekkie zaokrąglenie krawędzi uchwytu. */
+    // margin-top: -2px; /* Wyrównuje uchwyt z torem suwaka. */
+    box-shadow: -3px 3px 3px 0 $black; /* Dodaje cień do uchwytu suwaka. */
+  }
+}

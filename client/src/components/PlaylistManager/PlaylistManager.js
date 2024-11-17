@@ -9,7 +9,7 @@ import PlaylistRemove from '@mui/icons-material/PlaylistRemove';
 import Delete from '@mui/icons-material/Delete';
 import Edit from '@mui/icons-material/Edit';
 
-const PlaylistManager = ({ selectedPlaylist, setSelectedPlaylist, playlistUpdateTrigger, onAssignToDeck }) => {
+const PlaylistManager = ({ selectedPlaylist, setSelectedPlaylist, playlistUpdateTrigger, onAssignToDeck, deckAssignments  }) => {
   // const { setCurrentTrack } = useContext(AudioContext);
   const [playlists, setPlaylists] = useState([]);
   const [editing, setEditing] = useState(false);
@@ -188,24 +188,24 @@ const PlaylistManager = ({ selectedPlaylist, setSelectedPlaylist, playlistUpdate
       <div className={styles.playlistContainer}>
         <div className={styles.topBar}>
           <p >deck</p>
-          <p>title</p>
-          <p>artist</p>
-          <p>length</p>
+          <p>tytuł</p>
+          <p>autor</p>
+          <p>czas</p>
           <p>bpm</p>
-          <p>key</p>
+          <p>tonacja</p>
           <p></p>
         </div>
 
         {/* Zawartość wybranej playlisty */}
         <ul className={styles.playlistContent}>
           {currentPlaylistSongs.length === 0 ? (
-            <li>Brak utworów do wyświetlenia</li>
+            <li className={styles.emptyPlaylist}>Playlista jest pusta. Aby dodać utwór, kliknij dwukrotnie na wybrany plik w bibliotece utworów. </li>
           ) : (
             currentPlaylistSongs.map((song, index) => (
               <li key={index} className={styles.songItem}>
                 <div className={styles.songControls}>
-                <button className={styles.channelBtn} onClick={() => onAssignToDeck(1, song)}>1</button>
-                <button className={styles.channelBtn} onClick={() => onAssignToDeck(2, song)}>2</button>
+                <button className={`${styles.channelBtn} ${deckAssignments[1] === song._id ? styles.active : ''}`} onClick={() => onAssignToDeck(1, song)}>1</button>
+                <button className={`${styles.channelBtn} ${deckAssignments[2] === song._id ? styles.active : ''}`} onClick={() => onAssignToDeck(2, song)}>2</button>
                 </div>
           
                   <p className={styles.songTitle}>{song.title}</p>
