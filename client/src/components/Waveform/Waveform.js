@@ -1,17 +1,17 @@
-import React, { useEffect, useRef, useMemo } from 'react';
+// Waveform.js
+import React, { useEffect, useRef, useMemo, useState } from 'react';
 import { useAudio } from '../../components/AudioManager/AudioManager';
 import styles from './Waveform.module.scss';
+import debounce from 'lodash.debounce';
 
 function Waveform({
   deckNumber,
-  waveformColor = '#007bff',
-  playheadColor = '#007bff',
-  loopColor = 'rgba(180, 180, 180, 0.4)', // Półprzezroczysty czerwony dla pętli
-  cueColor = '#b1270a', // Czerwony dla CUE
-  loopLineColor = '#FF0000', // Czerwony dla linii pętli
-  loopLineWidth = 4, // Grubość linii pętli
-  barWidth = 3,
-  barSpacing = 1,
+  waveformColor = '#FF5722',
+  playheadColor = '#FFFFFF',
+  loopColor = 'rgba(180, 180, 180, 0.4)',
+  cueColor = '#DC143C',
+  loopLineColor = '#1E90FF',
+  loopLineWidth = 3,
 }) {
   const { decks, updateCurrentTime, startPlayback, stopPlayback } = useAudio();
   const canvasRef = useRef(null);
@@ -20,12 +20,14 @@ function Waveform({
   const wasPlayingRef = useRef(false);
   const lastSeekTimeRef = useRef(0);
 
+  // Szerokość jednego beatu w pikselach
+  const BEAT_WIDTH = 60; // Możesz dostosować tę wartość
 
   // Extract necessary data from the deck
   const deck = decks[deckNumber];
   const waveformData = deck?.waveformData;
-  const duration = deck?.duration;
-  const currentTime = deck?.currentTime;
+  const duration = deck?.duration || 0;
+  const currentTime = deck?.currentTime || 0;
   const cuePoint = deck?.cuePoint || 0;
   const bpm = deck?.bpm || 120;
   const defaultBpm = deck?.defaultBpm || 120;
@@ -33,8 +35,38 @@ function Waveform({
   const loopEnd = deck?.loopEnd;
   const isLooping = deck?.isLooping;
 
-  const pixelsPerSecond = 150; // Stała prędkość przesuwania waveforma
   const scaleFactor = defaultBpm / bpm; // Współczynnik skalowania
+
+  // Aktualizuj szerokość canvasu przy renderowaniu
+  const [canvasWidth, setCanvasWidth] = useState(0);
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (canvas) {
+      setCanvasWidth(canvas.clientWidth);
+    }
+  }, [deckNumber]);
+
+  // Obsługa zmiany rozmiaru okna z debouncingiem
+  useEffect(() => {
+    const handleResize = debounce(() => {
+      const canvas = canvasRef.current;
+      if (canvas) {
+        setCanvasWidth(canvas.clientWidth);
+      }
+    }, 200); // 200ms opóźnienia
+
+    window.addEventListener('resize', handleResize);
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      handleResize.cancel(); // Usuń debouncing
+    };
+  }, []);
+
+  // Obliczanie liczby beatów w utworze
+  const totalBeats = useMemo(() => {
+    if (!duration || !bpm) return 0;
+    return duration / (60 / bpm);
+  }, [duration, bpm]);
 
   // Normalize peaks so the maximum value is 1
   const normalizedPeaks = useMemo(() => {
@@ -46,6 +78,7 @@ function Waveform({
 
   useEffect(() => {
     const canvas = canvasRef.current;
+    if (!canvas) return;
     adjustCanvasForDPR(canvas);
 
     const drawWaveform = () => {
@@ -59,19 +92,26 @@ function Waveform({
         const height = canvas.clientHeight;
         const peaks = normalizedPeaks;
 
-        // W funkcji drawWaveform, przed obliczeniem shift:
-const currentTimeToUse = isSeeking.current ? lastSeekTimeRef.current : currentTime;
+        // Ustawienie barWidth i barSpacing
+        const barWidth = 2; // Możesz dostosować szerokość słupków
+        const barSpacing = 1; // Możesz dostosować odstęp między słupkami
+
+        const totalBars = peaks.length;
+        const timePerBar = duration / totalBars;
+
+        // Obliczanie całkowitej szerokości waveforma
+        const totalWaveformWidth = totalBeats * BEAT_WIDTH;
 
         const centerX = width / 2;
-// Następnie użyj currentTimeToUse zamiast currentTime:
-const shift = currentTimeToUse * pixelsPerSecond * scaleFactor - centerX;
 
-        const timePerSample = duration / peaks.length;
+        // Obliczanie shift
+        const currentTimeToUse = isSeeking.current ? lastSeekTimeRef.current : currentTime;
+        const xOffset = (currentTimeToUse / duration) * totalWaveformWidth - centerX;
 
         // Rysowanie zakresu pętli (jeśli aktywna)
         if (isLooping && loopStart !== null && loopEnd !== null) {
-          const xLoopStart = loopStart * pixelsPerSecond * scaleFactor - shift;
-          const xLoopEnd = loopEnd * pixelsPerSecond * scaleFactor - shift;
+          const xLoopStart = (loopStart / duration) * totalWaveformWidth - xOffset;
+          const xLoopEnd = (loopEnd / duration) * totalWaveformWidth - xOffset;
 
           const xStart = Math.max(0, xLoopStart);
           const xEnd = Math.min(width, xLoopEnd);
@@ -99,8 +139,8 @@ const shift = currentTimeToUse * pixelsPerSecond * scaleFactor - centerX;
 
         for (let i = 0; i < peaks.length; i++) {
           const peak = peaks[i];
-          const time = i * timePerSample;
-          const x = time * pixelsPerSecond * scaleFactor - shift;
+          const time = i * timePerBar;
+          const x = (time / duration) * totalWaveformWidth - xOffset;
 
           const y = ((1 - peak) * height) / 2;
           const barHeight = peak * height;
@@ -115,12 +155,12 @@ const shift = currentTimeToUse * pixelsPerSecond * scaleFactor - centerX;
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
         ctx.lineWidth = 1;
 
-        const timePerBeat = 60 / defaultBpm; // Użyj defaultBpm zamiast bpm
-        const totalBeats = duration / timePerBeat;
+        const secondsPerBeat = 60 / defaultBpm; // Użyj defaultBpm zamiast bpm
+        const totalBeatsToDraw = Math.ceil(duration / secondsPerBeat);
 
-        for (let i = 0; i <= totalBeats; i++) {
-          const beatTime = i * timePerBeat;
-          const xBeat = beatTime * pixelsPerSecond * scaleFactor - shift;
+        for (let i = 0; i <= totalBeatsToDraw; i++) {
+          const beatTime = i * secondsPerBeat;
+          const xBeat = (beatTime / duration) * totalWaveformWidth - xOffset;
 
           if (xBeat >= 0 && xBeat <= width) {
             ctx.beginPath();
@@ -132,11 +172,11 @@ const shift = currentTimeToUse * pixelsPerSecond * scaleFactor - centerX;
 
         // Rysowanie głowicy odtwarzania (linia środkowa)
         ctx.fillStyle = playheadColor;
-        ctx.fillRect(centerX - 1, 0, 4, height);
+        ctx.fillRect(centerX - 1, 0, 3, height);
 
         // Rysowanie wskaźnika punktu CUE
         if (cuePoint >= 0 && cuePoint <= duration) {
-          const xCue = cuePoint * pixelsPerSecond * scaleFactor - shift;
+          const xCue = (cuePoint / duration) * totalWaveformWidth - xOffset;
 
           if (xCue >= 0 && xCue <= width) {
             ctx.fillStyle = cueColor;
@@ -171,14 +211,13 @@ const shift = currentTimeToUse * pixelsPerSecond * scaleFactor - centerX;
     loopColor,
     loopLineColor,
     loopLineWidth,
-    barWidth,
-    barSpacing,
     deckNumber,
     bpm,
     defaultBpm,
-    pixelsPerSecond,
     cueColor,
     scaleFactor,
+    BEAT_WIDTH,
+    totalBeats,
   ]);
 
   const adjustCanvasForDPR = (canvas) => {
@@ -213,10 +252,10 @@ const shift = currentTimeToUse * pixelsPerSecond * scaleFactor - centerX;
     if (isSeeking.current) {
       event.preventDefault();
       isSeeking.current = false;
-  
+
       // Update current time and ensure it's applied before playback resumes
       updateCurrentTime(deckNumber, lastSeekTimeRef.current, false);
-  
+
       // If the track was playing before, resume playback after currentTime is updated
       if (wasPlayingRef.current) {
         // Use a timeout to ensure currentTime is updated before starting playback
@@ -226,7 +265,6 @@ const shift = currentTimeToUse * pixelsPerSecond * scaleFactor - centerX;
       }
     }
   };
-  
 
   const handleSeek = (event) => {
     if (!waveformData || !duration) return;
@@ -238,9 +276,10 @@ const shift = currentTimeToUse * pixelsPerSecond * scaleFactor - centerX;
     const width = canvas.clientWidth;
     const centerX = width / 2;
 
-    const shift = currentTime * pixelsPerSecond * scaleFactor - centerX;
+    const totalWaveformWidth = totalBeats * BEAT_WIDTH;
+    const xOffset = (currentTime / duration) * totalWaveformWidth - centerX;
 
-    const newTime = (x + shift) / (pixelsPerSecond * scaleFactor);
+    const newTime = ((x + xOffset) / totalWaveformWidth) * duration;
 
     const clampedTime = Math.max(0, Math.min(duration, newTime));
 

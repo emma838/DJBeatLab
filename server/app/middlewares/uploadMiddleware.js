@@ -25,8 +25,21 @@ const storage = multer.diskStorage({
     cb(null, userDir); // Ustaw katalog docelowy
   },
   filename: (req, file, cb) => {
-    console.log('Nazwa pliku:', file.originalname);
-    cb(null, file.originalname); // Zapisz plik pod oryginalną nazwą
+    // console.log('Nazwa pliku:', file.originalname);
+    // cb(null, file.originalname); // Zapisz plik pod oryginalną nazwą
+
+    console.log('Oryginalna nazwa pliku:', file.originalname);
+
+  // Obsługa polskich znaków
+  const normalizedFileName = Buffer.from(file.originalname, 'latin1')
+    .toString('utf8')
+    .normalize('NFKD')
+    .replace(/[\u0300-\u036f]/g, '') // Usuwa akcenty
+    // .replace(/[^a-zA-Z0-9.-]/g, '_'); // Zamienia niedozwolone znaki na "_"
+
+  console.log('Znormalizowana nazwa pliku:', normalizedFileName);
+
+  cb(null, normalizedFileName);
   },
 });
 

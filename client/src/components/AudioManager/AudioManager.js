@@ -149,6 +149,12 @@ export function AudioProvider({ children }) {
     2: useRef(null),
   };
 
+  // Add currentTimeRef to store currentTime for each deck
+const currentTimeRef = useRef({
+  1: 0,
+  2: 0,
+});
+
   // References do przechowywania ID animacji
   const animationFrameIds = useRef({});
 
@@ -195,13 +201,20 @@ export function AudioProvider({ children }) {
 
       // GainNode dla głośności decka
       const volumeGain = audioContexts[deckNumber].current.createGain();
-      volumeGain.gain.value = 0.2; // Domyślnie 100% głośności
+      volumeGain.gain.value = 0.6; // Domyślnie 100% głośności
+
+       // GainNode dla crossfadera decka
+    const crossfadeGain = audioContexts[deckNumber].current.createGain();
+    crossfadeGain.gain.value = 1; // Początkowo bez zmiany
+
+    // Łączenie crossfadeGain z volumeGain
+    crossfadeGain.connect(volumeGain);
 
       // Przypisz GainNode do stanu decka
       dispatch({
         type: 'SET_DECK',
         deckNumber: parseInt(deckNumber, 10),
-        payload: { volumeGain },
+        payload: { volumeGain, crossfadeGain },
       });
     });
   }, []);
@@ -237,23 +250,16 @@ export function AudioProvider({ children }) {
       const source = audioCtx.createBufferSource();
       source.buffer = audioBuffer;
   
-      // GainNode dla głośności (jeśli jeszcze nie istnieje)
-      if (!deck.volumeGain) {
-        deck.volumeGain = audioCtx.createGain();
-        deck.volumeGain.gain.value = 1; // Ustawienie domyślnej głośności
-      }
-  
       // Dodanie AnalyserNode do monitorowania poziomu głośności
       const analyser = audioCtx.createAnalyser();
       analyser.fftSize = 512; // Ustaw fftSize, aby odpowiednio analizować poziom sygnału
       deck.volumeGain.connect(analyser); // Podłącz analyser do volumeGain
       analyser.connect(audioCtx.destination); // Podłącz analyser do wyjścia audio
   
-      
       // Reverb
       const convolver = await loadImpulseResponse(audioCtx);
       const dryGain = audioCtx.createGain();
-      dryGain.gain.value = 1;
+      dryGain.gain.value = 0.6;
       const wetGain = audioCtx.createGain();
       wetGain.gain.value = 0;
   
@@ -270,7 +276,7 @@ export function AudioProvider({ children }) {
   
       const lowShelf = audioCtx.createBiquadFilter();
       lowShelf.type = 'lowshelf';
-      lowShelf.frequency.value = 150;
+      lowShelf.frequency.value = 500;
       lowShelf.gain.value = 0;
   
       // Delay
@@ -278,67 +284,86 @@ export function AudioProvider({ children }) {
       delayNode.delayTime.value = 0.1;
       const delayGain = audioCtx.createGain();
       delayGain.gain.value = 0;
-  
- // Flanger
- const flangerDelay = audioCtx.createDelay();
- flangerDelay.delayTime.value = 0.002; // 2 ms
 
- const flangerWetGain = audioCtx.createGain();
- flangerWetGain.gain.value = 0; // Początkowo brak efektu
-
- const flangerFeedbackGain = audioCtx.createGain();
- flangerFeedbackGain.gain.value = 0.4; // 40% feedback
-
- const flangerLFO = audioCtx.createOscillator();
- const flangerLFOGain = audioCtx.createGain();
- flangerLFOGain.gain.value = 0.002; // Głębokość modulacji
- flangerLFO.type = 'sine';
- flangerLFO.frequency.value = 0.25; // 0.25 Hz
- flangerLFO.connect(flangerLFOGain).connect(flangerDelay.delayTime);
- flangerLFO.start();
+            // Filter for effects
+            const filter = audioCtx.createBiquadFilter();
+            filter.type = 'allpass';
+            filter.frequency.value = 1000;
   
-      // Filter for effects
-      const filter = audioCtx.createBiquadFilter();
-      filter.type = 'allpass';
-      filter.frequency.value = 1000;
-  
+// Flanger
+const flangerDelay = audioCtx.createDelay();
+flangerDelay.delayTime.value = 0.003; // 3 ms
+
+const flangerWetGain = audioCtx.createGain();
+flangerWetGain.gain.value = 0; // Początkowo brak efektu
+
+const flangerFeedbackGain = audioCtx.createGain();
+flangerFeedbackGain.gain.value = 0; // Początkowo brak feedbacku
+
+const flangerLFO = audioCtx.createOscillator();
+const flangerLFOGain = audioCtx.createGain();
+flangerLFOGain.gain.value = 0.002; // Głębokość modulacji
+flangerLFO.type = 'sine';
+flangerLFO.frequency.value = 0.25; // 0.25 Hz
+flangerLFO.connect(flangerLFOGain).connect(flangerDelay.delayTime);
+flangerLFO.start();
+
 // Połączenie źródła z EQ nodes
 source.connect(lowShelf);
 lowShelf.connect(midPeak);
 midPeak.connect(highShelf);
 highShelf.connect(filter);
 
-// Dry path
+// Sygnał po filtrze jest kierowany do dryGain i do efektów
 filter.connect(dryGain);
-dryGain.connect(deck.volumeGain);
+filter.connect(flangerDelay);
+filter.connect(convolver);
+filter.connect(delayNode);
+
+// Flanger path
+flangerDelay.connect(flangerFeedbackGain);
+flangerFeedbackGain.connect(flangerDelay); // Feedback loop
+
+flangerDelay.connect(flangerWetGain);
+
+// Stwórz główny węzeł miksujący efekty
+const effectsMixGain = audioCtx.createGain();
+
+// Sumowanie sygnału flangera
+flangerWetGain.connect(effectsMixGain);
 
 // Reverb path
 if (convolver) {
-  filter.connect(convolver);
   convolver.connect(wetGain);
-  wetGain.connect(deck.volumeGain);
+  wetGain.connect(effectsMixGain);
 }
 
 // Delay path
-filter.connect(delayNode);
 delayNode.connect(delayGain);
-delayGain.connect(deck.volumeGain);
+delayGain.connect(effectsMixGain);
 
-// Flanger path
-filter.connect(flangerDelay); // Łączymy z opóźnieniem
-flangerDelay.connect(flangerWetGain); // Łączymy z wet gain
-flangerWetGain.connect(flangerFeedbackGain); // Dodaj feedback
-flangerFeedbackGain.connect(flangerDelay); // Połącz feedback z powrotem do opóźnienia
-flangerWetGain.connect(deck.volumeGain); // Łączymy do głównego gainu decka
+// Sumowanie sygnału suchego z efektami
+dryGain.connect(effectsMixGain);
 
+// Podłączenie effectsMixGain do crossfadeGain
+effectsMixGain.connect(deck.crossfadeGain);
 
-// Final output
+// Ustawienie crossfadeGain do volumeGain (pozostaje bez zmian)
+deck.crossfadeGain.connect(deck.volumeGain);
+
+// Podłączenie volumeGain do analyser i destination (pozostaje bez zmian)
+deck.volumeGain.connect(analyser);
 deck.volumeGain.connect(audioCtx.destination);
+
   
-      // Przetwarzanie danych waveforma
-      const rawData = audioBuffer.getChannelData(0);
-      const samples = 6000;
-      const waveformData = extractPeaks(rawData, samples);
+// Po załadowaniu audioBuffer i przed ekstrakcją danych waveforma
+const rawData = audioBuffer.getChannelData(0);
+const bpm = track.bpm || 120;
+const totalBeats = audioBuffer.duration / (60 / bpm);
+const SAMPLES_PER_BEAT = 20; // Użyj tej samej wartości co BARS_PER_BEAT w Waveform.js
+const samples = Math.floor(totalBeats * SAMPLES_PER_BEAT);
+const waveformData = extractPeaks(rawData, samples);
+
   
       // Aktualizacja stanu decka
       dispatch({
@@ -373,9 +398,11 @@ deck.volumeGain.connect(audioCtx.destination);
           delayGain,
           flangerDelay,
           flangerWetGain,
+          flangerFeedbackGain,
           flangerLFO,
           flangerLFOGain,
           volumeGain: deck.volumeGain,
+          crossfadeGain: deck.crossfadeGain,
           analyser, // Dodaj analyser do stanu
         },
       });
@@ -551,12 +578,10 @@ const stopPlayback = (deckNumber) => {
   }
 };
 
-
   // Funkcja do aktualizacji czasu odtwarzania
   const updateTime = (deckNumber) => {
     const deck = decksRef.current[deckNumber];
     if (!deck.isPlaying) {
-      console.log(`Deck ${deckNumber} is not playing. Exiting updateTime.`);
       return;
     }
 
@@ -568,7 +593,6 @@ const stopPlayback = (deckNumber) => {
     if (deck.isLooping && deck.loopStart !== null && deck.loopEnd !== null) {
       const loopLength = deck.loopEnd - deck.loopStart;
       if (loopLength <= 0) {
-        console.warn(`Invalid loop length on deck ${deckNumber}. Exiting loop.`);
         dispatch({
           type: 'EXIT_LOOP',
           deckNumber,
@@ -585,13 +609,18 @@ const stopPlayback = (deckNumber) => {
       return;
     }
 
-    dispatch({
-      type: 'SET_DECK',
-      deckNumber,
-      payload: { currentTime },
-    });
+    // Dodano throttling aktualizacji currentTime
+    const now = Date.now();
+    if (!deck.lastUpdateTime || now - deck.lastUpdateTime >= 20) { // Aktualizuj co 50 ms
+      dispatch({
+        type: 'SET_DECK',
+        deckNumber,
+        payload: { currentTime, lastUpdateTime: now },
+      });
+    }
 
-    // animationFrameIds.current[deckNumber] = requestAnimationFrame(() => updateTime(deckNumber));
+    // Kontynuuj animację
+    animationFrameIds.current[deckNumber] = requestAnimationFrame(() => updateTime(deckNumber));
   };
 
   // Funkcja do aktualizacji bieżącego czasu (seek)
@@ -1056,46 +1085,68 @@ const exitLoop = (deckNumber) => {
     }
   };
   
-const updateFlangerStrength = (deckNumber, value) => {
-  const deck = decksRef.current[deckNumber];
-  if (deck.flangerWetGain && deck.flangerFeedbackGain) {
-    const maxWetGain = 1; // Maksymalna wartość gain dla wet
-    const maxFeedbackGain = 0.5; // Maksymalna wartość gain dla feedback
-
-    // Zakładam, że 'value' jest w zakresie od -10 do 10
-    const normalizedValue = Math.abs(value) / 10; // Normalizacja do 0 - 1
-
-    if (value === 0) {
-      // Wyłącz efekt Flanger
-      deck.flangerWetGain.gain.value = 0;
-      deck.flangerFeedbackGain.gain.value = 0;
+  const updateFlangerStrength = (deckNumber, value) => {
+    const deck = decksRef.current[deckNumber];
+    if (deck.flangerWetGain && deck.flangerFeedbackGain) {
+      const maxWetGain = 1; // Maksymalna wartość gain dla wet
+      const maxFeedbackGain = 0.9; // Maksymalna wartość gain dla feedback
+  
+      // Normalizacja wartości od 0 do 1
+      const normalizedValue = value / 0.6; // Ponieważ maksymalna wartość gałki to 0.6
+  
+      if (value === 0) {
+        // Wyłącz efekt Flanger
+        deck.flangerWetGain.gain.value = 0;
+        deck.flangerFeedbackGain.gain.value = 0;
+      } else {
+        // Ustaw efekty
+        deck.flangerWetGain.gain.value = normalizedValue * maxWetGain;
+        deck.flangerFeedbackGain.gain.value = normalizedValue * maxFeedbackGain;
+      }
+  
+      console.log(`Flanger strength updated on deck ${deckNumber}:`, value);
     } else {
-      // Ustaw efekty
-      deck.flangerWetGain.gain.value = normalizedValue * maxWetGain;
-      deck.flangerFeedbackGain.gain.value = normalizedValue * maxFeedbackGain;
+      console.warn(`Flanger gain nodes not found for deck ${deckNumber}`);
     }
+  };
+  
+  
 
-    console.log(`Flanger strength updated on deck ${deckNumber}:`, value);
+const setCrossfade = (position) => {
+  let crossfade1 = 1; // Crossfade dla decka 1
+  let crossfade2 = 1; // Crossfade dla decka 2
+
+  if (position < 0.5) {
+    // Przesunięcie w lewo: zmniejszamy głośność decka 2
+    const factor = (0.5 - position) / 0.5; // Od 1 do 0
+    crossfade2 = Math.max(0, 1 - factor); // Zmniejszamy decka 2
+    crossfade1 = 1; // Deck 1 pozostaje bez zmian
+  } else if (position > 0.5) {
+    // Przesunięcie w prawo: zmniejszamy głośność decka 1
+    const factor = (position - 0.5) / 0.5; // Od 0 do 1
+    crossfade1 = Math.max(0, 1 - factor); // Zmniejszamy decka 1
+    crossfade2 = 1; // Deck 2 pozostaje bez zmian
   } else {
-    console.warn(`Flanger gain nodes not found for deck ${deckNumber}`);
+    // Pozycja w środku: oba decki grają bez zmiany
+    crossfade1 = 1;
+    crossfade2 = 1;
   }
+
+  // Ustawienie crossfadeGain dla decka 1
+  if (decksRef.current[1]?.crossfadeGain) {
+    decksRef.current[1].crossfadeGain.gain.value = crossfade1;
+  }
+  // Ustawienie crossfadeGain dla decka 2
+  if (decksRef.current[2]?.crossfadeGain) {
+    decksRef.current[2].crossfadeGain.gain.value = crossfade2;
+  }
+
+  console.log(
+    `Crossfader position: ${position}, Deck 1 Crossfade: ${crossfade1}, Deck 2 Crossfade: ${crossfade2}`
+  );
 };
 
-  
-  
-  
-  const setCrossfade = (position) => {
-    const deck1Volume = 1 - position; // Głośność decka 1 zmniejsza się przy przesunięciu w prawo
-    const deck2Volume = position;     // Głośność decka 2 zmniejsza się przy przesunięciu w lewo
-  
-    if (decksRef.current[1]?.volumeGain) {
-      decksRef.current[1].volumeGain.gain.value = deck1Volume;
-    }
-    if (decksRef.current[2]?.volumeGain) {
-      decksRef.current[2].volumeGain.gain.value = deck2Volume;
-    }
-    console.log(`Crossfader position: ${position}, Deck 1 Volume: ${deck1Volume}, Deck 2 Volume: ${deck2Volume}`);
-  };
+
   
 
   // Synchronizacja decksRef.current z najnowszym stanem decks
@@ -1134,25 +1185,22 @@ const updateFlangerStrength = (deckNumber, value) => {
     prevDecksRef.current = decks;
   }, [decks]);
 
-  // useEffect do uruchamiania updateTime, gdy isPlaying jest true
-  useEffect(() => {
-    Object.keys(decks).forEach((deckNumber) => {
-      const deck = decks[deckNumber];
-      const isAnimating = animationFrameIds.current[deckNumber] != null;
-  
-      if (deck.isPlaying && !isAnimating) {
-        // Start the updateTime loop
-        updateTime(deckNumber);
-      } else if (!deck.isPlaying && isAnimating) {
-        // Stop the updateTime loop
-        cancelAnimationFrame(animationFrameIds.current[deckNumber]);
-        delete animationFrameIds.current[deckNumber];
-      }
-    });
-  
-    // Synchronizuj decksRef.current z najnowszym stanem decks
-    decksRef.current = decks;
-  }, [decks]);
+// useEffect do uruchamiania updateTime, gdy isPlaying jest true
+useEffect(() => {
+  Object.keys(decks).forEach((deckNumber) => {
+    const deck = decks[deckNumber];
+    const isAnimating = animationFrameIds.current[deckNumber] != null;
+
+    if (deck.isPlaying && !isAnimating) {
+      // Start the updateTime loop
+      updateTime(deckNumber);
+    } else if (!deck.isPlaying && isAnimating) {
+      // Stop the updateTime loop
+      cancelAnimationFrame(animationFrameIds.current[deckNumber]);
+      delete animationFrameIds.current[deckNumber];
+    }
+  });
+}, [decks]); // Upewnij się, że decks jest w zależnościach
 
   return (
     <AudioContext.Provider
@@ -1183,6 +1231,7 @@ const updateFlangerStrength = (deckNumber, value) => {
         updateFlangerStrength,
         setVolume,
         setCrossfade,
+        currentTimeRef,
       }}
     >
       {children}

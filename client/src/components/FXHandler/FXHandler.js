@@ -48,8 +48,8 @@ const FXHandler = ({ deckNumber }) => {
 
   const effectSettings = {
     reverb: { min: 0, max: 1, step: 0.1, defaultValue: 0, label: 'GAIN', numTicks: 11 },
-    delay: { min: 0, max: 1, step: 0.1, defaultValue: 0, label: 'GAIN', numTicks: 11 },
-    flanger: { min: 0, max: 1, step: 0.1, defaultValue: 0, label: 'GAIN', numTicks: 11 },
+    delay: { min: 0, max: 0.6, step: 0.1, defaultValue: 0, label: 'GAIN', numTicks: 11 },
+    flanger: { min: 0, max: 0.6, step: 0.1, defaultValue: 0, label: 'GAIN', numTicks: 11 },
   };
 
   const delayTimeSettings = {

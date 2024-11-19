@@ -2,7 +2,6 @@ import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import AddFileModal from '../AddFile/AddFileModal';
 import styles from './FileManager.module.scss';
-//materialsymbols:
 import AddBox from '@mui/icons-material/AddBox';
 import Delete from '@mui/icons-material/DeleteForever';
 

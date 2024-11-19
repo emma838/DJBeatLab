@@ -47,8 +47,8 @@ const VolumeSlider = ({ deckNumber, initialValue = 1, onVolumeChange }) => {
       <input
         type="range"
         min="0"
-        max="1" // Ustaw maksymalną głośność na 1
-        step="0.001"
+        max="0.5" // Ustaw maksymalną głośność na 1
+        step="0.01"
         value={volume}
         onChange={handleVolumeChange}
         className={styles.slider}

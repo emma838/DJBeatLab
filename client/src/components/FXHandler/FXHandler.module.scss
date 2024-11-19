@@ -40,13 +40,13 @@
 }
 
 .activeEffect {
-  background-color: $orange-extra-dark;
+  background-color: $orange;
   color: $white;
   font-weight: bold;
   border-color: lighten($orange, 20%);
 
   &:hover {
-    background-color: $orange-extra-dark;
+    background-color: $orange;
   }
 }
 

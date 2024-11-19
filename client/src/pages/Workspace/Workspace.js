@@ -72,15 +72,19 @@ const Workspace = () => {
       <div className={styles.waveforms}>
         <Waveform
           deckNumber={1}
-          waveformColor="#c62b0a"
-          playheadColor="#e4dbdb"
-          cueColor="#e4dbdb"
+          waveformColor="#FF5722"
+          playheadColor="#FFFFFF"
+          cueColor="#DC143C "
+          loopColor='rgba(30, 144, 255, 0.2)'
+          loopLineColor='#1E90FF'
         />
         <Waveform
           deckNumber={2}
-          waveformColor="#00aa3c"
-          playheadColor="#e4dbdb"
-          cueColor="#e4dbdb"
+          waveformColor="#4CAF50"
+          playheadColor="#FFFFFF"
+          cueColor="#DC143C"
+          loopColor='rgba(30, 144, 255, 0.2)'
+          loopLineColor='#1E90FF'
         />
       </div>
 

@@ -13,6 +13,7 @@ const uploadFile = async (req, res) => {
   try {
     // Wyciągnij metadane z pliku
     const metadata = await mm.parseFile(req.file.path);
+    // console.log('Metadane pliku:', metadata);
     const duration = metadata.format.duration;
     const title = metadata.common.title || req.file.originalname;
     const author = metadata.common.artist || 'Nieznany';
@@ -20,8 +21,14 @@ const uploadFile = async (req, res) => {
     const newSong = new Song({
       title: title,
       author: author,
-      filename: req.file.originalname,
-      path: req.file.path,
+      // filename: req.file.originalname,
+      filename: Buffer.from(req.file.originalname, 'latin1').toString('utf8')
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, ''),
+      // path: req.file.path,
+      path: Buffer.from(req.file.path, 'latin1').toString('utf8')
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, ''),
       duration: duration,
       bpm: parseFloat(req.body.bpm),
       key: req.body.key,

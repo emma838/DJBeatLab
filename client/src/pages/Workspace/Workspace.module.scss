@@ -44,6 +44,14 @@
   padding: 10px;
 }
 
+.leftSection{
+  border-radius: 0 10px 10px 0;
+}
+
+.rightSection{
+  border-radius: 10px 0 0 10px;
+}
+
 /* Sekcja na mikser po środku */
 .middleSection {
   width: 30%;
@@ -52,6 +60,7 @@
   padding: 10px;
   display: flex;
   flex-direction: row;
+  border-radius: 10px;
 
   .eqleft,
   .eqright {
