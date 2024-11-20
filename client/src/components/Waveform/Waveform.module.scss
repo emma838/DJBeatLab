@@ -6,7 +6,10 @@
     height: 50%; /* Zwiększenie wysokości dla większej szczegółowości */
     overflow: hidden;
     background-color: black; /* Możesz dostosować */
-    border-bottom: 1px solid $light-grey;
+
+    &:nth-of-type(2){
+      border-bottom: 3px solid $grey;
+    }
     
     @media (max-width: 600px) {
       height: 150px; /* Mniejsza wysokość na małych ekranach */

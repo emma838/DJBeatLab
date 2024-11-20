@@ -146,7 +146,7 @@ const PlaylistManager = ({ selectedPlaylist, setSelectedPlaylist, playlistUpdate
   return (
     <div className={styles.playlistManagerContainer}>
       <div className={styles.settingsContainer}>
-        <p className={styles.settingsTitle}>Playlisty</p>
+        <p className={styles.settingsTitle}>Playlists</p>
         <div className={styles.settingsContent}>
         {/* Lista rozwijana z playlistami */}
         {editing ? (
@@ -162,7 +162,7 @@ const PlaylistManager = ({ selectedPlaylist, setSelectedPlaylist, playlistUpdate
             value={selectedPlaylist}
             onChange={(e) => setSelectedPlaylist(e.target.value)}
           >
-            <option value="uploads">wszystkie utwory</option>
+            <option value="uploads">All songs</option>
             {playlists.map((playlist) => (
               <option key={playlist._id} value={playlist._id}>
                 {playlist.name}
@@ -173,33 +173,33 @@ const PlaylistManager = ({ selectedPlaylist, setSelectedPlaylist, playlistUpdate
 
         {/* Przyciski do zarządzania playlistą */}
           <button className={styles.editButton} onClick={() => setEditing(true)} disabled={selectedPlaylist === 'uploads'}>
-            <Edit /> zmień nazwę
+            <Edit />Edit
           </button>
-          <button className={styles.addButton} onClick={handleAddPlaylist}><PlaylistAdd /> Dodaj</button>
+          <button className={styles.addButton} onClick={handleAddPlaylist}><PlaylistAdd />Add</button>
           <button
             className={styles.deleteButton}
             onClick={handleDeletePlaylist}
             disabled={selectedPlaylist === 'uploads'}
           >
-          <PlaylistRemove /> usuń
+          <PlaylistRemove />Delete
           </button>
         </div>
       </div>
       <div className={styles.playlistContainer}>
         <div className={styles.topBar}>
-          <p >deck</p>
-          <p>tytuł</p>
-          <p>autor</p>
-          <p>czas</p>
-          <p>bpm</p>
-          <p>tonacja</p>
+          <p >Deck</p>
+          <p>Title</p>
+          <p>Artist</p>
+          <p>Time</p>
+          <p>BPM</p>
+          <p>KEY</p>
           <p></p>
         </div>
 
         {/* Zawartość wybranej playlisty */}
         <ul className={styles.playlistContent}>
           {currentPlaylistSongs.length === 0 ? (
-            <li className={styles.emptyPlaylist}>Playlista jest pusta. Aby dodać utwór, kliknij dwukrotnie na wybrany plik w bibliotece utworów. </li>
+            <li className={styles.emptyPlaylist}>Playlist is empty. To add a track, double-click on a selected file in uploaded tracks library.</li>
           ) : (
             currentPlaylistSongs.map((song, index) => (
               <li key={index} className={styles.songItem}>

@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import styles from './Register.module.scss'; // Zmodyfikowana ścieżka do pliku stylów
 import { useNavigate } from 'react-router-dom';  // Import hooka do nawigacji
-//import logoImage from '../../../assets/djbl_logo1.png'; // Upewnij się, że masz obraz logo w odpowiednim folderze
+import logoImage from '../../assets/djbl_logo1.png';  // Upewnij się, że masz obraz logo w odpowiednim folderze
 
 const Register = () => {
   const [username, setUsername] = useState('');
@@ -56,13 +56,13 @@ const Register = () => {
   return (
     <div className={styles.pageContainer}>
       {/* Obraz logo, który będzie nad kontenerem */}
-     {/* <img src={logoImage} alt="DJBeatLab Logo" className={styles.logo} /> */}
+     <img src={logoImage} alt="DJBeatLab Logo" className={styles.logo} />
 
       <div className={styles.container}>
-        <h2 className={styles.title}>Rejestracja</h2>
+        <h2 className={styles.title}>Sign Up</h2>
         <form className={styles.form} onSubmit={handleRegister}>
           <div className={styles.inputGroup}>
-            <label className={styles.label}>Nazwa użytkownika:</label>
+            <label className={styles.label}>Username:</label>
             <input
               className={styles.input}
               type="text"
@@ -84,7 +84,7 @@ const Register = () => {
           </div>
 
           <div className={styles.inputGroup}>
-            <label className={styles.label}>Hasło:</label>
+            <label className={styles.label}>Password:</label>
             <input
               className={styles.input}
               type="password"
@@ -95,7 +95,7 @@ const Register = () => {
           </div>
 
           <div className={styles.inputGroup}>
-            <label className={styles.label}>Powtórz hasło:</label>
+            <label className={styles.label}>Confirm password:</label>
             <input
               className={styles.input}
               type="password"
@@ -113,10 +113,10 @@ const Register = () => {
               </p>
             </div>
             <div className={styles.submitContainer}>
-              <button type="submit" className={styles.button}>Utwórz konto</button>
+              <button type="submit" className={styles.button}>Create account</button>
               <div className={styles.loginContainer}>
                 <div className={styles.loginText}>
-                  <p>Masz konto? <br /><a href="/login" className={styles.loginLink}>Zaloguj się</a></p>
+                  <p>Got an account? <br /><a href="/login" className={styles.loginLink}>Sign In</a></p>
                 </div>
               </div>
             </div>

@@ -36,10 +36,10 @@
 
   .settingsContent {
     display: flex;
-    padding: 10px;
+    padding: 10px 20px;
     flex-direction: column;
     justify-content: space-between;
-    align-items: center;
+    align-items: flex-start;
     height: 82%;
     overflow-y: auto;
   }
@@ -49,70 +49,97 @@
     width: 100%;
     justify-content: flex-start;
     align-items: center;
-    background-color: $light-grey;
-    height: 18%;
+    background-color: $light-grey-dark;
+    border: 2px solid $light-grey;
+    border-bottom: none;
+    height:40px;
     border-radius: 5px 5px 0 0;
     font-size: 1rem;
-        text-align: center;
+    text-align: center;
   }
 
   .topBar p:nth-of-type(1){
     width: 8%;
+    height: 80%;
     color: $white;
     font-size: 1rem;
-    text-align: center;
-    border-right: 2px solid $white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-right: 2px solid $grey-extra-light;
   }
 
   .topBar p:nth-of-type(2){
     width: 35%;
     color: $white;
     font-size: 1rem;
-    border-right: 2px solid $white;
+    border-right: 2px solid $grey-extra-light;
+    display: flex;
+    align-items: center;
+    height: 80%;
+    justify-content: center;
   }
 
   .topBar p:nth-of-type(3){
     width: 28%;
     color: $white;
     font-size: 1rem;
-    border-right: 2px solid $white;
+    border-right: 2px solid $grey-extra-light;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 80%;
   }
 
   .topBar p:nth-of-type(4){
     width: 8%;
     color: $white;
     font-size: 1rem;
-    border-right: 2px solid $white;
+    border-right: 2px solid $grey-extra-light;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 80%;
   }
 
   .topBar p:nth-of-type(5){
     width: 8%;
     color: $white;
     font-size: 1rem;
-    border-right: 2px solid $white;
+    border-right: 2px solid $grey-extra-light;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 80%;
   }
 
   .topBar p:nth-of-type(6){
     width: 8%;
     color: $white;
     font-size: 1rem;
-    border-right: 2px solid $white;
+    border-right: 2px solid $grey-extra-light;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 80%;
   }
 
   .topBar p:nth-of-type(7){
     width: 5%;
     color: $white;
     font-size: 1rem;
+    height: 80%;
   }
 
   .dropdown {
     padding: 3px;
     background-color: $black;
     color: $white;
-    width: 90%;
+    width: 100%;
     border: 1px solid $orange;
     border-radius: 5px;
     font-size: medium;
+    margin-bottom: 10px;
   }
 
   .dropdown:focus {
@@ -130,7 +157,7 @@
   .buttons {
     display: flex;
     flex-direction: column;
-    width: 50%;
+    width: 40%;
     gap: 10px;
     margin-left: 10px;
   }
@@ -139,7 +166,7 @@
     background-color: $white;
     margin: 10px 0;
     color: $grey;
-    width: 70%;
+    width: 50%;
     border: none;
     height: 25px;
     padding: 10px;
@@ -149,14 +176,14 @@
     cursor: pointer;
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-start;
     gap: 10px;
     transition: background-color 0.3s ease-in-out, color 0.3s ease-in-out;
     box-shadow: 4px 4px 5px 0 $black;
   }
 
   .editButton:hover, .addButton:hover, .deleteButton:hover {
-    background-color: $orange; /* Kolor tła po najechaniu */
+    background-color: darken($white, 25%); /* Kolor tła po najechaniu */
     color: $black; /* Kolor tekstu po najechaniu */
   }
   
@@ -173,8 +200,8 @@
       overflow-y: scroll;
       background-color: $black;
       box-sizing: border-box;
-      height: 82%;
-      border-left: 2px solid $light-grey;
+      height: 84%;
+      border: 2px solid $light-grey;
       border-radius: 0  0 10px 10px;
   }
 
@@ -187,6 +214,10 @@
 
     color: white;
     font-weight: light;
+
+    &:hover {
+      background-color: $grey-extra-dark;
+    }
   }
 
   .emptyPlaylist{
@@ -267,6 +298,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
+    transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
   }
 
   .channelBtn:hover {
@@ -280,7 +312,7 @@
   }
   
   .deleteSongButton {
-    background-color: $black;
+    background-color: rgba($color: #000000, $alpha: 0);
     width: 4.5%;
     color: $orange;
     border: none;
@@ -289,7 +321,7 @@
   }
 
   .deleteSongButton:hover {
-    background-color: $black;
+    background-color: rgba($color: #000000, $alpha: 0);
     width:  4.5%;
     color: $white;
     border: none;

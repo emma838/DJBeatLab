@@ -276,12 +276,12 @@ const currentTimeRef = useRef({
   
       const lowShelf = audioCtx.createBiquadFilter();
       lowShelf.type = 'lowshelf';
-      lowShelf.frequency.value = 500;
+      lowShelf.frequency.value = 200;
       lowShelf.gain.value = 0;
   
       // Delay
       const delayNode = audioCtx.createDelay();
-      delayNode.delayTime.value = 0.1;
+      delayNode.delayTime.value = 0;
       const delayGain = audioCtx.createGain();
       delayGain.gain.value = 0;
 

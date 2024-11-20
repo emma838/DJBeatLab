@@ -9,6 +9,7 @@ import Deck from '../../components/Deck/Deck';
 import Waveform from '../../components/Waveform/Waveform';
 import VolumeSlider from '../../components/VolumeSlider/VolumeSlider';
 import CrossFader from '../../components/CrossFader/CrossFader';
+import ConfirmDeckModal from '../../components/ConfirmDeckModal/ConfirmDeckModal';
 import EQKnobs from '../../components/EQKnobs/EQKnobs';
 
 // Importowanie hooka do zarządzania audio
@@ -19,7 +20,13 @@ import styles from './Workspace.module.scss';
 
 const Workspace = () => {
   // Destrukturyzacja funkcji z hooka useAudio
-  const { loadTrackData, setVolume, setCrossfade } = useAudio();
+  const {
+    decks,
+    loadTrackData,
+    setVolume,
+    setCrossfade,
+    stopPlayback,
+  } = useAudio();
 
   // Stan do przechowywania wybranej playlisty
   const [selectedPlaylist, setSelectedPlaylist] = useState('uploads');
@@ -27,40 +34,61 @@ const Workspace = () => {
   // Stan do wyzwalania aktualizacji playlisty
   const [playlistUpdateTrigger, setPlaylistUpdateTrigger] = useState(false);
 
-  //stan do zapamietywania przycisku assign to deck"
+  // Stan do zapamiętywania przycisku "assign to deck"
   const [deckAssignments, setDeckAssignments] = useState({});
 
+  const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
+  const [pendingDeckNumber, setPendingDeckNumber] = useState(null);
+  const [pendingSong, setPendingSong] = useState(null);
 
-  // /**
-  //  * Funkcja przypisująca wybraną piosenkę do decka
-  //  * @param {number} deckNumber - Numer decka (1 lub 2)
-  //  * @param {object} song - Obiekt piosenki
-  //  */
-  const handleAssignToDeck = (deckNumber, song) => {
+  // Funkcja przypisująca wybraną piosenkę do decka
+  const assignTrackToDeck = (deckNumber, song) => {
     setDeckAssignments((prevAssignments) => ({
       ...prevAssignments,
-      [deckNumber]: song._id, // Przypisz ID utworu do danego decka
+      [deckNumber]: song._id,
     }));
+
     const trackUrl = `/api/audio/${song.user}/uploaded/${encodeURIComponent(song.filename)}`;
     const track = { ...song, url: trackUrl };
     loadTrackData(deckNumber, track);
   };
 
-  /**
-   * Funkcja wyzwalająca aktualizację playlisty
-   */
+  const handleAssignToDeck = (deckNumber, song) => {
+    if (decks[deckNumber]?.isPlaying) {
+      // Deck jest aktualnie odtwarzany, pokaż modal z potwierdzeniem
+      setPendingDeckNumber(deckNumber);
+      setPendingSong(song);
+      setIsConfirmModalOpen(true);
+    } else {
+      // Deck nie odtwarza, wgraj utwór normalnie
+      assignTrackToDeck(deckNumber, song);
+    }
+  };
+
+  const handleConfirmLoad = () => {
+    stopPlayback(pendingDeckNumber);
+    assignTrackToDeck(pendingDeckNumber, pendingSong);
+    setIsConfirmModalOpen(false);
+    setPendingDeckNumber(null);
+    setPendingSong(null);
+  };
+
+  const handleCancelLoad = () => {
+    setIsConfirmModalOpen(false);
+    setPendingDeckNumber(null);
+    setPendingSong(null);
+  };
+
+  // Funkcja wyzwalająca aktualizację playlisty
   const handleSongAdded = () => {
-    setPlaylistUpdateTrigger(prev => !prev);
+    setPlaylistUpdateTrigger((prev) => !prev);
   };
 
   // Funkcje do zmiany głośności dla obu decków
   const handleVolumeChangeDeck1 = (newVolume) => setVolume(1, newVolume);
   const handleVolumeChangeDeck2 = (newVolume) => setVolume(2, newVolume);
 
-  // /**
-  //  * Funkcja obsługująca zmianę pozycji crossfadera
-  //  * @param {number} newPosition - Nowa pozycja crossfadera
-  //  */
+  // Funkcja obsługująca zmianę pozycji crossfadera
   const handleCrossfadeChange = (newPosition) => setCrossfade(newPosition);
 
   return (
@@ -75,16 +103,16 @@ const Workspace = () => {
           waveformColor="#FF5722"
           playheadColor="#FFFFFF"
           cueColor="#DC143C "
-          loopColor='rgba(30, 144, 255, 0.2)'
-          loopLineColor='#1E90FF'
+          loopColor="rgba(30, 144, 255, 0.2)"
+          loopLineColor="#1E90FF"
         />
         <Waveform
           deckNumber={2}
           waveformColor="#4CAF50"
           playheadColor="#FFFFFF"
           cueColor="#DC143C"
-          loopColor='rgba(30, 144, 255, 0.2)'
-          loopLineColor='#1E90FF'
+          loopColor="rgba(30, 144, 255, 0.2)"
+          loopLineColor="#1E90FF"
         />
       </div>
 
@@ -109,21 +137,19 @@ const Workspace = () => {
               {/* Slider głośności lewego decka */}
               <div className={styles.volfilterleft}>
                 <VolumeSlider
-                  deckNumber={1} // Możliwe: 1 lub 2, w zależności od decka
+                  deckNumber={1}
                   initialValue={1}
                   onVolumeChange={handleVolumeChangeDeck1}
                 />
-                {/* <GainMeter deckNumber={1} /> */}
               </div>
 
               {/* Slider głośności prawego decka */}
               <div className={styles.volfilterright}>
                 <VolumeSlider
-                  deckNumber={2} // Poprawione na 2 dla prawego decka
+                  deckNumber={2}
                   initialValue={1}
                   onVolumeChange={handleVolumeChangeDeck2}
                 />
-                {/* <GainMeter deckNumber={2} /> */}
               </div>
             </div>
 
@@ -164,6 +190,15 @@ const Workspace = () => {
           />
         </div>
       </section>
+
+      {/* Modal z potwierdzeniem */}
+      {isConfirmModalOpen && (
+        <ConfirmDeckModal
+          deckNumber={pendingDeckNumber}
+          onConfirm={handleConfirmLoad}
+          onCancel={handleCancelLoad}
+        />
+      )}
     </div>
   );
 };

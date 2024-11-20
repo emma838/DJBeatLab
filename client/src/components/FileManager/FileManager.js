@@ -1,3 +1,4 @@
+//filemanager.js
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import AddFileModal from '../AddFile/AddFileModal';
@@ -12,7 +13,7 @@ const FileManager = ({ selectedPlaylist, onSongAdded }) => {
   });
   const [isAddFileOpen, setIsAddFileOpen] = useState(false);
 
-  axios.defaults.headers.common['Accept-Charset'] = 'utf-8';
+  // axios.defaults.headers.common['Accept-Charset'] = 'utf-8';
   const openAddFile = () => setIsAddFileOpen(true);
   const closeAddFile = () => setIsAddFileOpen(false);
 
@@ -73,19 +74,24 @@ const FileManager = ({ selectedPlaylist, onSongAdded }) => {
 
   // Funkcja do usuwania pliku
  // Funkcja do usuwania pliku
-const deleteFile = async (songId) => {
+ const deleteFile = async (songId) => {
   try {
     const response = await axios.delete(`/api/files/delete/${songId}`, {
       headers: {
         Authorization: `Bearer ${localStorage.getItem('token')}`,
       },
     });
-    console.log(response.data.msg); // Sprawdź odpowiedź z serwera
+    console.log(response.data.msg);
 
-    // Po udanym usunięciu pliku odśwież listę plików
-    updateDirectories(); // Odśwież listę plików
+    // Refresh the file list
+    updateDirectories();
+
+    // Notify that a song has been removed
+    if (onSongAdded) {
+      onSongAdded();
+    }
   } catch (error) {
-    console.error('Błąd podczas usuwania pliku:', error);
+    console.error('Error deleting file:', error);
   }
 };
 
@@ -100,9 +106,9 @@ const deleteFile = async (songId) => {
       {/* Uploaded Files */}
       <div className={styles.headerContainer}>
         <h3 className={styles.folderHeader}>
-          <div className={styles.folderHeaderLeft}>Biblioteka utworów</div>
+          <div className={styles.folderHeaderLeft}>Uploaded Tracks</div>
           <div className={styles.folderHeaderRight}>
-            <button onClick={openAddFile} className={styles.fileButton}><AddBox  /> Dodaj</button>
+            <button onClick={openAddFile} className={styles.fileButton}><AddBox  /> Add file</button>
             
           </div>
         </h3>
@@ -127,7 +133,7 @@ const deleteFile = async (songId) => {
               </li>
             ))
           ) : (
-            <li className={styles.emptyItem}>Brak plików wgranych przez użytkownika</li>
+            <li className={styles.emptyItem}>No files uploaded by user.</li>
           )}
         </ul>
       </div>
@@ -138,6 +144,7 @@ const deleteFile = async (songId) => {
           isOpen={isAddFileOpen}
           onClose={closeAddFile}
           updateDirectories={updateDirectories} // Przekazanie funkcji do modala
+          onSongAdded={onSongAdded}
         />
       )}
     </div>

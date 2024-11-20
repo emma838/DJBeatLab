@@ -7,7 +7,7 @@ import LoadingAnimation from '../LoadingAnimation/LoadingAnimation';
 import styles from './AddFileModal.module.scss';
 import UploadIcon from '@mui/icons-material/Upload';
 
-const AddFileModal = ({ isOpen, onClose, updateDirectories }) => {
+const AddFileModal = ({ isOpen, onClose, updateDirectories, onSongAdded }) => {
   const [selectedFile, setSelectedFile] = useState(null);
   const [fileName, setFileName] = useState('');
   const arrayBufferRef = useRef(null);
@@ -74,7 +74,7 @@ const AddFileModal = ({ isOpen, onClose, updateDirectories }) => {
       formData.append('file', selectedFile);
       formData.append('bpm', bpm);
       formData.append('key', key);
-
+  
       try {
         const response = await axios.post('/api/files/upload', formData, {
           headers: {
@@ -82,10 +82,16 @@ const AddFileModal = ({ isOpen, onClose, updateDirectories }) => {
             'Content-Type': 'multipart/form-data',
           },
         });
-
+  
         if (response.status === 200) {
           console.log('File uploaded:', response.data);
           updateDirectories();
+  
+          // Call onSongAdded here
+          if (onSongAdded) {
+            onSongAdded();
+          }
+  
           onClose();
         } else {
           console.error('Error uploading file:', response.data);
@@ -104,7 +110,7 @@ const AddFileModal = ({ isOpen, onClose, updateDirectories }) => {
     isOpen && (
       <div className={styles.modalOverlay}>
         <div className={styles.modalContent}>
-          <h2>Dodaj utwór</h2>
+          <h2>Upload track</h2>
           <form onSubmit={handleSubmit}>
             {/* Ukryty input typu file */}
             <input
@@ -118,15 +124,15 @@ const AddFileModal = ({ isOpen, onClose, updateDirectories }) => {
             <label htmlFor="fileInput" className={styles.customFileUpload}>
               <UploadIcon className={styles.uploadIcon} />
               <span className={styles.uploadText}>
-                Wybierz plik
+                Select file (mp3, wav)
               </span>
             </label>
             {/* Kontener wyników analizy */}
             <div className={styles.analysisContainer}>
               {/* Sekcja Plik */}
               <div className={styles.analysisRow}>
-                <span className={styles.label}>Plik: </span>
-                <span className={styles.value}>{fileName || 'Brak wybranego pliku'}</span>
+                <span className={styles.label}>File name: </span>
+                <span className={styles.value}>{fileName || 'No file uploaded'}</span>
               </div>
               {/* Kontener Statusu Analizy */}
               <div className={styles.analysisStatusContainer}>
@@ -135,7 +141,7 @@ const AddFileModal = ({ isOpen, onClose, updateDirectories }) => {
                     <LoadingAnimation />
                   </>
                 ) : analysisCompleted ? (
-                  <span className={styles.analysisCompleted}>Analiza zakończona</span>
+                  <span className={styles.analysisCompleted}>Analysis completed</span>
                 ) : null}
               </div>
               {/* Sekcja BPM */}
@@ -153,7 +159,7 @@ const AddFileModal = ({ isOpen, onClose, updateDirectories }) => {
               </div>
               {/* Sekcja Tonacja */}
               <div className={styles.analysisRow}>
-                <span className={styles.label}>Tonacja:</span>
+                <span className={styles.label}>Key:</span>
                 <span className={styles.value}>
                   {isAnalyzing && selectedFile ? (
                     '---'
@@ -181,14 +187,14 @@ const AddFileModal = ({ isOpen, onClose, updateDirectories }) => {
                 className={`${styles.button} ${styles.uploadButton}`}
                 disabled={!bpm || !key}
               >
-                Dodaj plik
+                Submit file
               </button>
               <button
                 type="button"
                 onClick={onClose}
                 className={`${styles.button} ${styles.closeButton}`}
               >
-                Anuluj
+                Cancel
               </button>
             </div>
           </form>

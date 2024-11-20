@@ -56,7 +56,7 @@
 }
 
 .fileButton:hover {
-  background-color: $orange;
+  background-color: darken($color: $white, $amount: 25%);
   color: $black;
 }
 

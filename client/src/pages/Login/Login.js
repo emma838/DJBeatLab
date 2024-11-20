@@ -47,10 +47,10 @@ const Login = () => {
       <img src={logoImage} alt="DJBeatLab Logo" className={styles.logo} />
 
       <div className={styles.container}>
-        <h2 className={styles.title}>Logowanie</h2>
+        <h2 className={styles.title}>Sign In</h2>
         <form className={styles.form} onSubmit={handleLogin}>
           <div className={styles.inputGroup}>
-            <label className={styles.label}>Email lub login:</label>
+            <label className={styles.label}>Email or Username:</label>
             <input
               className={styles.input}
               type="text"
@@ -60,7 +60,7 @@ const Login = () => {
             />
           </div>
           <div className={styles.inputGroup}> 
-            <label className={styles.label}>Hasło:</label>
+            <label className={styles.label}>Password:</label>
             <input
               className={styles.input}
               type="password"
@@ -77,13 +77,13 @@ const Login = () => {
                   {message || '\u00A0'}
                 </p>
               </div>
-              <button type="submit" className={styles.button}>Zaloguj się</button>
+              <button type="submit" className={styles.button}>Sign In</button>
             </div>
             <div className={styles.registerContainer}>
               <div className={styles.registerText}>
                 <p>
-                  Nie masz konta?{' '}
-                  <a href="/register" className={styles.registerLink}>Zarejestruj się</a>
+                No account yet?{' '}
+                  <a href="/register" className={styles.registerLink}><br></br>Sign Up</a>
                 </p>
               </div>
             </div>

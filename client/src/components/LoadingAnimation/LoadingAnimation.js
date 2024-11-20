@@ -8,7 +8,7 @@ const LoadingAnimation = () => {
     <div className={styles.loadingContainer}>
 <div className={styles.spinner}></div>
       <div className={styles.loadingText}>
-        Analiza utworu 
+      Analyzing track 
       </div>
     </div>
   );

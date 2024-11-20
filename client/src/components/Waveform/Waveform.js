@@ -1,12 +1,12 @@
-// Waveform.js
+//Waveform.js
 import React, { useEffect, useRef, useMemo, useState } from 'react';
 import { useAudio } from '../../components/AudioManager/AudioManager';
 import styles from './Waveform.module.scss';
-import debounce from 'lodash.debounce';
+import debounce from 'lodash.debounce'; // Opcjonalnie, do debouncingu
 
 function Waveform({
   deckNumber,
-  waveformColor = '#FF5722',
+  waveformColor = '#FF5722', // Zaktualizowane kolory
   playheadColor = '#FFFFFF',
   loopColor = 'rgba(180, 180, 180, 0.4)',
   cueColor = '#DC143C',
@@ -20,14 +20,17 @@ function Waveform({
   const wasPlayingRef = useRef(false);
   const lastSeekTimeRef = useRef(0);
 
-  // Szerokość jednego beatu w pikselach
-  const BEAT_WIDTH = 60; // Możesz dostosować tę wartość
+  // Stała liczba barów na sekundę
+  const BARS_PER_SECOND = 100;
+
+  // Stan do przechowywania szerokości canvasu
+  const [canvasWidth, setCanvasWidth] = useState(0);
 
   // Extract necessary data from the deck
   const deck = decks[deckNumber];
   const waveformData = deck?.waveformData;
-  const duration = deck?.duration || 0;
-  const currentTime = deck?.currentTime || 0;
+  const duration = deck?.duration;
+  const currentTime = deck?.currentTime;
   const cuePoint = deck?.cuePoint || 0;
   const bpm = deck?.bpm || 120;
   const defaultBpm = deck?.defaultBpm || 120;
@@ -35,16 +38,16 @@ function Waveform({
   const loopEnd = deck?.loopEnd;
   const isLooping = deck?.isLooping;
 
+  const pixelsPerSecond = 150; // Stała prędkość przesuwania waveforma
   const scaleFactor = defaultBpm / bpm; // Współczynnik skalowania
 
   // Aktualizuj szerokość canvasu przy renderowaniu
-  const [canvasWidth, setCanvasWidth] = useState(0);
   useEffect(() => {
     const canvas = canvasRef.current;
     if (canvas) {
       setCanvasWidth(canvas.clientWidth);
     }
-  }, [deckNumber]);
+  }, [deckNumber, duration]);
 
   // Obsługa zmiany rozmiaru okna z debouncingiem
   useEffect(() => {
@@ -62,11 +65,11 @@ function Waveform({
     };
   }, []);
 
-  // Obliczanie liczby beatów w utworze
-  const totalBeats = useMemo(() => {
-    if (!duration || !bpm) return 0;
-    return duration / (60 / bpm);
-  }, [duration, bpm]);
+  // Obliczanie dynamicznej gęstości barów na podstawie długości utworu
+  const desiredBarDensity = useMemo(() => {
+    if (!duration) return 1000; // Domyślna wartość, jeśli długość utworu nie jest znana
+    return Math.floor(duration * BARS_PER_SECOND);
+  }, [duration]);
 
   // Normalize peaks so the maximum value is 1
   const normalizedPeaks = useMemo(() => {
@@ -76,6 +79,23 @@ function Waveform({
     return waveformData.map((peak) => peak / maxPeak);
   }, [waveformData]);
 
+  // Dynamicznie próbkuj peaks do desiredBarDensity używając średniej
+  const sampledPeaks = useMemo(() => {
+    if (!normalizedPeaks || normalizedPeaks.length === 0) return [];
+
+    const totalBars = desiredBarDensity;
+    const sampleSize = Math.floor(normalizedPeaks.length / totalBars);
+    if (sampleSize < 1) return normalizedPeaks; // Jeśli mniej peaków niż desiredBarDensity
+
+    const result = [];
+    for (let i = 0; i < normalizedPeaks.length; i += sampleSize) {
+      const segment = normalizedPeaks.slice(i, i + sampleSize);
+      const averagePeak = segment.reduce((sum, peak) => sum + peak, 0) / segment.length;
+      result.push(averagePeak);
+    }
+    return result;
+  }, [normalizedPeaks, desiredBarDensity]);
+
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -83,35 +103,31 @@ function Waveform({
 
     const drawWaveform = () => {
       try {
-        if (!normalizedPeaks || normalizedPeaks.length === 0 || !duration) return;
+        if (!sampledPeaks || sampledPeaks.length === 0 || !duration) return;
 
         const ctx = canvas.getContext('2d');
         ctx.clearRect(0, 0, canvas.width, canvas.height);
 
         const width = canvas.clientWidth;
         const height = canvas.clientHeight;
-        const peaks = normalizedPeaks;
+        const peaks = sampledPeaks;
 
         // Ustawienie barWidth i barSpacing
-        const barWidth = 2; // Możesz dostosować szerokość słupków
-        const barSpacing = 1; // Możesz dostosować odstęp między słupkami
-
-        const totalBars = peaks.length;
-        const timePerBar = duration / totalBars;
-
-        // Obliczanie całkowitej szerokości waveforma
-        const totalWaveformWidth = totalBeats * BEAT_WIDTH;
+        const barWidth = 2; // Możesz dostosować szerokość bary
+        const barSpacing = 1; // Możesz dostosować odstęp między bary
 
         const centerX = width / 2;
 
         // Obliczanie shift
         const currentTimeToUse = isSeeking.current ? lastSeekTimeRef.current : currentTime;
-        const xOffset = (currentTimeToUse / duration) * totalWaveformWidth - centerX;
+        const shift = currentTimeToUse * pixelsPerSecond * scaleFactor - centerX;
+
+        const timePerBar = duration / peaks.length;
 
         // Rysowanie zakresu pętli (jeśli aktywna)
         if (isLooping && loopStart !== null && loopEnd !== null) {
-          const xLoopStart = (loopStart / duration) * totalWaveformWidth - xOffset;
-          const xLoopEnd = (loopEnd / duration) * totalWaveformWidth - xOffset;
+          const xLoopStart = loopStart * pixelsPerSecond * scaleFactor - shift;
+          const xLoopEnd = loopEnd * pixelsPerSecond * scaleFactor - shift;
 
           const xStart = Math.max(0, xLoopStart);
           const xEnd = Math.min(width, xLoopEnd);
@@ -140,7 +156,7 @@ function Waveform({
         for (let i = 0; i < peaks.length; i++) {
           const peak = peaks[i];
           const time = i * timePerBar;
-          const x = (time / duration) * totalWaveformWidth - xOffset;
+          const x = time * pixelsPerSecond * scaleFactor - shift;
 
           const y = ((1 - peak) * height) / 2;
           const barHeight = peak * height;
@@ -155,12 +171,12 @@ function Waveform({
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
         ctx.lineWidth = 1;
 
-        const secondsPerBeat = 60 / defaultBpm; // Użyj defaultBpm zamiast bpm
-        const totalBeatsToDraw = Math.ceil(duration / secondsPerBeat);
+        const timePerBeat = 60 / defaultBpm; // Użyj defaultBpm zamiast bpm
+        const totalBeats = duration / timePerBeat;
 
-        for (let i = 0; i <= totalBeatsToDraw; i++) {
-          const beatTime = i * secondsPerBeat;
-          const xBeat = (beatTime / duration) * totalWaveformWidth - xOffset;
+        for (let i = 0; i <= totalBeats; i++) {
+          const beatTime = i * timePerBeat;
+          const xBeat = beatTime * pixelsPerSecond * scaleFactor - shift;
 
           if (xBeat >= 0 && xBeat <= width) {
             ctx.beginPath();
@@ -176,7 +192,7 @@ function Waveform({
 
         // Rysowanie wskaźnika punktu CUE
         if (cuePoint >= 0 && cuePoint <= duration) {
-          const xCue = (cuePoint / duration) * totalWaveformWidth - xOffset;
+          const xCue = cuePoint * pixelsPerSecond * scaleFactor - shift;
 
           if (xCue >= 0 && xCue <= width) {
             ctx.fillStyle = cueColor;
@@ -199,7 +215,7 @@ function Waveform({
       cancelAnimationFrame(animationFrameRef.current);
     };
   }, [
-    normalizedPeaks,
+    sampledPeaks,
     duration,
     currentTime,
     cuePoint,
@@ -214,11 +230,13 @@ function Waveform({
     deckNumber,
     bpm,
     defaultBpm,
+    pixelsPerSecond,
     cueColor,
     scaleFactor,
-    BEAT_WIDTH,
-    totalBeats,
   ]);
+
+  // Obsługa responsywności
+  // (Debounced handleResize już jest zaimplementowany powyżej)
 
   const adjustCanvasForDPR = (canvas) => {
     const ctx = canvas.getContext('2d');
@@ -276,10 +294,9 @@ function Waveform({
     const width = canvas.clientWidth;
     const centerX = width / 2;
 
-    const totalWaveformWidth = totalBeats * BEAT_WIDTH;
-    const xOffset = (currentTime / duration) * totalWaveformWidth - centerX;
+    const shift = currentTime * pixelsPerSecond * scaleFactor - centerX;
 
-    const newTime = ((x + xOffset) / totalWaveformWidth) * duration;
+    const newTime = (x + shift) / (pixelsPerSecond * scaleFactor);
 
     const clampedTime = Math.max(0, Math.min(duration, newTime));
 

@@ -17,7 +17,7 @@ const FXHandler = ({ deckNumber }) => {
     flanger: 0,
   });
 
-  const [delayTime, setDelayTime] = useState(0.3); // Default delay time
+  const [delayTime, setDelayTime] = useState(0); // Default delay time
   const [effectType, setEffectType] = useState('reverb'); // Default effect type
 
   const handleEffectTypeClick = (selectedEffect) => {
@@ -92,7 +92,6 @@ const FXHandler = ({ deckNumber }) => {
           label={currentEffectSettings.label}
           showScale={true}
           numTicks={currentEffectSettings.numTicks}
-          tickLength={7}
           tickSize={1}
           tickColor="#d1c6c6"
           tickOffset={6}
@@ -109,7 +108,6 @@ const FXHandler = ({ deckNumber }) => {
             label={delayTimeSettings.label}
             showScale={true}
             numTicks={delayTimeSettings.numTicks}
-            tickLength={7}
             tickSize={1}
           tickColor="#d1c6c6"
           tickOffset={6}

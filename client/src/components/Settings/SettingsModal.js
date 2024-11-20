@@ -125,7 +125,7 @@ const SettingsModal = ({ isOpen, onClose, username, onUsernameChange }) => {
     isOpen && (
       <div className={styles.modalOverlay}>
         <div className={styles.modal}>
-          <h2>Ustawienia</h2>
+          <h2>Settings</h2>
 
           {/* Login */}
           <div className={styles.settingItem}>
@@ -134,27 +134,27 @@ const SettingsModal = ({ isOpen, onClose, username, onUsernameChange }) => {
               type="text"
               value={newUsername}
               onChange={handleUsernameChange}
-              placeholder="podaj nowy login"
+              placeholder="enter new login"
             />
           </div>
 
           {/* Hasło */}
           <div className={styles.settingItem}>
-            <label>Nowe hasło:</label>
+            <label>New password:</label>
             <input
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              placeholder="podaj nowe hasło"
+              placeholder="enter new password"
             />
           </div>
           <div className={styles.settingItem}>
-            <label>Powtórz hasło:</label>
+            <label>Confirm password:</label>
             <input
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              placeholder="powtórz nowe hasło"
+              placeholder="confirm new password"
             />
           </div>
 
@@ -172,10 +172,10 @@ const SettingsModal = ({ isOpen, onClose, username, onUsernameChange }) => {
   }
   className={`${styles.button} ${styles.saveButton}`}
 >
-  Zapisz
+  Save
 </button>
           <button onClick={onClose} className={`${styles.button} ${styles.cancelButton}`}>
-            Anuluj
+            Cancel
           </button>
           </div>
         </div>

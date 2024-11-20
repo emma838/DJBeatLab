@@ -58,8 +58,8 @@ const Header = ({ username: initialUsername, onUsernameChange }) => {
           <img src={userIcon} alt="User Icon" className={styles.avatar} />
           <div className={styles.dropdownMenu}>
             <ul>
-              <li onClick={toggleSettings}>Ustawienia</li>
-              <li onClick={handleLogout} className={styles.logout}>Wyloguj</li>
+              <li onClick={toggleSettings}>Settings</li>
+              <li onClick={handleLogout} className={styles.logout}>Sign Out</li>
             </ul>
           </div>
         </div>
