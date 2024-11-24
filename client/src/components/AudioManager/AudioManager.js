@@ -453,57 +453,35 @@ const waveformData = extractPeaks(rawData, samples);
     return peaks;
   };
 
-  // Funkcja play/pause
-  const playPause = (deckNumber) => {
-    const deck = decksRef.current[deckNumber];
-    console.log(`playPause triggered for deck ${deckNumber}, isPlaying: ${deck.isPlaying}`);
-  
-    if (!deck.audioBuffer) {
-      console.warn(`No audio buffer loaded for deck ${deckNumber}`);
-      return;
-    }
-  
-    // Prevent rapid toggling
-    if (deck.isToggling) {
-      console.warn(`Deck ${deckNumber} is already toggling playback, ignoring.`);
-      return;
-    }
-  
-    // Set toggling flag
-    dispatch({
-      type: 'SET_DECK',
-      deckNumber,
-      payload: { isToggling: true },
-    });
-  
-    // Toggle playback
-    if (!deck.isPlaying) {
-      startPlayback(deckNumber); // Start playback if not already playing
-    } else {
-      stopPlayback(deckNumber); // Stop playback if already playing
-    }
-  
-    // Clear toggling flag after a short delay
-    setTimeout(() => {
-      dispatch({
-        type: 'SET_DECK',
-        deckNumber,
-        payload: { isToggling: false },
-      });
-    }, 100); // Adjust this delay as needed
-  };
+ // Funkcja play/pause
+ const playPause = (deckNumber) => {
+  const deck = decksRef.current[deckNumber];
+  console.log(`playPause called for deck ${deckNumber}, isPlaying: ${deck.isPlaying}`);
+
+  if (!deck.audioBuffer) return;
+
+  if (!deck.isPlaying) {
+    startPlayback(deckNumber);
+  } else {
+    stopPlayback(deckNumber);
+  }
+
+  // dispatch({
+  //   type: 'SET_DECK',
+  //   deckNumber,
+  //   payload: {
+  //     isPlaying: !deck.isPlaying,
+  //   },
+  // });
+};
   
 
-  // Funkcja do rozpoczęcia odtwarzania
  // Funkcja do rozpoczęcia odtwarzania
  const startPlayback = (deckNumber, startOffset = null) => {
   const deck = decksRef.current[deckNumber];
   const audioCtx = audioContexts[deckNumber].current;
 
-  if (!deck.audioBuffer) {
-    console.warn(`No audio buffer loaded for deck ${deckNumber}`);
-    return;
-  }
+  if (!deck.audioBuffer) return;
 
   if (audioCtx.state === 'suspended') {
     audioCtx.resume();
@@ -517,35 +495,19 @@ const waveformData = extractPeaks(rawData, samples);
     startOffset = 0;
   }
 
-  console.log(`Starting playback on deck ${deckNumber} from offset: ${startOffset.toFixed(2)} seconds`);
+  console.log(`Starting playback from offset: ${startOffset.toFixed(2)} seconds`);
 
-  // Ensure previous source is stopped
   if (deck.source) {
-    try {
-      deck.source.onended = null;
-      deck.source.stop();
-      console.log(`Previous source stopped on deck ${deckNumber}`);
-    } catch (error) {
-      console.warn(`Error stopping previous source on deck ${deckNumber}:`, error);
-    }
+    deck.source.onended = null;
+    deck.source.stop();
   }
 
-  // Clear the previous source reference
-  dispatch({
-    type: 'SET_DECK',
-    deckNumber,
-    payload: { source: null },
-  });
-
-  // Create a new source
   const source = audioCtx.createBufferSource();
   source.buffer = deck.audioBuffer;
   source.playbackRate.value = deck.bpm / deck.defaultBpm || 1;
 
-  // Connect EQ filters
   source.connect(deck.lowShelf).connect(deck.midPeak).connect(deck.highShelf);
 
-  // Handle looping if enabled
   if (deck.isLooping && deck.loopStart !== null && deck.loopEnd !== null && deck.loopEnd > deck.loopStart) {
     source.loop = true;
     source.loopStart = deck.loopStart;
@@ -555,12 +517,10 @@ const waveformData = extractPeaks(rawData, samples);
     source.loop = false;
   }
 
-  // Start playback
   source.start(0, startOffset);
 
-  // Handle source end event
   source.onended = () => {
-    console.log(`Playback ended on deck ${deckNumber}`);
+    console.log(`Playback ended`);
     dispatch({
       type: 'SET_DECK',
       deckNumber,
@@ -573,7 +533,6 @@ const waveformData = extractPeaks(rawData, samples);
     });
   };
 
-  // Update state with the new source
   dispatch({
     type: 'SET_DECK',
     deckNumber,
@@ -601,51 +560,41 @@ const waveformData = extractPeaks(rawData, samples);
   };
 
   // Funkcja do zatrzymania odtwarzania
-  // Funkcja do zatrzymania odtwarzania
-  const stopPlayback = (deckNumber) => {
-    const deck = decksRef.current[deckNumber];
-    const audioCtx = audioContexts[deckNumber].current;
-  
-    console.log(`Stopping playback on deck ${deckNumber}`);
-  
-    if (deck.source) {
-      try {
-        deck.source.onended = null; // Prevent triggering `onended` callback
-        deck.source.stop(); // Stop the audio source
-        console.log(`Source stopped successfully on deck ${deckNumber}`);
-      } catch (error) {
-        console.warn(`Error stopping source on deck ${deckNumber}:`, error);
-      }
-  
-      // Immediately clear the source reference
-      dispatch({
-        type: 'SET_DECK',
-        deckNumber,
-        payload: {
-          source: null,
-          isPlaying: false,
-        },
-      });
+// Funkcja do zatrzymania odtwarzania
+const stopPlayback = (deckNumber) => {
+  const deck = decksRef.current[deckNumber];
+  const audioCtx = audioContexts[deckNumber].current;
+
+  console.log(`Stopping playback on deck ${deckNumber}`);
+
+  if (deck.source) {
+    deck.source.onended = null; // Zapobieganie wywoływaniu onended
+    deck.source.stop();
+
+    let currentTime;
+
+    if (deck.isLooping && deck.loopStart !== null && deck.loopEnd !== null) {
+      const loopLength = deck.loopEnd - deck.loopStart;
+      const elapsedTime = audioCtx.currentTime - deck.playbackStartTime;
+      const playbackRate = deck.bpm / deck.defaultBpm || 1;
+      currentTime = deck.loopStart + ((elapsedTime * playbackRate) % loopLength);
+      console.log(`Calculated currentTime within loop: ${currentTime.toFixed(2)} seconds`);
     } else {
-      console.warn(`No active source to stop on deck ${deckNumber}`);
+      currentTime = audioCtx.currentTime - deck.playbackStartTime + deck.startOffset;
+      console.log(`Calculated currentTime without loop: ${currentTime.toFixed(2)} seconds`);
     }
-  
-    // Calculate and update the current time
-    const elapsedTime = audioCtx.currentTime - deck.playbackStartTime;
-    const playbackRate = deck.bpm / deck.defaultBpm || 1;
-    const currentTime = deck.startOffset + elapsedTime * playbackRate;
-  
+
     dispatch({
       type: 'SET_DECK',
       deckNumber,
       payload: {
         currentTime,
-        playbackStartTime: 0,
-        startOffset: currentTime,
         isPlaying: false,
+        source: null,
         isCuePlaying: false,
       },
     });
+  }
   
     // Cancel any ongoing animations
     if (animationFrameIds.current[deckNumber]) {
@@ -881,6 +830,7 @@ const waveformData = extractPeaks(rawData, samples);
         payload: { isPlaying: true, wasPlaying: false },
       });
       if (deck.isLooping) {
+        startPlayback(deckNumber);
         // Looping będzie obsługiwane przez useEffect
       } else {
         startPlayback(deckNumber);
