@@ -17,25 +17,33 @@ const BpmSlider = ({ deckNumber }) => {
     updateBpm(deckNumber, newBpm);
   };
 
+  const handleWheel = (e) => {
+    e.preventDefault(); // Zapobiega przewijaniu strony
+    const delta = e.deltaY > 0 ? -1 : 1; // Scroll w dół zmniejsza, w górę zwiększa
+    const newBpm = Math.max(minBpm, Math.min(maxBpm, bpm + delta)); // Ogranicz BPM do zakresu
+    updateBpm(deckNumber, newBpm);
+  };
+
   return (
     <div className={styles.bpmSliderContent}>
-            <div className={styles.label}>TEMPO</div>
-    <div className={styles.bpmSlider}>
-      <div className={styles.scale}>
-        <div className={`${styles.scaleMark} ${styles.top}`} />
-        <div className={`${styles.scaleMark} ${styles.middle}`} />
-        <div className={`${styles.scaleMark} ${styles.bottom}`} />
+      <div className={styles.label}>TEMPO</div>
+      <div className={styles.bpmSlider}>
+        <div className={styles.scale}>
+          <div className={`${styles.scaleMark} ${styles.top}`} />
+          <div className={`${styles.scaleMark} ${styles.middle}`} />
+          <div className={`${styles.scaleMark} ${styles.bottom}`} />
+        </div>
+        <input
+          type="range"
+          min={minBpm}
+          max={maxBpm}
+          step="1"
+          value={bpm}
+          onChange={handleSliderChange}
+          onWheel={handleWheel} // Dodanie obsługi scrolla
+          className={styles.slider}
+        />
       </div>
-      <input
-        type="range"
-        min={minBpm}
-        max={maxBpm}
-        step="1"
-        value={bpm}
-        onChange={handleSliderChange}
-        className={styles.slider}
-      />
-    </div>
     </div>
   );
 };

@@ -1,4 +1,3 @@
-// CrossFader.js
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import styles from './CrossFader.module.scss';
@@ -9,6 +8,16 @@ const Crossfader = ({ onCrossfadeChange }) => {
   const handleSliderChange = (e) => {
     let newPosition = parseFloat(e.target.value);
     // Upewnij się, że wartość jest w zakresie 0 do 1
+    newPosition = Math.max(0, Math.min(1, newPosition));
+    setPosition(newPosition);
+    onCrossfadeChange(newPosition); // Przekazanie wartości do funkcji obsługującej
+  };
+
+  const handleWheel = (e) => {
+    e.preventDefault(); // Zapobiega przewijaniu strony
+    const delta = e.deltaY > 0 ? -0.01 : 0.01; // Scroll w górę zwiększa, w dół zmniejsza
+    let newPosition = position + delta;
+    // Ogranicz zakres 0 do 1
     newPosition = Math.max(0, Math.min(1, newPosition));
     setPosition(newPosition);
     onCrossfadeChange(newPosition); // Przekazanie wartości do funkcji obsługującej
@@ -30,6 +39,7 @@ const Crossfader = ({ onCrossfadeChange }) => {
           step="0.01"
           value={position}
           onChange={handleSliderChange}
+          onWheel={handleWheel} // Dodanie obsługi scrolla
           className={styles.slider}
         />
       </div>

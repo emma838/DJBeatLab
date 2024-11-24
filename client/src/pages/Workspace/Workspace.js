@@ -1,5 +1,5 @@
 // Workspace.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 
 // Importowanie komponentów
 import Header from '../../components/Headers/HeaderWorkspace/HeaderWorkspace';
@@ -11,6 +11,8 @@ import VolumeSlider from '../../components/VolumeSlider/VolumeSlider';
 import CrossFader from '../../components/CrossFader/CrossFader';
 import ConfirmDeckModal from '../../components/ConfirmDeckModal/ConfirmDeckModal';
 import EQKnobs from '../../components/EQKnobs/EQKnobs';
+import midiMappings from './MidiMappings.js';
+
 
 // Importowanie hooka do zarządzania audio
 import { useAudio } from '../../components/AudioManager/AudioManager';
@@ -26,8 +28,94 @@ const Workspace = () => {
     setVolume,
     setCrossfade,
     stopPlayback,
+    playPause,
+    handleCueMouseDown,
+    handleCueMouseUp,
+    decksInitializedRef,
   } = useAudio();
 
+  const [error, setError] = useState(null);
+
+  useEffect(() => {
+    // Sprawdzamy, czy przeglądarka obsługuje Web MIDI API
+    if (navigator.requestMIDIAccess) {
+      navigator.requestMIDIAccess()
+        .then(onMIDISuccess)
+        .catch((err) => setError(`Błąd MIDI: ${err.message}`));
+    } else {
+      setError('Twoja przeglądarka nie obsługuje Web MIDI API.');
+    }
+  }, []);
+
+  const onMIDISuccess = (midiAccess) => {
+    const inputs = midiAccess.inputs.values();
+
+    for (let input of inputs) {
+      console.log('Podłączone urządzenie MIDI:', input.name);
+      input.onmidimessage = handleMIDIMessage;
+    }
+  };
+
+  const debounceTimers = {};
+
+  const handleMIDIMessage = (event) => {
+    if (!decksInitializedRef.current) {
+      console.warn('Decks not initialized yet, ignoring MIDI message.');
+      return;
+    }
+
+    const [status, control, value] = event.data;
+    const command = status >> 4; // Extract the command type
+    const channel = status & 0xf; // Extract the channel
+    
+  
+    console.log('MIDI Event:', { status, control, value, command, channel });
+  
+    const mappingKey = `${control}-${channel}`;
+  
+    if (command === 9 && value > 0) { // Note On
+      const mapping = midiMappings.noteOn[mappingKey];
+      if (mapping) {
+        const { action, deck } = mapping;
+  
+        if (action === 'playPause') {
+          // Debounce playPause for the deck
+          if (debounceTimers[deck]) {
+            clearTimeout(debounceTimers[deck]);
+          }
+          debounceTimers[deck] = setTimeout(() => {
+            playPause(deck);
+          }, 50); // Debounce time in milliseconds
+        } else if (action === 'cuePress') {
+          handleCueMouseDown(deck); // Obsługa przycisku wciśniętego
+        }
+      }
+    } else if (command === 8 || (command === 9 && value === 0)) { // Note Off
+      const mapping = midiMappings.noteOff[mappingKey];
+      if (mapping) {
+        const { action, deck } = mapping;
+        if (action === 'cueRelease') {
+          handleCueMouseUp(deck); // Obsługa przycisku zwolnionego
+        }
+      }
+    }else if (command === 11) { // Control Change
+      if (control === 28) { // Suwak głośności (przykład)
+        const deck = channel === 0 ? 1 : 2; // Deck 1 for channel 0, Deck 2 for channel 1
+        let normalizedVolume = value / 127; // Normalize to range 0–0.6
+
+        // Zaokrąglanie do precyzji suwaka
+  const step = 0.001; // Taki sam jak w VolumeSlider
+  normalizedVolume = Math.round(normalizedVolume / step) * step;
+
+   // Ustaw wartość 0 jako dokładne zero
+   if (normalizedVolume < 0.008) {
+    normalizedVolume = 0;
+  }
+        setVolume(deck, normalizedVolume);
+      }
+    }
+  };
+  
   // Stan do przechowywania wybranej playlisty
   const [selectedPlaylist, setSelectedPlaylist] = useState('uploads');
 
@@ -138,7 +226,7 @@ const Workspace = () => {
               <div className={styles.volfilterleft}>
                 <VolumeSlider
                   deckNumber={1}
-                  initialValue={1}
+                  initialValue={decks[1]?.volumeGain?.gain.value || 1}
                   onVolumeChange={handleVolumeChangeDeck1}
                 />
               </div>
@@ -147,7 +235,7 @@ const Workspace = () => {
               <div className={styles.volfilterright}>
                 <VolumeSlider
                   deckNumber={2}
-                  initialValue={1}
+                  initialValue={decks[2]?.volumeGain?.gain.value || 1}
                   onVolumeChange={handleVolumeChangeDeck2}
                 />
               </div>

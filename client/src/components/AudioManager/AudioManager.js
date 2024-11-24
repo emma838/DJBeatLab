@@ -201,7 +201,7 @@ const currentTimeRef = useRef({
 
       // GainNode dla głośności decka
       const volumeGain = audioContexts[deckNumber].current.createGain();
-      volumeGain.gain.value = 0.6; // Domyślnie 100% głośności
+      volumeGain.gain.value = 1; // Domyślnie 100% głośności
 
        // GainNode dla crossfadera decka
     const crossfadeGain = audioContexts[deckNumber].current.createGain();
@@ -221,14 +221,40 @@ const currentTimeRef = useRef({
 
    // Funkcja do ustawiania głośności
    const setVolume = (deckNumber, volume) => {
-    const deck = decks[deckNumber];
-    if (deck && deck.volumeGain) {
-      deck.volumeGain.gain.value = volume;
-      console.log(`Volume for deck ${deckNumber} set to ${volume}`);
-    } else {
-      console.warn(`Volume gain node not found for deck ${deckNumber}`);
+    let deck = decksRef.current[deckNumber];
+    const audioCtx = audioContexts[deckNumber]?.current;
+  
+    if (!deck) {
+      console.warn(`Deck ${deckNumber} not initialized.`);
+      return;
     }
+  
+    if (!deck.volumeGain) {
+      if (!audioCtx) {
+        console.error(`AudioContext for deck ${deckNumber} not found.`);
+        return;
+      }
+  
+      console.log(`Initializing volume gain node for deck ${deckNumber}`);
+      const gainNode = audioCtx.createGain();
+      gainNode.gain.value = volume; // Ustaw od razu zadaną głośność
+      gainNode.connect(audioCtx.destination);
+  
+      // Przypisz do decka i zaktualizuj stan
+      dispatch({
+        type: 'SET_DECK',
+        deckNumber,
+        payload: { volumeGain: gainNode },
+      });
+  
+      deck = { ...deck, volumeGain: gainNode };
+    }
+  
+    // Ustaw głośność
+    deck.volumeGain.gain.value = volume;
+    console.log(`Volume for deck ${deckNumber} set to ${volume}`);
   };
+  
 
   const loadTrackData = async (deckNumber, track) => {
     console.log(`Loading track on deck ${deckNumber}:`, track);
@@ -430,24 +456,43 @@ const waveformData = extractPeaks(rawData, samples);
   // Funkcja play/pause
   const playPause = (deckNumber) => {
     const deck = decksRef.current[deckNumber];
-    console.log(`playPause called for deck ${deckNumber}, isPlaying: ${deck.isPlaying}`);
-
-    if (!deck.audioBuffer) return;
-
-    if (!deck.isPlaying) {
-      startPlayback(deckNumber);
-    } else {
-      stopPlayback(deckNumber);
+    console.log(`playPause triggered for deck ${deckNumber}, isPlaying: ${deck.isPlaying}`);
+  
+    if (!deck.audioBuffer) {
+      console.warn(`No audio buffer loaded for deck ${deckNumber}`);
+      return;
     }
-
-    // dispatch({
-    //   type: 'SET_DECK',
-    //   deckNumber,
-    //   payload: {
-    //     isPlaying: !deck.isPlaying,
-    //   },
-    // });
+  
+    // Prevent rapid toggling
+    if (deck.isToggling) {
+      console.warn(`Deck ${deckNumber} is already toggling playback, ignoring.`);
+      return;
+    }
+  
+    // Set toggling flag
+    dispatch({
+      type: 'SET_DECK',
+      deckNumber,
+      payload: { isToggling: true },
+    });
+  
+    // Toggle playback
+    if (!deck.isPlaying) {
+      startPlayback(deckNumber); // Start playback if not already playing
+    } else {
+      stopPlayback(deckNumber); // Stop playback if already playing
+    }
+  
+    // Clear toggling flag after a short delay
+    setTimeout(() => {
+      dispatch({
+        type: 'SET_DECK',
+        deckNumber,
+        payload: { isToggling: false },
+      });
+    }, 100); // Adjust this delay as needed
   };
+  
 
   // Funkcja do rozpoczęcia odtwarzania
  // Funkcja do rozpoczęcia odtwarzania
@@ -455,7 +500,10 @@ const waveformData = extractPeaks(rawData, samples);
   const deck = decksRef.current[deckNumber];
   const audioCtx = audioContexts[deckNumber].current;
 
-  if (!deck.audioBuffer) return;
+  if (!deck.audioBuffer) {
+    console.warn(`No audio buffer loaded for deck ${deckNumber}`);
+    return;
+  }
 
   if (audioCtx.state === 'suspended') {
     audioCtx.resume();
@@ -469,19 +517,35 @@ const waveformData = extractPeaks(rawData, samples);
     startOffset = 0;
   }
 
-  console.log(`Starting playback from offset: ${startOffset.toFixed(2)} seconds`);
+  console.log(`Starting playback on deck ${deckNumber} from offset: ${startOffset.toFixed(2)} seconds`);
 
+  // Ensure previous source is stopped
   if (deck.source) {
-    deck.source.onended = null;
-    deck.source.stop();
+    try {
+      deck.source.onended = null;
+      deck.source.stop();
+      console.log(`Previous source stopped on deck ${deckNumber}`);
+    } catch (error) {
+      console.warn(`Error stopping previous source on deck ${deckNumber}:`, error);
+    }
   }
 
+  // Clear the previous source reference
+  dispatch({
+    type: 'SET_DECK',
+    deckNumber,
+    payload: { source: null },
+  });
+
+  // Create a new source
   const source = audioCtx.createBufferSource();
   source.buffer = deck.audioBuffer;
   source.playbackRate.value = deck.bpm / deck.defaultBpm || 1;
 
+  // Connect EQ filters
   source.connect(deck.lowShelf).connect(deck.midPeak).connect(deck.highShelf);
 
+  // Handle looping if enabled
   if (deck.isLooping && deck.loopStart !== null && deck.loopEnd !== null && deck.loopEnd > deck.loopStart) {
     source.loop = true;
     source.loopStart = deck.loopStart;
@@ -491,10 +555,12 @@ const waveformData = extractPeaks(rawData, samples);
     source.loop = false;
   }
 
+  // Start playback
   source.start(0, startOffset);
 
+  // Handle source end event
   source.onended = () => {
-    console.log(`Playback ended`);
+    console.log(`Playback ended on deck ${deckNumber}`);
     dispatch({
       type: 'SET_DECK',
       deckNumber,
@@ -507,6 +573,7 @@ const waveformData = extractPeaks(rawData, samples);
     });
   };
 
+  // Update state with the new source
   dispatch({
     type: 'SET_DECK',
     deckNumber,
@@ -522,6 +589,8 @@ const waveformData = extractPeaks(rawData, samples);
 
 
 
+
+
   // Funkcja do restartowania odtwarzania (używana przy zmianach pętli)
   const restartPlayback = (deckNumber) => {
     const deck = decksRef.current[deckNumber];
@@ -533,47 +602,60 @@ const waveformData = extractPeaks(rawData, samples);
 
   // Funkcja do zatrzymania odtwarzania
   // Funkcja do zatrzymania odtwarzania
-const stopPlayback = (deckNumber) => {
-  const deck = decksRef.current[deckNumber];
-  const audioCtx = audioContexts[deckNumber].current;
-
-  console.log(`Stopping playback on deck ${deckNumber}`);
-
-  if (deck.source) {
-    deck.source.onended = null; // Zapobieganie wywoływaniu onended
-    deck.source.stop();
-
-    let currentTime;
-
-    if (deck.isLooping && deck.loopStart !== null && deck.loopEnd !== null) {
-      const loopLength = deck.loopEnd - deck.loopStart;
-      const elapsedTime = audioCtx.currentTime - deck.playbackStartTime;
-      const playbackRate = deck.bpm / deck.defaultBpm || 1;
-      currentTime = deck.loopStart + ((elapsedTime * playbackRate) % loopLength);
-      console.log(`Calculated currentTime within loop: ${currentTime.toFixed(2)} seconds`);
+  const stopPlayback = (deckNumber) => {
+    const deck = decksRef.current[deckNumber];
+    const audioCtx = audioContexts[deckNumber].current;
+  
+    console.log(`Stopping playback on deck ${deckNumber}`);
+  
+    if (deck.source) {
+      try {
+        deck.source.onended = null; // Prevent triggering `onended` callback
+        deck.source.stop(); // Stop the audio source
+        console.log(`Source stopped successfully on deck ${deckNumber}`);
+      } catch (error) {
+        console.warn(`Error stopping source on deck ${deckNumber}:`, error);
+      }
+  
+      // Immediately clear the source reference
+      dispatch({
+        type: 'SET_DECK',
+        deckNumber,
+        payload: {
+          source: null,
+          isPlaying: false,
+        },
+      });
     } else {
-      currentTime = audioCtx.currentTime - deck.playbackStartTime + deck.startOffset;
-      console.log(`Calculated currentTime without loop: ${currentTime.toFixed(2)} seconds`);
+      console.warn(`No active source to stop on deck ${deckNumber}`);
     }
-
+  
+    // Calculate and update the current time
+    const elapsedTime = audioCtx.currentTime - deck.playbackStartTime;
+    const playbackRate = deck.bpm / deck.defaultBpm || 1;
+    const currentTime = deck.startOffset + elapsedTime * playbackRate;
+  
     dispatch({
       type: 'SET_DECK',
       deckNumber,
       payload: {
         currentTime,
+        playbackStartTime: 0,
+        startOffset: currentTime,
         isPlaying: false,
-        source: null,
         isCuePlaying: false,
       },
     });
-  }
-
-  // Anulowanie animacji
-  if (animationFrameIds.current[deckNumber]) {
-    cancelAnimationFrame(animationFrameIds.current[deckNumber]);
-    delete animationFrameIds.current[deckNumber];
-  }
-};
+  
+    // Cancel any ongoing animations
+    if (animationFrameIds.current[deckNumber]) {
+      cancelAnimationFrame(animationFrameIds.current[deckNumber]);
+      delete animationFrameIds.current[deckNumber];
+      console.log(`Animation frame canceled for deck ${deckNumber}`);
+    }
+  };
+  
+  
 
   // Funkcja do aktualizacji czasu odtwarzania
   const updateTime = (deckNumber) => {
@@ -707,6 +789,7 @@ const stopPlayback = (deckNumber) => {
     }
   };
   
+  
 
   // Funkcja do zatrzymania odtwarzania od punktu CUE
   const stopFromCue = (deckNumber) => {
@@ -724,6 +807,47 @@ const stopPlayback = (deckNumber) => {
         },
       });
       console.log(`Playback stopped and returned to cue point at ${deck.cuePoint.toFixed(2)} seconds.`);
+    }
+  };
+
+    // Funkcje obsługujące przycisk CUE
+    const handleCueMouseDown = (deckNumber) => {
+      isMouseDown.current[deckNumber] = true; // Ustawienie stanu przycisku
+      isHold.current[deckNumber] = false;
+      holdTimer.current[deckNumber] = setTimeout(() => {
+        isHold.current[deckNumber] = true;
+        playFromCue(deckNumber);
+      }, 200); // 200ms próg dla hold
+    };
+  
+  const handleCueMouseUp = (deckNumber) => {
+    if (!isMouseDown.current[deckNumber]) {
+      // Jeśli przycisk nie był naciśnięty na tym decku, ignoruj
+      return;
+    }
+    isMouseDown.current[deckNumber] = false; // Resetowanie stanu przycisku
+    clearTimeout(holdTimer.current[deckNumber]);
+  
+    const deck = decksRef.current[deckNumber];
+  
+    if (isHold.current[deckNumber]) {
+      // Zatrzymaj odtwarzanie i wróć do punktu CUE
+      stopPlayback(deckNumber);
+  
+      setTimeout(() => {
+        dispatch({
+          type: 'SET_DECK',
+          deckNumber,
+          payload: {
+            currentTime: deck.cuePoint,
+            isCuePlaying: false,
+          },
+        });
+        console.log(`Playback stopped and returned to cue point at ${deck.cuePoint.toFixed(2)} seconds.`);
+      }, 0); // Ustaw aktualizację stanu po zatrzymaniu odtwarzania
+    } else {
+      // Ustaw punkt CUE, jeśli nie był odtwarzany
+      handleSetCuePoint(deckNumber);
     }
   };
 
@@ -765,46 +889,7 @@ const stopPlayback = (deckNumber) => {
     }
   };
 
-  // Funkcje obsługujące przycisk CUE
-  const handleCueMouseDown = (deckNumber) => {
-    isMouseDown.current[deckNumber] = true; // Ustawienie stanu przycisku
-    isHold.current[deckNumber] = false;
-    holdTimer.current[deckNumber] = setTimeout(() => {
-      isHold.current[deckNumber] = true;
-      playFromCue(deckNumber);
-    }, 200); // 200ms próg dla hold
-  };
 
-const handleCueMouseUp = (deckNumber) => {
-  if (!isMouseDown.current[deckNumber]) {
-    // Jeśli przycisk nie był naciśnięty na tym decku, ignoruj
-    return;
-  }
-  isMouseDown.current[deckNumber] = false; // Resetowanie stanu przycisku
-  clearTimeout(holdTimer.current[deckNumber]);
-
-  const deck = decksRef.current[deckNumber];
-
-  if (isHold.current[deckNumber]) {
-    // Zatrzymaj odtwarzanie i wróć do punktu CUE
-    stopPlayback(deckNumber);
-
-    setTimeout(() => {
-      dispatch({
-        type: 'SET_DECK',
-        deckNumber,
-        payload: {
-          currentTime: deck.cuePoint,
-          isCuePlaying: false,
-        },
-      });
-      console.log(`Playback stopped and returned to cue point at ${deck.cuePoint.toFixed(2)} seconds.`);
-    }, 0); // Ustaw aktualizację stanu po zatrzymaniu odtwarzania
-  } else {
-    // Ustaw punkt CUE, jeśli nie był odtwarzany
-    handleSetCuePoint(deckNumber);
-  }
-};
 
 
   // Funkcja do aktualizacji BPM
@@ -1089,7 +1174,7 @@ const exitLoop = (deckNumber) => {
       const maxFeedbackGain = 0.9; // Maksymalna wartość gain dla feedback
   
       // Normalizacja wartości od 0 do 1
-      const normalizedValue = value / 0.6; // Ponieważ maksymalna wartość gałki to 0.6
+      const normalizedValue = value / 1; // Ponieważ maksymalna wartość gałki to 0.6
   
       if (value === 0) {
         // Wyłącz efekt Flanger
@@ -1199,6 +1284,27 @@ useEffect(() => {
   });
 }, [decks]); // Upewnij się, że decks jest w zależnościach
 
+const decksInitializedRef = useRef(false);
+
+useEffect(() => {
+  Object.keys(audioContexts).forEach((deckNumber) => {
+    if (!audioContexts[deckNumber].current) {
+      audioContexts[deckNumber].current = new (window.AudioContext || window.webkitAudioContext)();
+    }
+    const volumeGain = audioContexts[deckNumber].current.createGain();
+    volumeGain.gain.value = 1;
+
+    dispatch({
+      type: 'SET_DECK',
+      deckNumber: parseInt(deckNumber, 10),
+      payload: { volumeGain },
+    });
+  });
+
+  decksInitializedRef.current = true; // Flaga inicjalizacji
+}, []);
+
+
   return (
     <AudioContext.Provider
       value={{
@@ -1229,6 +1335,7 @@ useEffect(() => {
         setVolume,
         setCrossfade,
         currentTimeRef,
+        decksInitializedRef,
       }}
     >
       {children}

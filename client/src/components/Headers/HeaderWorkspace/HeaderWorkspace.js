@@ -54,7 +54,7 @@ const Header = ({ username: initialUsername, onUsernameChange }) => {
           <img src={logoImage} alt="Logo" />
         </div>
         <div className={styles.userInfo}>
-          <span className={styles.username}>{localUsername}</span>
+          <span className={styles.username}>DJ {localUsername}</span>
           <img src={userIcon} alt="User Icon" className={styles.avatar} />
           <div className={styles.dropdownMenu}>
             <ul>

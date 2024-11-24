@@ -8,12 +8,16 @@ import PlaylistAdd from '@mui/icons-material/PlaylistAdd';
 import PlaylistRemove from '@mui/icons-material/PlaylistRemove';
 import Delete from '@mui/icons-material/Delete';
 import Edit from '@mui/icons-material/Edit';
+import ArrowDropUp from '@mui/icons-material/ArrowDropUp';
+import ArrowDropDown from '@mui/icons-material/ArrowDropDown';
+
 
 const PlaylistManager = ({ selectedPlaylist, setSelectedPlaylist, playlistUpdateTrigger, onAssignToDeck, deckAssignments  }) => {
   // const { setCurrentTrack } = useContext(AudioContext);
   const [playlists, setPlaylists] = useState([]);
   const [editing, setEditing] = useState(false);
   const [currentPlaylistSongs, setCurrentPlaylistSongs] = useState([]); // Stan dla listy utworów
+  const [sortOrder, setSortOrder] = useState({}); // Stan dla kierunku sortowania
 
   // Funkcja pobierająca playlisty z serwera
   const fetchPlaylists = async () => {
@@ -40,7 +44,8 @@ const PlaylistManager = ({ selectedPlaylist, setSelectedPlaylist, playlistUpdate
         },
       });
       if (response.status === 200) {
-        setCurrentPlaylistSongs(response.data.songs); // Ustawienie wszystkich utworów użytkownika
+        setCurrentPlaylistSongs(response.data.songs); 
+        // Ustawienie wszystkich utworów użytkownika
       }
     } catch (err) {
       console.error('Błąd serwera przy pobieraniu wszystkich utworów użytkownika:', err);
@@ -61,7 +66,11 @@ const PlaylistManager = ({ selectedPlaylist, setSelectedPlaylist, playlistUpdate
         },
       });
       if (response.status === 200) {
-        setCurrentPlaylistSongs(response.data.songs); // Ustawienie listy utworów dla wybranej playlisty
+        // const a  = response.data.songs;
+        // setCurrentPlaylistSongs(a.sort((a, b) => a.title.localeCompare(b.title)));
+        console.log(response.data.songs);
+        setCurrentPlaylistSongs(response.data.songs);
+        // Ustawienie listy utworów dla wybranej playlisty
       }
     } catch (err) {
       console.error('Błąd serwera przy pobieraniu utworów:', err);
@@ -117,7 +126,32 @@ const PlaylistManager = ({ selectedPlaylist, setSelectedPlaylist, playlistUpdate
       console.error('Błąd serwera podczas usuwania utworu z playlisty:', err);
     }
   };
+ // Funkcja sortująca
+  const handleSort = (criteria) => {
+    console.log('criteria', criteria);
+    if (!currentPlaylistSongs || currentPlaylistSongs.length === 0) return;
 
+    // Ustaw domyślny kierunek sortowania na rosnący
+    const isAscending = sortOrder[criteria] !== 'asc'; 
+
+    const sortedSongs = [...currentPlaylistSongs].sort((a, b) => {
+      const valueA = criteria === 'bpm' ? a[criteria] : a[criteria]?.toString().toLowerCase();
+      const valueB = criteria === 'bpm' ? b[criteria] : b[criteria]?.toString().toLowerCase();
+
+      if (valueA < valueB) return isAscending ? -1 : 1;
+      if (valueA > valueB) return isAscending ? 1 : -1;
+      return 0;
+    });
+
+    setCurrentPlaylistSongs(sortedSongs);
+
+    // Zaktualizuj kierunek sortowania
+    setSortOrder({
+      ...sortOrder,
+      [criteria]: isAscending ? 'asc' : 'desc',
+    });
+  };
+  
   // Funkcja do formatu czasu w minutach i sekundach
   const formatDuration = (seconds) => {
     const minutes = Math.floor(seconds / 60);
@@ -186,15 +220,31 @@ const PlaylistManager = ({ selectedPlaylist, setSelectedPlaylist, playlistUpdate
         </div>
       </div>
       <div className={styles.playlistContainer}>
-        <div className={styles.topBar}>
-          <p >Deck</p>
-          <p>Title</p>
-          <p>Artist</p>
-          <p>Time</p>
-          <p>BPM</p>
-          <p>KEY</p>
-          <p></p>
-        </div>
+      <div className={styles.topBar}>
+      <p >Deck</p>
+  <p onClick={() => handleSort('title')}>
+    Title
+    {sortOrder['title'] === 'asc' && <ArrowDropUp />}
+    {sortOrder['title'] === 'desc' && <ArrowDropDown />}
+  </p>
+  <p onClick={() => handleSort('author')}>
+    Artist
+    {sortOrder['artist'] === 'asc' && <ArrowDropUp />}
+    {sortOrder['artist'] === 'desc' && <ArrowDropDown />}
+  </p>
+  <p>Time</p>
+  <p onClick={() => handleSort('bpm')}>
+    BPM
+    {sortOrder['bpm'] === 'asc' && <ArrowDropUp />}
+    {sortOrder['bpm'] === 'desc' && <ArrowDropDown />}
+  </p>
+  <p onClick={() => handleSort('key')}>
+    KEY
+    {sortOrder['key'] === 'asc' && <ArrowDropUp />}
+    {sortOrder['key'] === 'desc' && <ArrowDropDown />}
+  </p>
+  <p></p>
+</div>
 
         {/* Zawartość wybranej playlisty */}
         <ul className={styles.playlistContent}>
@@ -213,7 +263,6 @@ const PlaylistManager = ({ selectedPlaylist, setSelectedPlaylist, playlistUpdate
                   <p className={styles.songDuration}>{formatDuration(song.duration)}</p>
                   <p className={styles.songBpm}>{song.bpm}</p>
                   <p className={styles.songKey}>{song.key}</p>
-
                 {/* Renderuj pusty element zamiast przycisku, jeśli wybrano 'uploads' */}
         {selectedPlaylist === 'uploads' ? (
           <div className={styles.deleteSongButton}> </div>
