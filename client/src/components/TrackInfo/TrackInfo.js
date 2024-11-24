@@ -13,10 +13,17 @@ function TrackInfo({ track, duration, currentTime }) {
     <div className={styles.trackInfo}>
       {track && (
         <>
-        <div  className={styles.titleauthor}>
-        <div className={styles.title}>{track.title}</div>
-        <div className={styles.author}>{track.author}</div>
-        </div>
+          <div className={styles.albumImg}>
+            {track.albumImage ? (
+              <img src={track.albumImage} alt={`${track.title} album cover`} />
+            ) : (
+              <div className={styles.placeholder}>No Image</div>
+            )}
+          </div>
+          <div className={styles.titleauthor}>
+            <div className={styles.title}>{track.title}</div>
+            <div className={styles.author}>{track.author}</div>
+          </div>
           <div className={styles.time}>
             {formatTime(currentTime)} / {formatTime(duration)}
           </div>
@@ -25,5 +32,6 @@ function TrackInfo({ track, duration, currentTime }) {
     </div>
   );
 }
+
 
 export default TrackInfo;

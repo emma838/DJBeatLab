@@ -413,9 +413,6 @@ const waveformData = extractPeaks(rawData, samples);
     }
   };
   
-  
-  
-
   // Funkcja do ekstrakcji peaków z danych audio
   const extractPeaks = (data, samples) => {
     const blockSize = Math.floor(data.length / samples);

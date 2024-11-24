@@ -1,8 +1,10 @@
-//Waveform.js
+// Waveform.js
 import React, { useEffect, useRef, useMemo, useState } from 'react';
 import { useAudio } from '../../components/AudioManager/AudioManager';
 import styles from './Waveform.module.scss';
 import debounce from 'lodash.debounce'; // Opcjonalnie, do debouncingu
+import ChevronLeft from '@mui/icons-material/ChevronLeft';
+import ChevronRight from '@mui/icons-material/ChevronRight';
 
 function Waveform({
   deckNumber,
@@ -37,6 +39,9 @@ function Waveform({
   const loopStart = deck?.loopStart;
   const loopEnd = deck?.loopEnd;
   const isLooping = deck?.isLooping;
+
+  // Stan dla przesunięcia beatgridu
+  const [beatGridOffsetTime, setBeatGridOffsetTime] = useState(0); // W pikselach
 
   const pixelsPerSecond = 150; // Stała prędkość przesuwania waveforma
   const scaleFactor = defaultBpm / bpm; // Współczynnik skalowania
@@ -167,7 +172,7 @@ function Waveform({
           }
         }
 
-        // Rysowanie beat grid
+        // Rysowanie beat grid z przesunięciem
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
         ctx.lineWidth = 1;
 
@@ -176,7 +181,7 @@ function Waveform({
 
         for (let i = 0; i <= totalBeats; i++) {
           const beatTime = i * timePerBeat;
-          const xBeat = beatTime * pixelsPerSecond * scaleFactor - shift;
+          const xBeat = (beatTime + beatGridOffsetTime) * pixelsPerSecond * scaleFactor - shift;
 
           if (xBeat >= 0 && xBeat <= width) {
             ctx.beginPath();
@@ -233,6 +238,7 @@ function Waveform({
     pixelsPerSecond,
     cueColor,
     scaleFactor,
+    beatGridOffsetTime, // Dodaj beatGridOffset do zależności
   ]);
 
   // Obsługa responsywności
@@ -305,7 +311,35 @@ function Waveform({
   };
 
   return (
-    <div className={styles.waveformWrapper}>
+    <div className={styles.waveformWrapper} style={{ position: 'relative' }}>
+      {/* Przyciski do modyfikacji beatgridu */}
+      <div
+        style={{
+          position: 'absolute',
+          top: '10px', // Dodanie odstępu od góry
+          left: '10px', // Dodanie odstępu od lewej
+          zIndex: 10,
+          display: 'flex',
+          alignItems: 'center',
+          backgroundColor: 'rgba(0, 0, 0, 0.5)', // Opcjonalne tło dla lepszej widoczności
+          padding: '5px',
+          borderRadius: '5px',
+        }}
+      >
+        <div className={styles.gridAdjust}>
+        <button
+        className={styles.gridButton}
+          onClick={() => setBeatGridOffsetTime((prev) => prev - 0.01)} // Przesuń w lewo o 10px
+        >
+          <ChevronLeft />
+        </button>
+        <span>GRID</span>
+        <button
+          onClick={() => setBeatGridOffsetTime((prev) => prev + 0.01)} // Przesuń w prawo o 10px
+          className={styles.gridButton}><ChevronRight />
+        </button>
+      </div>
+      </div>
       {/* Waveform Canvas */}
       <canvas
         ref={canvasRef}

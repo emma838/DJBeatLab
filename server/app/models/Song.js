@@ -9,6 +9,7 @@ const SongSchema = new Schema({
     duration: { type: Number },
     bpm: { type: Number },
     key: { type: String },
+    albumImage: String,
     user: { type: Schema.Types.ObjectId, ref: 'User', required: true }
 }, { timestamps: true });
 

@@ -11,19 +11,35 @@
 padding: 10px;
 }
 
+.albumImg {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100%;
+  aspect-ratio: 1/1; // Proporcja szerokości do wysokości (1:2 oznacza 50% wysokości)
+  margin-right: 10px;
+  color: $white;
+
+  img{
+    width: 100%;
+    height: 100%;
+    object-fit: cover; // Obraz zostanie rozciągnięty, aby wypełnić całe pole
+  }
+}
+
 .titleauthor{
   display: flex;
   flex-direction: column;
   justify-content: space-around;
   width: 75%;
-  height: 100%;
+  height: 90%;
   border-right: 1px solid $white;
   padding-right: 10px;
 
   .title{
     color: $white;
     font-weight: 700;
-    font-size: 1.1rem;
+    font-size: 1rem;
     white-space: nowrap;         // Zapobiega przechodzeniu tekstu do nowej linii
     overflow: hidden;            // Ukrywa nadmiarowy tekst
     text-overflow: ellipsis;     // Dodaje trzy kropeczki na końcu
@@ -32,7 +48,7 @@ padding: 10px;
 .author{
     color: #555555;
     font-weight: 700;
-    font-size: 1rem;
+    font-size: 0.9rem;
     white-space: nowrap;         // Zapobiega przechodzeniu tekstu do nowej linii
     overflow: hidden;            // Ukrywa nadmiarowy tekst
     text-overflow: ellipsis;     // Dodaje trzy kropeczki na końcu
@@ -50,4 +66,12 @@ padding: 10px;
     height: 100%;
     font-weight: 700;
     font-size: 1rem;
-}
+
+    .gridbuttons{
+      display: flex;
+      flex-direction: row;
+      justify-content: space-around;
+      width: 100%;
+      height: 100%;
+    }
+  }

@@ -2,6 +2,9 @@ const path = require('path');
 const fs = require('fs-extra');
 const mm = require ('music-metadata');
 const Song = require('../models/Song'); // Importuj model Song
+const dotenv = require('dotenv');
+
+dotenv.config(); 
 
 const uploadFile = async (req, res) => {
   console.log('Otrzymano plik:', req.file);
@@ -9,7 +12,6 @@ const uploadFile = async (req, res) => {
   if (!req.file) {
     return res.status(400).json({ msg: 'Nie znaleziono pliku' });
   }
-
   try {
     // Wyciągnij metadane z pliku
     const metadata = await mm.parseFile(req.file.path);
@@ -17,6 +19,17 @@ const uploadFile = async (req, res) => {
     const duration = metadata.format.duration;
     const title = metadata.common.title || req.file.originalname;
     const author = metadata.common.artist || 'Nieznany';
+
+
+
+    let albumImage = null;
+    if (metadata.common.picture && metadata.common.picture.length > 0) {
+      // Pobierz obraz albumu i przekonwertuj na Base64
+      const picture = metadata.common.picture[0];
+      albumImage = `data:${picture.format};base64,${picture.data.toString('base64')}`;
+    } else {
+      albumImage = process.env.DEFAULT_IMAGE;
+          }
 
     const newSong = new Song({
       title: title,
@@ -32,6 +45,7 @@ const uploadFile = async (req, res) => {
       duration: duration,
       bpm: parseFloat(req.body.bpm),
       key: req.body.key,
+      albumImage,
       user: req.user.userId,
     });
 

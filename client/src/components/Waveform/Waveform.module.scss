@@ -26,3 +26,44 @@
 .waveform:active {
   cursor: grabbing; /* Zmiana kursora na 'grabbing' podczas przeciągania */
 }
+
+.gridAdjust{
+  display: flex;
+  margin-top: -10px;
+  margin-left: -10px;
+  flex-direction: row;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 0.7rem;
+  height: 100%;
+  background-color: rgba($dark-grey, 0.7); 
+  border-radius: 5px;
+  padding: 5px 0px;
+
+  span{
+    display: flex;
+    height: 100%; 
+    color: $white;
+    text-align: center;
+  }
+}
+
+.gridButton {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  color: $white;
+  background-color: rgba($dark-grey, 0); 
+  border: none;
+  height: 100%;
+  border-radius: 5px;
+
+  &:hover{
+    cursor: pointer;
+  }
+
+  &:active{
+    color: $orange;
+  }
+}
