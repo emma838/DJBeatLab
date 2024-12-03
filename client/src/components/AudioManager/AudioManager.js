@@ -1,5 +1,7 @@
 // AudioManager.js
 import React, { createContext, useContext, useRef, useReducer, useEffect } from 'react';
+import { throttle } from 'lodash';
+
 
 // Tworzenie kontekstu audio
 export const AudioContext = createContext();
@@ -302,7 +304,7 @@ const currentTimeRef = useRef({
   
       const lowShelf = audioCtx.createBiquadFilter();
       lowShelf.type = 'lowshelf';
-      lowShelf.frequency.value = 200;
+      lowShelf.frequency.value = 300;
       lowShelf.gain.value = 0;
   
       // Delay

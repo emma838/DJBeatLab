@@ -22,6 +22,15 @@ const AddFileModal = ({ isOpen, onClose, updateDirectories, onSongAdded }) => {
     const file = e.target.files[0];
     if (!file) return;
 
+     // Sprawdzenie rozszerzenia pliku
+  const allowedExtensions = ['mp3', 'wav'];
+  const fileExtension = file.name.split('.').pop().toLowerCase();
+
+  if (!allowedExtensions.includes(fileExtension)) {
+    alert('Obsługiwane są tylko pliki w formatach MP3 i WAV.');
+    return;
+  }
+
     if (isAnalyzing) {
       alert('Analiza jest już w toku.');
       return;

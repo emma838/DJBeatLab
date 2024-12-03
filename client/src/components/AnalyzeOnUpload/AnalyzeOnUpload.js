@@ -28,7 +28,7 @@ const AnalyzeOnUpload = ({ arrayBuffer, onComplete, onError }) => {
         const length = audioBuffer.length;
 
         const totalDuration = length / sampleRate;
-        const analysisDuration = 30;
+        const analysisDuration = 40;
         const halfAnalysis = analysisDuration / 2;
 
         let startSample;
@@ -61,42 +61,6 @@ const AnalyzeOnUpload = ({ arrayBuffer, onComplete, onError }) => {
         }
         console.log('Converted to mono and averaged channels');
 
-        // Przetwarzanie wstępne: filtracja i normalizacja
-        const offlineContext = new OfflineAudioContext(1, monoAudioData.length, sampleRate);
-        const audioBufferMono = offlineContext.createBuffer(1, monoAudioData.length, sampleRate);
-        audioBufferMono.copyToChannel(monoAudioData, 0);
-
-        const source = offlineContext.createBufferSource();
-        source.buffer = audioBufferMono;
-
-        // Filtry
-        const highPassFilter = offlineContext.createBiquadFilter();
-        highPassFilter.type = 'highpass';
-        highPassFilter.frequency.value = 100;
-
-        const bandPassFilter = offlineContext.createBiquadFilter();
-        bandPassFilter.type = 'bandpass';
-        bandPassFilter.frequency.value = 3000;
-        bandPassFilter.Q.value = 1;
-
-        const lowPassFilter = offlineContext.createBiquadFilter();
-        lowPassFilter.type = 'lowpass';
-        lowPassFilter.frequency.value = 5000;
-
-        // Połączenia: Źródło -> High-Pass -> Band-Pass -> Low-Pass -> Destination
-        source.connect(highPassFilter);
-        highPassFilter.connect(bandPassFilter);
-        bandPassFilter.connect(lowPassFilter);
-        lowPassFilter.connect(offlineContext.destination);
-
-        source.start(0);
-        console.log('Filters connected and started');
-
-        const renderedBuffer = await offlineContext.startRendering();
-        console.log('Offline rendering completed');
-
-        monoAudioData = renderedBuffer.getChannelData(0);
-
         // Normalizacja RMS
         const calculateRMS = (buffer) => {
           let sum = 0;
@@ -124,9 +88,6 @@ const AnalyzeOnUpload = ({ arrayBuffer, onComplete, onError }) => {
         let bpmValues = [];
         let pitchesDetected = [];
 
-        const totalHopSteps = Math.floor((monoAudioData.length - bufferSize) / hopSize);
-        console.log(`Total hop steps: ${totalHopSteps}`);
-
         for (let i = 0; i + bufferSize <= monoAudioData.length; i += hopSize) {
           if (isCancelled) {
             console.log('Analysis cancelled');
@@ -134,7 +95,6 @@ const AnalyzeOnUpload = ({ arrayBuffer, onComplete, onError }) => {
           }
 
           let buffer = monoAudioData.slice(i, i + bufferSize);
-          buffer = applyHanningWindow(buffer);
 
           tempoDetector.do(buffer);
           const currentBpm = tempoDetector.getBpm();
@@ -146,78 +106,70 @@ const AnalyzeOnUpload = ({ arrayBuffer, onComplete, onError }) => {
           if (pitch && pitch > 0) {
             pitchesDetected.push(pitch);
           }
-
-          // Aktualizacja postępu na podstawie hop steps
-          // Możesz tutaj dodać inne mechanizmy śledzenia postępu, jeśli potrzebujesz
         }
 
-        console.log('Loop analysis completed');
-
-// Uśrednianie BPM
-if (bpmValues.length > 0) {
-  bpmValues.sort((a, b) => a - b);
-  const medianIndex = Math.floor(bpmValues.length / 2);
-  bpmResult = Math.trunc(bpmValues[medianIndex]); // Obcinanie wartości po przecinku
-} else {
-  bpmResult = Math.trunc(tempoDetector.getBpm()); // Obcinanie wartości po przecinku
-}
-
+        // Uśrednianie BPM
+        if (bpmValues.length > 0) {
+          bpmValues.sort((a, b) => a - b);
+          const medianIndex = Math.floor(bpmValues.length / 2);
+          bpmResult = Math.trunc(bpmValues[medianIndex]);
+        }
 
         // Estymacja tonacji
         const estimateKeyFromPitches = (pitches) => {
-          if (pitches.length === 0) return 'Nieznana';
-          const noteNames = pitches.map((freq) => {
+          if (pitches.length === 0) return { detectedKey: 'Unknown', camelot: 'Unknown' };
+        
+          const noteNamesArray = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+        
+          const noteToCamelot = {
+            'C': '8B', 'C#': '3B', 'D': '10B', 'D#': '5B', 'E': '12B', 
+            'F': '7B', 'F#': '2B', 'G': '9B', 'G#': '4B', 'A': '11B', 
+            'A#': '6B', 'B': '1B',
+            'C#m': '3A', 'Dm': '10A', 'D#m': '5A', 'Em': '12A', 
+            'Fm': '7A', 'F#m': '2A', 'Gm': '9A', 'G#m': '4A', 
+            'Am': '11A', 'A#m': '6A', 'Bm': '1A',
+          };
+        
+          const noteCounts = {};
+          pitches.forEach((freq) => {
             const noteNumber = 12 * (Math.log2(freq / 440)) + 69;
             const noteIndex = Math.round(noteNumber) % 12;
-            const noteNamesArray = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
-            return noteNamesArray[(noteIndex + 12) % 12];
-          });
-          const noteCounts = {};
-          noteNames.forEach((note) => {
+            const note = noteNamesArray[(noteIndex + 12) % 12];
             noteCounts[note] = (noteCounts[note] || 0) + 1;
           });
-          let maxCount = 0;
-          let mostCommonNote = 'Nieznana';
-          for (const note in noteCounts) {
-            if (noteCounts[note] > maxCount) {
-              maxCount = noteCounts[note];
-              mostCommonNote = note;
-            }
-          }
-          return mostCommonNote;
+        
+          const sortedNotes = Object.entries(noteCounts).sort((a, b) => b[1] - a[1]);
+          const mostCommonNote = sortedNotes[0]?.[0] || 'Unknown';
+        
+          // Zakładamy tonację molową jako domyślną, ale można to zmodyfikować w oparciu o inne dane.
+          const inferredKey = `${mostCommonNote}m`; // Domyślnie w molowej (np. 'Bm')
+          const camelotCode = noteToCamelot[inferredKey] || 'Unknown';
+        
+          return {
+            detectedKey: inferredKey.replace('m', ' minor'), // Formatowanie na "B minor"
+            camelot: camelotCode,
+          };
         };
+        
 
-        let detectedKey = 'Nieznana';
-        if (pitchesDetected.length >= 10) {
-          detectedKey = estimateKeyFromPitches(pitchesDetected);
-        }
+        const { detectedKey, camelot } = estimateKeyFromPitches(pitchesDetected);
 
-        console.log('Analysis completed:', { bpm: bpmResult, key: detectedKey });
-        console.log('Calling onComplete');
-        onComplete({ bpm: bpmResult, key: detectedKey });
+        console.log('Analysis completed:', { bpm: bpmResult, key: detectedKey, camelot });
+        onComplete({ bpm: bpmResult, key: camelot });
       } catch (error) {
         console.error('Error in audio analysis:', error);
         onError(error);
       }
     };
 
-    const applyHanningWindow = (buffer) => {
-      for (let i = 0; i < buffer.length; i++) {
-        buffer[i] *= 0.5 * (1 - Math.cos((2 * Math.PI * i) / (buffer.length - 1)));
-      }
-      return buffer;
-    };
-
     analyze();
 
-    // Cleanup funkcja do anulowania analizy, jeśli komponent zostanie odmontowany
     return () => {
       isCancelled = true;
-      console.log('Cleanup: analysis cancelled');
     };
-  }, [arrayBuffer, onComplete, onError]); // Usunięcie onProgress z zależności
+  }, [arrayBuffer, onComplete, onError]);
 
-  return null; // Ten komponent nie renderuje nic
+  return null;
 };
 
 export default AnalyzeOnUpload;

@@ -3,6 +3,7 @@ import React, { useEffect, useRef, useMemo, useState } from 'react';
 import { useAudio } from '../../components/AudioManager/AudioManager';
 import styles from './Waveform.module.scss';
 import debounce from 'lodash.debounce'; // Opcjonalnie, do debouncingu
+import { throttle } from 'lodash';
 import ChevronLeft from '@mui/icons-material/ChevronLeft';
 import ChevronRight from '@mui/icons-material/ChevronRight';
 
@@ -21,6 +22,13 @@ function Waveform({
   const animationFrameRef = useRef(null);
   const wasPlayingRef = useRef(false);
   const lastSeekTimeRef = useRef(0);
+
+  // Opakowanie updateCurrentTime w throttle
+const throttledUpdateCurrentTime = useMemo(() => {
+  return throttle((deckNumber, time) => {
+    updateCurrentTime(deckNumber, time, false); // Funkcja do aktualizacji czasu
+  }, 50); // Throttle co 50ms
+}, [updateCurrentTime]);
 
   // Stała liczba barów na sekundę
   const BARS_PER_SECOND = 100;
@@ -278,7 +286,7 @@ function Waveform({
       isSeeking.current = false;
 
       // Update current time and ensure it's applied before playback resumes
-      updateCurrentTime(deckNumber, lastSeekTimeRef.current, false);
+      throttledUpdateCurrentTime(deckNumber, lastSeekTimeRef.current, false);
 
       // If the track was playing before, resume playback after currentTime is updated
       if (wasPlayingRef.current) {
@@ -307,7 +315,7 @@ function Waveform({
     const clampedTime = Math.max(0, Math.min(duration, newTime));
 
     lastSeekTimeRef.current = clampedTime;
-    updateCurrentTime(deckNumber, clampedTime, false);
+    throttledUpdateCurrentTime(deckNumber, clampedTime, false);
   };
 
   return (
