@@ -19,6 +19,33 @@ const PlaylistManager = ({ selectedPlaylist, setSelectedPlaylist, playlistUpdate
   const [currentPlaylistSongs, setCurrentPlaylistSongs] = useState([]); // Stan dla listy utworów
   const [sortOrder, setSortOrder] = useState({}); // Stan dla kierunku sortowania
 
+  const camelotColors = {
+    "1A": "#00ff00", // Zielony (dla A-Flat Minor)
+    "1B": "#66ffcc", // Miętowy (dla B-Major)
+    "2A": "#33cccc",
+    "2B": "#66ccff",
+    "3A": "#0099ff",
+    "3B": "#3366ff",
+    "4A": "#0000ff",
+    "4B": "#6666ff",
+    "5A": "#9900cc",
+    "5B": "#cc33cc",
+    "6A": "#ff00ff",
+    "6B": "#ff66cc",
+    "7A": "#ff3399",
+    "7B": "#ff6699",
+    "8A": "#ff3366",
+    "8B": "#ff6666",
+    "9A": "#ff3300",
+    "9B": "#ff6633",
+    "10A": "#ff6600",
+    "10B": "#ff9933",
+    "11A": "#ffcc00",
+    "11B": "#ffff33",
+    "12A": "#ccff00",
+    "12B": "#99ff33"
+  };
+
   // Funkcja pobierająca playlisty z serwera
   const fetchPlaylists = async () => {
     try {
@@ -262,7 +289,12 @@ const PlaylistManager = ({ selectedPlaylist, setSelectedPlaylist, playlistUpdate
                   <p className={styles.songAuthor}>{song.author}</p>
                   <p className={styles.songDuration}>{formatDuration(song.duration)}</p>
                   <p className={styles.songBpm}>{song.bpm}</p>
-                  <p className={styles.songKey}>{song.key}</p>
+                  <p
+  className={styles.songKey}
+  style={{ color: camelotColors[song.key] || "#000" }} // Domyślny kolor czarny
+>
+  {song.key}
+</p>
                 {/* Renderuj pusty element zamiast przycisku, jeśli wybrano 'uploads' */}
         {selectedPlaylist === 'uploads' ? (
           <div className={styles.deleteSongButton}> </div>
