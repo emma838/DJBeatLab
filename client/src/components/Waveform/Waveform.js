@@ -1,42 +1,47 @@
 // Waveform.js
+// Komponent odpowiedzialny za renderowanie waveformu utworu, obsługę interakcji użytkownika (seek, beat grid), oraz integrację z kontrolerem MIDI.
+
 import React, { useEffect, useRef, useMemo, useState } from 'react';
 import { useAudio } from '../../components/AudioManager/AudioManager';
 import styles from './Waveform.module.scss';
-import debounce from 'lodash.debounce'; // Opcjonalnie, do debouncingu
+import debounce from 'lodash.debounce'; // Do debouncingu obsługi resize
 import { throttle } from 'lodash';
 import ChevronLeft from '@mui/icons-material/ChevronLeft';
 import ChevronRight from '@mui/icons-material/ChevronRight';
 
 function Waveform({
   deckNumber,
-  waveformColor = '#FF5722', // Zaktualizowane kolory
-  playheadColor = '#FFFFFF',
-  loopColor = 'rgba(180, 180, 180, 0.4)',
-  cueColor = '#DC143C',
-  loopLineColor = '#1E90FF',
-  loopLineWidth = 3,
+  waveformColor = '#FF5722', // Kolor waveformu
+  playheadColor = '#FFFFFF',  // Kolor linii playhead
+  loopColor = 'rgba(180, 180, 180, 0.4)', // Kolor obszaru pętli
+  cueColor = '#DC143C', // Kolor wskaźnika CUE
+  loopLineColor = '#1E90FF', // Kolor linii pętli
+  loopLineWidth = 3, // Grubość linii pętli
 }) {
+  // Destrukturyzacja funkcji z hooka useAudio
   const { decks, updateCurrentTime, startPlayback, stopPlayback } = useAudio();
-  const canvasRef = useRef(null);
-  const isSeeking = useRef(false);
-  const animationFrameRef = useRef(null);
-  const wasPlayingRef = useRef(false);
-  const lastSeekTimeRef = useRef(0);
+  
+  // Referencje do elementów DOM i stanów
+  const canvasRef = useRef(null); // Referencja do canvasu
+  const isSeeking = useRef(false); // Czy użytkownik aktualnie przesuwa waveform
+  const animationFrameRef = useRef(null); // Referencja do requestAnimationFrame
+  const wasPlayingRef = useRef(false); // Czy deck był odtwarzany przed seekiem
+  const lastSeekTimeRef = useRef(0); // Ostatni czas seeku
 
-  // Opakowanie updateCurrentTime w throttle
-const throttledUpdateCurrentTime = useMemo(() => {
-  return throttle((deckNumber, time) => {
-    updateCurrentTime(deckNumber, time, false); // Funkcja do aktualizacji czasu
-  }, 50); // Throttle co 50ms
-}, [updateCurrentTime]);
+  // Throttling funkcji updateCurrentTime, aby nie wywoływać jej zbyt często
+  const throttledUpdateCurrentTime = useMemo(() => {
+    return throttle((deckNumber, time) => {
+      updateCurrentTime(deckNumber, time, false); // Aktualizacja czasu bez wznowienia odtwarzania
+    }, 50); // Throttling co 50ms
+  }, [updateCurrentTime]);
 
-  // Stała liczba barów na sekundę
+  // Stała określająca liczbę barów na sekundę
   const BARS_PER_SECOND = 100;
 
-  // Stan do przechowywania szerokości canvasu
+  // Stan przechowujący szerokość canvasu
   const [canvasWidth, setCanvasWidth] = useState(0);
 
-  // Extract necessary data from the deck
+  // Ekstrakcja danych z decka
   const deck = decks[deckNumber];
   const waveformData = deck?.waveformData;
   const duration = deck?.duration;
@@ -48,13 +53,14 @@ const throttledUpdateCurrentTime = useMemo(() => {
   const loopEnd = deck?.loopEnd;
   const isLooping = deck?.isLooping;
 
-  // Stan dla przesunięcia beatgridu
-  const [beatGridOffsetTime, setBeatGridOffsetTime] = useState(0); // W pikselach
+  // Stan do przechowywania przesunięcia beatgridu
+  const [beatGridOffsetTime, setBeatGridOffsetTime] = useState(0); // W sekundach
 
-  const pixelsPerSecond = 150; // Stała prędkość przesuwania waveforma
-  const scaleFactor = defaultBpm / bpm; // Współczynnik skalowania
+  // Stałe definiujące prędkość przesuwania waveformu oraz skalowanie na podstawie BPM
+  const pixelsPerSecond = 150; // Prędkość przesuwania waveformu w pikselach na sekundę
+  const scaleFactor = defaultBpm / bpm; // Skalowanie na podstawie BPM
 
-  // Aktualizuj szerokość canvasu przy renderowaniu
+  // Aktualizacja szerokości canvasu przy renderowaniu
   useEffect(() => {
     const canvas = canvasRef.current;
     if (canvas) {
@@ -84,7 +90,7 @@ const throttledUpdateCurrentTime = useMemo(() => {
     return Math.floor(duration * BARS_PER_SECOND);
   }, [duration]);
 
-  // Normalize peaks so the maximum value is 1
+  // Normalizacja peaków, aby maksymalna wartość wynosiła 1
   const normalizedPeaks = useMemo(() => {
     if (!waveformData || waveformData.length === 0) return [];
     const maxPeak = Math.max(...waveformData);
@@ -92,7 +98,7 @@ const throttledUpdateCurrentTime = useMemo(() => {
     return waveformData.map((peak) => peak / maxPeak);
   }, [waveformData]);
 
-  // Dynamicznie próbkuj peaks do desiredBarDensity używając średniej
+  // Dynamiczne próbkowanie peaków do desiredBarDensity używając średniej
   const sampledPeaks = useMemo(() => {
     if (!normalizedPeaks || normalizedPeaks.length === 0) return [];
 
@@ -109,10 +115,11 @@ const throttledUpdateCurrentTime = useMemo(() => {
     return result;
   }, [normalizedPeaks, desiredBarDensity]);
 
+  // Rysowanie waveformu na canvasie
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
-    adjustCanvasForDPR(canvas);
+    adjustCanvasForDPR(canvas); // Dopasowanie canvasu do Device Pixel Ratio
 
     const drawWaveform = () => {
       try {
@@ -125,19 +132,19 @@ const throttledUpdateCurrentTime = useMemo(() => {
         const height = canvas.clientHeight;
         const peaks = sampledPeaks;
 
-        // Ustawienie barWidth i barSpacing
-        const barWidth = 2; // Możesz dostosować szerokość bary
-        const barSpacing = 1; // Możesz dostosować odstęp między bary
+        // Ustawienie szerokości bary i odstępu między nimi
+        const barWidth = 2; // Szerokość bary
+        const barSpacing = 1; // Odstęp między bary
 
         const centerX = width / 2;
 
-        // Obliczanie shift
+        // Obliczanie przesunięcia na podstawie aktualnego czasu odtwarzania
         const currentTimeToUse = isSeeking.current ? lastSeekTimeRef.current : currentTime;
         const shift = currentTimeToUse * pixelsPerSecond * scaleFactor - centerX;
 
         const timePerBar = duration / peaks.length;
 
-        // Rysowanie zakresu pętli (jeśli aktywna)
+        // Rysowanie zakresu pętli, jeśli aktywna
         if (isLooping && loopStart !== null && loopEnd !== null) {
           const xLoopStart = loopStart * pixelsPerSecond * scaleFactor - shift;
           const xLoopEnd = loopEnd * pixelsPerSecond * scaleFactor - shift;
@@ -146,9 +153,11 @@ const throttledUpdateCurrentTime = useMemo(() => {
           const xEnd = Math.min(width, xLoopEnd);
 
           if (xStart < width && xEnd > 0 && xEnd > xStart) {
+            // Rysowanie obszaru pętli
             ctx.fillStyle = loopColor;
             ctx.fillRect(xStart, 0, xEnd - xStart, height);
 
+            // Rysowanie linii pętli
             ctx.strokeStyle = loopLineColor;
             ctx.lineWidth = loopLineWidth;
             ctx.beginPath();
@@ -163,9 +172,10 @@ const throttledUpdateCurrentTime = useMemo(() => {
           }
         }
 
-        // Ustawienie koloru waveforma
+        // Ustawienie koloru waveformu
         ctx.fillStyle = waveformColor;
 
+        // Rysowanie bary waveformu
         for (let i = 0; i < peaks.length; i++) {
           const peak = peaks[i];
           const time = i * timePerBar;
@@ -174,17 +184,17 @@ const throttledUpdateCurrentTime = useMemo(() => {
           const y = ((1 - peak) * height) / 2;
           const barHeight = peak * height;
 
-          // Rysuj tylko widoczne słupki
+          // Rysuj tylko widoczne bary
           if (x + barWidth >= 0 && x <= width) {
             ctx.fillRect(x, y, barWidth, barHeight);
           }
         }
 
-        // Rysowanie beat grid z przesunięciem
+        // Rysowanie beat gridu
         ctx.strokeStyle = 'rgba(255, 255, 255, 0.8)';
         ctx.lineWidth = 1;
 
-        const timePerBeat = 60 / defaultBpm; // Użyj defaultBpm zamiast bpm
+        const timePerBeat = 60 / defaultBpm; // Czas na jeden beat
         const totalBeats = duration / timePerBeat;
 
         for (let i = 0; i <= totalBeats; i++) {
@@ -199,7 +209,7 @@ const throttledUpdateCurrentTime = useMemo(() => {
           }
         }
 
-        // Rysowanie głowicy odtwarzania (linia środkowa)
+        // Rysowanie linii playhead (środkowej)
         ctx.fillStyle = playheadColor;
         ctx.fillRect(centerX - 1, 0, 3, height);
 
@@ -222,8 +232,10 @@ const throttledUpdateCurrentTime = useMemo(() => {
       animationFrameRef.current = requestAnimationFrame(animate);
     };
 
+    // Rozpoczęcie animacji
     animationFrameRef.current = requestAnimationFrame(animate);
 
+    // Czyszczenie animacji przy odmontowaniu komponentu
     return () => {
       cancelAnimationFrame(animationFrameRef.current);
     };
@@ -246,12 +258,10 @@ const throttledUpdateCurrentTime = useMemo(() => {
     pixelsPerSecond,
     cueColor,
     scaleFactor,
-    beatGridOffsetTime, // Dodaj beatGridOffset do zależności
+    beatGridOffsetTime, // Dodanie beatGridOffsetTime do zależności
   ]);
 
-  // Obsługa responsywności
-  // (Debounced handleResize już jest zaimplementowany powyżej)
-
+  // Funkcja dostosowująca canvas do Device Pixel Ratio
   const adjustCanvasForDPR = (canvas) => {
     const ctx = canvas.getContext('2d');
     const dpr = window.devicePixelRatio || 1;
@@ -260,11 +270,12 @@ const throttledUpdateCurrentTime = useMemo(() => {
     ctx.scale(dpr, dpr);
   };
 
+  // Obsługa zdarzeń myszy do seekowania na waveformie
   const handleMouseDown = (event) => {
     event.preventDefault();
     isSeeking.current = true;
 
-    // Sprawdź, czy utwór był odtwarzany
+    // Sprawdzenie, czy deck był odtwarzany przed seekiem
     wasPlayingRef.current = deck.isPlaying;
 
     if (deck.isPlaying) {
@@ -285,12 +296,11 @@ const throttledUpdateCurrentTime = useMemo(() => {
       event.preventDefault();
       isSeeking.current = false;
 
-      // Update current time and ensure it's applied before playback resumes
+      // Aktualizacja currentTime i wznowienie odtwarzania, jeśli było odtwarzane
       throttledUpdateCurrentTime(deckNumber, lastSeekTimeRef.current, false);
 
-      // If the track was playing before, resume playback after currentTime is updated
       if (wasPlayingRef.current) {
-        // Use a timeout to ensure currentTime is updated before starting playback
+        // Wznowienie odtwarzania po aktualizacji currentTime
         setTimeout(() => {
           startPlayback(deckNumber);
         }, 0);
@@ -298,6 +308,7 @@ const throttledUpdateCurrentTime = useMemo(() => {
     }
   };
 
+  // Funkcja obliczająca nowy czas odtwarzania na podstawie pozycji kliknięcia
   const handleSeek = (event) => {
     if (!waveformData || !duration) return;
 
@@ -324,38 +335,43 @@ const throttledUpdateCurrentTime = useMemo(() => {
       <div
         style={{
           position: 'absolute',
-          top: '10px', // Dodanie odstępu od góry
-          left: '10px', // Dodanie odstępu od lewej
+          top: '10px', // Odstęp od góry
+          left: '10px', // Odstęp od lewej
           zIndex: 10,
           display: 'flex',
           alignItems: 'center',
-          backgroundColor: 'rgba(0, 0, 0, 0.5)', // Opcjonalne tło dla lepszej widoczności
+          backgroundColor: 'rgba(0, 0, 0, 0.5)', // Tło dla lepszej widoczności
           padding: '5px',
           borderRadius: '5px',
         }}
       >
         <div className={styles.gridAdjust}>
-        <button
-        className={styles.gridButton}
-          onClick={() => setBeatGridOffsetTime((prev) => prev - 0.01)} // Przesuń w lewo o 10px
-        >
-          <ChevronLeft />
-        </button>
-        <span>GRID</span>
-        <button
-          onClick={() => setBeatGridOffsetTime((prev) => prev + 0.01)} // Przesuń w prawo o 10px
-          className={styles.gridButton}><ChevronRight />
-        </button>
+          {/* Przycisk przesunięcia beatgridu w lewo */}
+          <button
+            className={styles.gridButton}
+            onClick={() => setBeatGridOffsetTime((prev) => prev - 0.01)} // Przesuń w lewo o 0.01 sekundy
+          >
+            <ChevronLeft />
+          </button>
+          <span>GRID</span>
+          {/* Przycisk przesunięcia beatgridu w prawo */}
+          <button
+            onClick={() => setBeatGridOffsetTime((prev) => prev + 0.01)} // Przesuń w prawo o 0.01 sekundy
+            className={styles.gridButton}
+          >
+            <ChevronRight />
+          </button>
+        </div>
       </div>
-      </div>
-      {/* Waveform Canvas */}
+
+      {/* Canvas do renderowania waveformu */}
       <canvas
         ref={canvasRef}
         className={styles.waveform}
         onMouseDown={handleMouseDown}
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUp}
-        onMouseLeave={handleMouseUp}
+        onMouseLeave={handleMouseUp} // Zatrzymaj seekowanie, gdy kursor opuści canvas
       />
     </div>
   );

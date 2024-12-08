@@ -1,40 +1,40 @@
 import React from 'react';
 import axios from 'axios';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import Login from './pages/Login/Login';
-import Home from './pages/Home/Home';
-import Register from './pages/Register/Register';
-import Workspace from './pages/Workspace/Workspace'; 
-import PrivateRoute from './routing/PrivateRoute';
-import { AudioProvider } from './components/AudioManager/AudioManager';
+import Login from './pages/Login/Login'; // Komponent strony logowania
+import Register from './pages/Register/Register'; // Komponent strony rejestracji
+import Workspace from './pages/Workspace/Workspace'; // Komponent obszaru roboczego aplikacji
+import PrivateRoute from './routing/PrivateRoute'; // Komponent odpowiedzialny za ochronę tras
+import { AudioProvider } from './components/AudioManager/AudioManager'; // Kontekst dla zarządzania dźwiękiem w aplikacji DJ-skiej
 
-axios.defaults.baseURL = 'http://localhost:5000/';
-axios.defaults.headers.common['Accept'] = 'application/json';
-// axios.defaults.headers.common['Accept-Charset'] = 'utf-8';
-axios.defaults.headers.common['Content-Type'] = 'application/json; charset=utf-8';
+// Konfiguracja domyślna Axios (API)
+axios.defaults.baseURL = 'http://localhost:5000/'; // Ustawienie domyślnej bazy URL API
+axios.defaults.headers.common['Accept'] = 'application/json'; // Nagłówek określający format odpowiedzi
+axios.defaults.headers.common['Content-Type'] = 'application/json; charset=utf-8'; // Nagłówek określający format danych
 
 const App = () => {
   return (
     <Router>
       <Routes>
-        {/* Trasy publiczne */}
-        <Route path="/register" element={<Register />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/home" element={<Home />} />
+        {/* Publiczne trasy - dostępne dla wszystkich użytkowników */}
+        <Route path="/register" element={<Register />} /> {/* Rejestracja użytkownika */}
+        <Route path="/login" element={<Login />} /> {/* Logowanie użytkownika */}
 
-        {/* Trasa chroniona z AudioProvider */}
+        {/* Chroniona trasa - dostępna tylko dla zalogowanych użytkowników */}
         <Route
           path="/workspace"
           element={
-            <PrivateRoute element={
-              <AudioProvider>
-                <Workspace />
-              </AudioProvider>
-            } />
+            <PrivateRoute
+              element={
+                <AudioProvider> {/* Udostępnienie kontekstu AudioManager w obrębie obszaru roboczego */}
+                  <Workspace /> {/* Główny interfejs aplikacji DJ-skiej */}
+                </AudioProvider>
+              }
+            />
           }
         />
 
-        {/* Przekierowanie na stronę logowania dla niezalogowanych użytkowników */}
+        {/* Przekierowanie dla nieprawidłowych tras - domyślnie na stronę logowania */}
         <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     </Router>

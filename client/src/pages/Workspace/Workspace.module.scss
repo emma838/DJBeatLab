@@ -14,6 +14,7 @@
   flex-direction: column;
   background-color: $black; /* Opcjonalnie, ustaw kolor tła */
   overflow-y: hidden;
+  user-select: none;
 }
 
 /* Sekcja na waveformy */

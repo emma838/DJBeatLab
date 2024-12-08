@@ -1,7 +1,9 @@
 // Workspace.js
+// Komponent główny aplikacji DJ-owej, zarządzający interfejsem użytkownika, deckami, playlistami oraz integracją z kontrolerem MIDI.
+
 import React, { useState, useEffect } from 'react';
 
-// Importowanie komponentów
+// Importowanie komponentów interfejsu
 import Header from '../../components/Headers/HeaderWorkspace/HeaderWorkspace';
 import FileManager from '../../components/FileManager/FileManager';
 import PlaylistManager from '../../components/PlaylistManager/PlaylistManager';
@@ -13,15 +15,14 @@ import ConfirmDeckModal from '../../components/ConfirmDeckModal/ConfirmDeckModal
 import EQKnobs from '../../components/EQKnobs/EQKnobs';
 import midiMappings from './MidiMappings.js';
 
-
-// Importowanie hooka do zarządzania audio
+// Importowanie hooka do zarządzania audio z AudioManager
 import { useAudio } from '../../components/AudioManager/AudioManager';
 
-// Importowanie stylów modułowych
+// Importowanie stylów modułowych SCSS
 import styles from './Workspace.module.scss';
 
 const Workspace = () => {
-  // Destrukturyzacja funkcji z hooka useAudio
+  // Destrukturyzacja funkcji i stanów z hooka useAudio
   const {
     decks,
     loadTrackData,
@@ -34,97 +35,19 @@ const Workspace = () => {
     decksInitializedRef,
   } = useAudio();
 
+  // Stan do obsługi błędów MIDI
   const [error, setError] = useState(null);
 
-  useEffect(() => {
-    // Sprawdzamy, czy przeglądarka obsługuje Web MIDI API
-    if (navigator.requestMIDIAccess) {
-      navigator.requestMIDIAccess()
-        .then(onMIDISuccess)
-        .catch((err) => setError(`Błąd MIDI: ${err.message}`));
-    } else {
-      setError('Twoja przeglądarka nie obsługuje Web MIDI API.');
-    }
-  }, []);
-
-  const onMIDISuccess = (midiAccess) => {
-    const inputs = midiAccess.inputs.values();
-
-    for (let input of inputs) {
-      console.log('Podłączone urządzenie MIDI:', input.name);
-      input.onmidimessage = handleMIDIMessage;
-    }
-  };
-
-  const debounceTimers = {};
-
-  const handleMIDIMessage = (event) => {
-    if (!decksInitializedRef.current) {
-      console.warn('Decks not initialized yet, ignoring MIDI message.');
-      return;
-    }
-
-    const [status, control, value] = event.data;
-    const command = status >> 4; // Extract the command type
-    const channel = status & 0xf; // Extract the channel
-    
-  
-    console.log('MIDI Event:', { status, control, value, command, channel });
-  
-    const mappingKey = `${control}-${channel}`;
-  
-    if (command === 9 && value > 0) { // Note On
-      const mapping = midiMappings.noteOn[mappingKey];
-      if (mapping) {
-        const { action, deck } = mapping;
-  
-        if (action === 'playPause') {
-          // Debounce playPause for the deck
-          if (debounceTimers[deck]) {
-            clearTimeout(debounceTimers[deck]);
-          }
-          debounceTimers[deck] = setTimeout(() => {
-            playPause(deck);
-          }, 50); // Debounce time in milliseconds
-        } else if (action === 'cuePress') {
-          handleCueMouseDown(deck); // Obsługa przycisku wciśniętego
-        }
-      }
-    } else if (command === 8 || (command === 9 && value === 0)) { // Note Off
-      const mapping = midiMappings.noteOff[mappingKey];
-      if (mapping) {
-        const { action, deck } = mapping;
-        if (action === 'cueRelease') {
-          handleCueMouseUp(deck); // Obsługa przycisku zwolnionego
-        }
-      }
-    }else if (command === 11) { // Control Change
-      if (control === 28) { // Suwak głośności (przykład)
-        const deck = channel === 0 ? 1 : 2; // Deck 1 for channel 0, Deck 2 for channel 1
-        let normalizedVolume = value / 127; // Normalize to range 0–0.6
-
-        // Zaokrąglanie do precyzji suwaka
-  const step = 0.001; // Taki sam jak w VolumeSlider
-  normalizedVolume = Math.round(normalizedVolume / step) * step;
-
-   // Ustaw wartość 0 jako dokładne zero
-   if (normalizedVolume < 0.008) {
-    normalizedVolume = 0;
-  }
-        setVolume(deck, normalizedVolume);
-      }
-    }
-  };
-  
   // Stan do przechowywania wybranej playlisty
   const [selectedPlaylist, setSelectedPlaylist] = useState('uploads');
 
   // Stan do wyzwalania aktualizacji playlisty
   const [playlistUpdateTrigger, setPlaylistUpdateTrigger] = useState(false);
 
-  // Stan do zapamiętywania przycisku "assign to deck"
+  // Stan do zapamiętywania przypisań utworów do decków
   const [deckAssignments, setDeckAssignments] = useState({});
 
+  // Stany do obsługi modala potwierdzenia przypisania utworu do decka
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [pendingDeckNumber, setPendingDeckNumber] = useState(null);
   const [pendingSong, setPendingSong] = useState(null);
@@ -141,6 +64,7 @@ const Workspace = () => {
     loadTrackData(deckNumber, track);
   };
 
+  // Funkcja obsługująca przypisanie utworu do decka z możliwością potwierdzenia, jeśli deck jest odtwarzany
   const handleAssignToDeck = (deckNumber, song) => {
     if (decks[deckNumber]?.isPlaying) {
       // Deck jest aktualnie odtwarzany, pokaż modal z potwierdzeniem
@@ -153,6 +77,7 @@ const Workspace = () => {
     }
   };
 
+  // Funkcja potwierdzająca przypisanie utworu do decka
   const handleConfirmLoad = () => {
     stopPlayback(pendingDeckNumber);
     assignTrackToDeck(pendingDeckNumber, pendingSong);
@@ -161,13 +86,14 @@ const Workspace = () => {
     setPendingSong(null);
   };
 
+  // Funkcja anulująca przypisanie utworu do decka
   const handleCancelLoad = () => {
     setIsConfirmModalOpen(false);
     setPendingDeckNumber(null);
     setPendingSong(null);
   };
 
-  // Funkcja wyzwalająca aktualizację playlisty
+  // Funkcja wyzwalająca aktualizację playlisty po dodaniu utworu
   const handleSongAdded = () => {
     setPlaylistUpdateTrigger((prev) => !prev);
   };
@@ -178,6 +104,89 @@ const Workspace = () => {
 
   // Funkcja obsługująca zmianę pozycji crossfadera
   const handleCrossfadeChange = (newPosition) => setCrossfade(newPosition);
+
+  // Funkcja obsługująca wiadomości MIDI
+  const handleMIDIMessage = (event) => {
+    if (!decksInitializedRef.current) {
+      console.warn('Decks not initialized yet, ignoring MIDI message.');
+      return;
+    }
+
+    const [status, control, value] = event.data;
+    const command = status >> 4; // Typ polecenia
+    const channel = status & 0xf; // Kanał MIDI
+
+    console.log('MIDI Event:', { status, control, value, command, channel });
+
+    const mappingKey = `${control}-${channel}`;
+
+    if (command === 9 && value > 0) { // Note On
+      const mapping = midiMappings.noteOn[mappingKey];
+      if (mapping) {
+        const { action, deck } = mapping;
+
+        if (action === 'playPause') {
+          // Debounce playPause dla decka
+          if (debounceTimers[deck]) {
+            clearTimeout(debounceTimers[deck]);
+          }
+          debounceTimers[deck] = setTimeout(() => {
+            playPause(deck);
+          }, 50); // Czas debounce w milisekundach
+        } else if (action === 'cuePress') {
+          handleCueMouseDown(deck); // Obsługa przycisku wciśniętego
+        }
+      }
+    } else if (command === 8 || (command === 9 && value === 0)) { // Note Off
+      const mapping = midiMappings.noteOff[mappingKey];
+      if (mapping) {
+        const { action, deck } = mapping;
+        if (action === 'cueRelease') {
+          handleCueMouseUp(deck); // Obsługa przycisku zwolnionego
+        }
+      }
+    } else if (command === 11) { // Control Change
+      if (control === 28) { // Suwak głośności (przykład)
+        const deck = channel === 0 ? 1 : 2; // Deck 1 dla kanału 0, Deck 2 dla kanału 1
+        let normalizedVolume = value / 127; // Normalizacja do zakresu 0–1
+
+        // Zaokrąglanie do precyzji suwaka
+        const step = 0.001; // Taki sam jak w VolumeSlider
+        normalizedVolume = Math.round(normalizedVolume / step) * step;
+
+        // Ustaw wartość 0 jako dokładne zero
+        if (normalizedVolume < 0.008) {
+          normalizedVolume = 0;
+        }
+
+        setVolume(deck, normalizedVolume);
+      }
+    }
+  };
+
+  // Funkcja obsługująca sukces połączenia MIDI
+  const onMIDISuccess = (midiAccess) => {
+    const inputs = midiAccess.inputs.values();
+
+    for (let input of inputs) {
+      console.log('Podłączone urządzenie MIDI:', input.name);
+      input.onmidimessage = handleMIDIMessage;
+    }
+  };
+
+  // Obiekt przechowujący timery debounce dla decków
+  const debounceTimers = {};
+
+  // Hook useEffect do inicjalizacji obsługi MIDI po załadowaniu komponentu
+  useEffect(() => {
+    if (navigator.requestMIDIAccess) {
+      navigator.requestMIDIAccess()
+        .then(onMIDISuccess)
+        .catch((err) => setError(`Błąd MIDI: ${err.message}`));
+    } else {
+      setError('Twoja przeglądarka nie obsługuje Web MIDI API.');
+    }
+  }, []);
 
   return (
     <div className={styles.workspace}>
@@ -190,7 +199,7 @@ const Workspace = () => {
           deckNumber={1}
           waveformColor="#FF5722"
           playheadColor="#FFFFFF"
-          cueColor="#DC143C "
+          cueColor="#DC143C"
           loopColor="rgba(30, 144, 255, 0.2)"
           loopLineColor="#1E90FF"
         />
@@ -220,7 +229,7 @@ const Workspace = () => {
 
           {/* Panel centralny z kontrolkami głośności i crossfaderem */}
           <div className={styles.centerpanel}>
-            {/* Sekcja głośności i filtru */}
+            {/* Sekcja głośności */}
             <div className={styles.volfilter}>
               {/* Slider głośności lewego decka */}
               <div className={styles.volfilterleft}>
@@ -279,7 +288,7 @@ const Workspace = () => {
         </div>
       </section>
 
-      {/* Modal z potwierdzeniem */}
+      {/* Modal z potwierdzeniem przypisania utworu do decka */}
       {isConfirmModalOpen && (
         <ConfirmDeckModal
           deckNumber={pendingDeckNumber}

@@ -5,19 +5,19 @@ const User = require('../models/User');
 // Tworzenie nowej playlisty
 const createPlaylist = async (req, res) => {
   const { name, songIds } = req.body;
-  const userId = req.user.userId; // Zakładamy, że userId jest ustawiony w middleware autoryzacyjnym
+  const userId = req.user.userId; // Pobieranie ID użytkownika z middleware autoryzacyjnego
 
   try {
     // Tworzenie nowej playlisty z przypisanymi utworami
     const playlist = new Playlist({
       name,
       user: userId,
-      songs: songIds, // Zakładamy, że songIds to tablica z identyfikatorami utworów
+      songs: songIds, // Zakładamy, że songIds to tablica z ID utworów
     });
 
     await playlist.save();
 
-    // Dodanie playlisty do użytkownika
+    // Dodanie playlisty do listy użytkownika
     await User.findByIdAndUpdate(userId, { $push: { playlists: playlist._id } });
 
     res.status(201).json({ msg: 'Playlista utworzona pomyślnie', playlist });
@@ -28,40 +28,34 @@ const createPlaylist = async (req, res) => {
 };
 
 // Dodawanie utworu do playlisty
-// Dodawanie utworu do playlisty lub do "uploads"
 const addSongToPlaylist = async (req, res) => {
   const { playlistId, songId } = req.body;
 
-  // Dodajemy logi, aby śledzić dane wejściowe
   console.log('Dodawanie utworu do playlisty:', { playlistId, songId });
 
   try {
-    // Upewniamy się, że playlistId i songId nie są puste
+    // Walidacja obecności wymaganych parametrów
     if (!playlistId || !songId) {
       return res.status(400).json({ msg: 'Brakuje playlistId lub songId' });
     }
 
-    // Sprawdzamy, czy utwór o podanym songId istnieje
+    // Sprawdzanie, czy utwór istnieje
     const songExists = await Song.findById(songId);
     if (!songExists) {
       console.log(`Utwór o ID ${songId} nie istnieje`);
       return res.status(404).json({ msg: 'Utwór nie znaleziony' });
     }
-    
-    console.log(`Utwór o ID ${songId} istnieje:`, songExists);
 
-    // Sprawdzamy, czy playlistId to 'uploads'
+    // Logika dla playlisty "uploads"
     if (playlistId === 'uploads') {
-      console.log('Dodawanie utworu do katalogu uploads, pomijanie aktualizacji playlisty');
-
-      // Możesz dodać tutaj inną logikę dla "uploads", jeśli chcesz coś zaktualizować
+      console.log('Dodawanie utworu do katalogu uploads');
       return res.status(200).json({ msg: 'Utwór znajduje się już w katalogu uploads', song: songExists });
     }
 
-    // Dodajemy utwór do playlisty, jeśli playlistId nie jest 'uploads'
+    // Dodanie utworu do playlisty
     const playlist = await Playlist.findByIdAndUpdate(
       playlistId,
-      { $addToSet: { songs: songId } }, // Dodajemy utwór do playlisty, unikając duplikatów
+      { $addToSet: { songs: songId } }, // Unikamy duplikatów
       { new: true }
     ).populate('songs');
 
@@ -70,7 +64,6 @@ const addSongToPlaylist = async (req, res) => {
       return res.status(404).json({ msg: 'Playlista nie znaleziona' });
     }
 
-    // Logujemy zaktualizowaną playlistę
     console.log('Playlista po dodaniu utworu:', playlist);
 
     res.json({ msg: 'Utwór dodany do playlisty', playlist });
@@ -80,17 +73,15 @@ const addSongToPlaylist = async (req, res) => {
   }
 };
 
-
-
-
 // Usuwanie utworu z playlisty
 const removeSongFromPlaylist = async (req, res) => {
   const { playlistId, songId } = req.body;
 
   try {
+    // Usuwanie utworu z playlisty
     const playlist = await Playlist.findByIdAndUpdate(
       playlistId,
-      { $pull: { songs: songId } }, // Usuwamy utwór ze zbioru
+      { $pull: { songs: songId } },
       { new: true }
     ).populate('songs');
 
@@ -111,6 +102,7 @@ const deletePlaylist = async (req, res) => {
   const userId = req.user.userId;
 
   try {
+    // Usuwanie playlisty użytkownika
     const playlist = await Playlist.findOneAndDelete({ _id: playlistId, user: userId });
 
     if (!playlist) {
@@ -129,9 +121,10 @@ const deletePlaylist = async (req, res) => {
 
 // Pobieranie wszystkich playlist użytkownika
 const getUserPlaylists = async (req, res) => {
-  const userId = req.user.userId; // zakładamy, że userId jest ustawiony w middleware autoryzacyjnym
+  const userId = req.user.userId;
 
   try {
+    // Pobieranie playlist użytkownika wraz z ich utworami
     const playlists = await Playlist.find({ user: userId }).populate('songs');
     res.status(200).json({ playlists });
   } catch (err) {
@@ -146,12 +139,13 @@ const renamePlaylist = async (req, res) => {
   const { name } = req.body;
 
   try {
+    // Aktualizacja nazwy playlisty
     const playlist = await Playlist.findByIdAndUpdate(
       playlistId,
       { name },
-      { new: true } // Zwrócenie zaktualizowanego dokumentu
+      { new: true }
     );
-    
+
     if (!playlist) {
       return res.status(404).json({ msg: 'Playlista nie znaleziona' });
     }
@@ -163,29 +157,32 @@ const renamePlaylist = async (req, res) => {
   }
 };
 
-// Funkcja do pobierania utworów z konkretnej playlisty
+// Pobieranie utworów z konkretnej playlisty
 const getPlaylistSongs = async (req, res) => {
   const { playlistId } = req.params;
 
   try {
-    const playlist = await Playlist.findById(playlistId).populate('songs'); // Pobieramy playlistę z przypisanymi utworami
+    // Pobieranie playlisty z jej utworami
+    const playlist = await Playlist.findById(playlistId).populate('songs');
     if (!playlist) {
       return res.status(404).json({ msg: 'Playlista nie znaleziona' });
     }
 
-    res.status(200).json({ songs: playlist.songs }); // Zwracamy utwory z playlisty
+    res.status(200).json({ songs: playlist.songs });
   } catch (err) {
     console.error('Błąd serwera przy pobieraniu utworów z playlisty:', err);
     res.status(500).json({ msg: 'Błąd serwera przy pobieraniu utworów z playlisty' });
   }
 };
 
-// Funkcja do pobierania wszystkich utworów użytkownika
+// Pobieranie wszystkich utworów użytkownika
 const getAllSongs = async (req, res) => {
-  const userId = req.user.userId; // Zakładamy, że userId pochodzi z middleware autoryzacyjnego
+  const userId = req.user.userId;
+
   console.log('Pobieranie wszystkich utworów dla użytkownika:', userId);
 
   try {
+    // Pobieranie utworów użytkownika
     const songs = await Song.find({ user: userId });
     if (!songs || songs.length === 0) {
       return res.status(404).json({ msg: 'Brak utworów dla tego użytkownika' });
@@ -196,12 +193,6 @@ const getAllSongs = async (req, res) => {
     console.error('Błąd serwera przy pobieraniu utworów użytkownika:', err);
     res.status(500).json({ msg: 'Błąd serwera przy pobieraniu utworów użytkownika' });
   }
-};
-
-
-
-module.exports = {
-  getPlaylistSongs,
 };
 
 module.exports = {
