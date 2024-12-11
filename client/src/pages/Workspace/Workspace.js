@@ -11,9 +11,9 @@ import Deck from '../../components/Deck/Deck';
 import Waveform from '../../components/Waveform/Waveform';
 import VolumeSlider from '../../components/VolumeSlider/VolumeSlider';
 import CrossFader from '../../components/CrossFader/CrossFader';
+import Tooltip from '../../components/ToolTip/ToolTip';
 import ConfirmDeckModal from '../../components/ConfirmDeckModal/ConfirmDeckModal';
 import EQKnobs from '../../components/EQKnobs/EQKnobs';
-import midiMappings from './MidiMappings.js';
 
 // Importowanie hooka do zarządzania audio z AudioManager
 import { useAudio } from '../../components/AudioManager/AudioManager';
@@ -29,15 +29,8 @@ const Workspace = () => {
     setVolume,
     setCrossfade,
     stopPlayback,
-    playPause,
-    handleCueMouseDown,
-    handleCueMouseUp,
-    decksInitializedRef,
   } = useAudio();
-
-  // Stan do obsługi błędów MIDI
-  const [error, setError] = useState(null);
-
+  
   // Stan do przechowywania wybranej playlisty
   const [selectedPlaylist, setSelectedPlaylist] = useState('uploads');
 
@@ -51,6 +44,8 @@ const Workspace = () => {
   const [isConfirmModalOpen, setIsConfirmModalOpen] = useState(false);
   const [pendingDeckNumber, setPendingDeckNumber] = useState(null);
   const [pendingSong, setPendingSong] = useState(null);
+
+  // const [cueStates, setCueStates] = useState({ 1: false, 2: false });
 
   // Funkcja przypisująca wybraną piosenkę do decka
   const assignTrackToDeck = (deckNumber, song) => {
@@ -105,94 +100,18 @@ const Workspace = () => {
   // Funkcja obsługująca zmianę pozycji crossfadera
   const handleCrossfadeChange = (newPosition) => setCrossfade(newPosition);
 
-  // Funkcja obsługująca wiadomości MIDI
-  const handleMIDIMessage = (event) => {
-    if (!decksInitializedRef.current) {
-      console.warn('Decks not initialized yet, ignoring MIDI message.');
-      return;
-    }
-
-    const [status, control, value] = event.data;
-    const command = status >> 4; // Typ polecenia
-    const channel = status & 0xf; // Kanał MIDI
-
-    console.log('MIDI Event:', { status, control, value, command, channel });
-
-    const mappingKey = `${control}-${channel}`;
-
-    if (command === 9 && value > 0) { // Note On
-      const mapping = midiMappings.noteOn[mappingKey];
-      if (mapping) {
-        const { action, deck } = mapping;
-
-        if (action === 'playPause') {
-          // Debounce playPause dla decka
-          if (debounceTimers[deck]) {
-            clearTimeout(debounceTimers[deck]);
-          }
-          debounceTimers[deck] = setTimeout(() => {
-            playPause(deck);
-          }, 50); // Czas debounce w milisekundach
-        } else if (action === 'cuePress') {
-          handleCueMouseDown(deck); // Obsługa przycisku wciśniętego
-        }
-      }
-    } else if (command === 8 || (command === 9 && value === 0)) { // Note Off
-      const mapping = midiMappings.noteOff[mappingKey];
-      if (mapping) {
-        const { action, deck } = mapping;
-        if (action === 'cueRelease') {
-          handleCueMouseUp(deck); // Obsługa przycisku zwolnionego
-        }
-      }
-    } else if (command === 11) { // Control Change
-      if (control === 28) { // Suwak głośności (przykład)
-        const deck = channel === 0 ? 1 : 2; // Deck 1 dla kanału 0, Deck 2 dla kanału 1
-        let normalizedVolume = value / 127; // Normalizacja do zakresu 0–1
-
-        // Zaokrąglanie do precyzji suwaka
-        const step = 0.001; // Taki sam jak w VolumeSlider
-        normalizedVolume = Math.round(normalizedVolume / step) * step;
-
-        // Ustaw wartość 0 jako dokładne zero
-        if (normalizedVolume < 0.008) {
-          normalizedVolume = 0;
-        }
-
-        setVolume(deck, normalizedVolume);
-      }
-    }
-  };
-
-  // Funkcja obsługująca sukces połączenia MIDI
-  const onMIDISuccess = (midiAccess) => {
-    const inputs = midiAccess.inputs.values();
-
-    for (let input of inputs) {
-      console.log('Podłączone urządzenie MIDI:', input.name);
-      input.onmidimessage = handleMIDIMessage;
-    }
-  };
-
-  // Obiekt przechowujący timery debounce dla decków
-  const debounceTimers = {};
-
-  // Hook useEffect do inicjalizacji obsługi MIDI po załadowaniu komponentu
-  useEffect(() => {
-    if (navigator.requestMIDIAccess) {
-      navigator.requestMIDIAccess()
-        .then(onMIDISuccess)
-        .catch((err) => setError(`Błąd MIDI: ${err.message}`));
-    } else {
-      setError('Twoja przeglądarka nie obsługuje Web MIDI API.');
-    }
-  }, []);
+  // const handleToggleCue = (deckNumber) => {
+  //   setCueStates((prevStates) => ({
+  //     ...prevStates,
+  //     [deckNumber]: !prevStates[deckNumber],
+  //   }));
+  // };
 
   return (
+    
     <div className={styles.workspace}>
       {/* Nagłówek Workspace */}
       <Header />
-
       {/* Sekcja z waveformami dla obu decków */}
       <div className={styles.waveforms}>
         <Waveform
@@ -238,6 +157,12 @@ const Workspace = () => {
                   initialValue={decks[1]?.volumeGain?.gain.value || 1}
                   onVolumeChange={handleVolumeChangeDeck1}
                 />
+                <Tooltip
+  iconColor="#ff5722"
+  bubbleBgColor="#f1f1f1"
+  title="Jak ustawić BPM?"
+  text="Kliknij na pole BPM, aby ręcznie wpisać wartość."
+/>
               </div>
 
               {/* Slider głośności prawego decka */}
@@ -248,6 +173,7 @@ const Workspace = () => {
                   onVolumeChange={handleVolumeChangeDeck2}
                 />
               </div>
+
             </div>
 
             {/* Kontrolka crossfadera */}

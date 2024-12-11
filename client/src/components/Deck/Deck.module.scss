@@ -51,6 +51,7 @@
 
 .utilsLeft{
   display: flex;
+  position: relative;
   flex-direction: column;
   width: 50%;
   height: 100%;
@@ -59,6 +60,7 @@
 
 .loops{
   display: flex;
+  position: relative;
   flex-direction: column;
   justify-content: space-between;
   width: 100%;
@@ -74,11 +76,11 @@
     border-top-left-radius: 5px;
     border-top-right-radius: 5px;
   }
-
 }
 
 .fxs{
   display: flex;
+  position: relative;
   flex-direction: column;
   justify-content: space-between;
   width: 100%;
@@ -100,6 +102,7 @@
 .utilsRight{
   display: flex;
   flex-direction: column;
+  position: relative;
   justify-content: flex-end;
   width: 50%;
   height: 100%;
@@ -107,6 +110,7 @@
 
 .jogpitch{
   display: flex;
+  position: relative;
   flex-direction: row;
   justify-content: space-between;
   width: 100%;
@@ -134,6 +138,8 @@
 
 .pitch{
   width: 30%;
+  position: relative;
+  z-index: 1;
 }
 
 .buttonsBpm{

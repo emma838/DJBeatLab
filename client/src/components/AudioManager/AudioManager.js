@@ -2,7 +2,6 @@
 // Komponent odpowiadający za zarządzanie odtwarzaniem audio, efektami, pętlami, cue pointami oraz integracją z kontrolerem MIDI.
 
 import React, { createContext, useContext, useRef, useReducer, useEffect } from 'react';
-import { throttle } from 'lodash';
 
 // Tworzenie kontekstu audio
 export const AudioContext = createContext();
@@ -47,6 +46,8 @@ const initialDeckState = {
     flangerLFOGain: null,
     volumeGain: null,
     activePredefinedLoop: null,
+    masterOutput: null,
+    cueOutput: null,
   },
   2: {
     track: null,
@@ -81,6 +82,8 @@ const initialDeckState = {
     flangerLFOGain: null,
     volumeGain: null,
     activePredefinedLoop: null,
+    masterOutput: null,
+    cueOutput: null,
   },
 };
 

@@ -1,0 +1,56 @@
+.tooltipContainer {
+    position: absolute;
+    display: flex; /* Zastosowanie flexbox */
+    align-items: center; /* Wyrównanie w pionie */
+    justify-content: center; /* Wyrównanie w poziomie */
+    width: 15px;
+    height: 15px;
+    background-color: white;
+    border-radius: 50px;
+  }
+  
+  .icon {
+    font-size: 15px;
+    font-weight: 800;
+    text-align: center;
+    color: black;
+    cursor: pointer;
+  }
+    
+  .tooltipBubble {
+    display: none;
+    position: absolute;
+    top: 110%;
+    left: 50%;
+    transform: translateX(-50%);
+    padding: 10px;
+    border-radius: 8px;
+    color: #000;
+    background-color: #fff; /* Upewnij się, że tło jest w pełni nieprzezroczyste */
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+    z-index: 9999; /* Zwiększ z-index, np. do 9999 */
+    white-space: nowrap;
+    opacity: 1; /* Upewnij się, że opacity jest 1 */
+  }
+  
+  .tooltipBubble h4 {
+    margin: 0 0 5px;
+    font-size: 14px;
+  }
+  
+  .tooltipBubble p {
+    margin: 0;
+    font-size: 12px;
+  }
+  
+  .tooltipBubble img {
+    margin-top: 5px;
+    max-width: 100%;
+    height: auto;
+    border-radius: 5px;
+  }
+  
+  .tooltipContainer:hover .tooltipBubble {
+    display: block;
+  }
+  

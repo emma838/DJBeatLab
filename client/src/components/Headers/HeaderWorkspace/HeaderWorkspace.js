@@ -1,19 +1,15 @@
-// HeaderWorkspace.js - Komponent nagłówka przestrzeni roboczej
-// Opis: Komponent `HeaderWorkspace` odpowiada za wyświetlanie nagłówka aplikacji, w tym logo, informacji o użytkowniku oraz opcji wylogowania.
-// Komponent zawiera także modal ustawień, w którym użytkownik może zmienić swoje dane.
-
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
 import logoImage from '../../../assets/djbl_logo1.png';
 import userIcon from '../../../assets/userIcon.png'; // Import statycznego obrazka
 import styles from './HeaderWorkspace.module.scss';
-import SettingsModal from '../../Settings/SettingsModal'; // Import nowego komponentu
+import SettingsModal from '../../Settings/SettingsModal'; // Import modala ustawień
 
 const Header = ({ username: initialUsername, onUsernameChange }) => {
-  const [localUsername, setLocalUsername] = useState(''); // Stan dla loginu użytkownika
+  const [localUsername, setLocalUsername] = useState('');
   const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
-  // Pobieranie loginu użytkownika z backendu
+  // Pobieranie loginu użytkownika
   useEffect(() => {
     const fetchProfile = async () => {
       try {
@@ -22,14 +18,11 @@ const Header = ({ username: initialUsername, onUsernameChange }) => {
             Authorization: `Bearer ${localStorage.getItem('token')}`,
           },
         });
-
         if (response.status === 200) {
-          setLocalUsername(response.data.username); // Ustaw login użytkownika
-        } else {
-          console.log(response.data.msg || 'Błąd pobierania danych użytkownika');
+          setLocalUsername(response.data.username);
         }
       } catch (err) {
-        console.log('Błąd serwera: ', err);
+        console.error('Błąd serwera: ', err);
       }
     };
 
@@ -43,8 +36,8 @@ const Header = ({ username: initialUsername, onUsernameChange }) => {
 
   // Wylogowanie
   const handleLogout = () => {
-    localStorage.removeItem('token'); // Usuń token
-    window.location.href = '/login'; // Przekieruj na stronę logowania
+    localStorage.removeItem('token');
+    window.location.href = '/login';
   };
 
   return (
@@ -53,24 +46,27 @@ const Header = ({ username: initialUsername, onUsernameChange }) => {
         <div className={styles.headerLogo}>
           <img src={logoImage} alt="Logo" />
         </div>
+        {/* Sekcja informacji o użytkowniku */}
         <div className={styles.userInfo}>
           <span className={styles.username}>DJ {localUsername}</span>
           <img src={userIcon} alt="User Icon" className={styles.avatar} />
           <div className={styles.dropdownMenu}>
             <ul>
               <li onClick={toggleSettings}>Settings</li>
-              <li onClick={handleLogout} className={styles.logout}>Sign Out</li>
+              <li onClick={handleLogout} className={styles.logout}>
+                Sign Out
+              </li>
             </ul>
           </div>
         </div>
       </div>
 
-      {/* Użycie komponentu SettingsModal */}
+      {/* Modal ustawień */}
       <SettingsModal
         isOpen={isSettingsOpen}
         onClose={toggleSettings}
-        username={localUsername} // Przekazujemy lokalny stan
-        onUsernameChange={setLocalUsername} // Zmieniamy login
+        username={localUsername}
+        onUsernameChange={setLocalUsername}
       />
     </header>
   );
