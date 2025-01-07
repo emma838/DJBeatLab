@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import styles from './VolumeSlider.module.scss';
 import { useAudio } from '../../components/AudioManager/AudioManager'; // Import useAudio
 import Knob from '../Knob/Knob'; // Import Knob
+import Tooltip from '../ToolTip/ToolTip';
 
 const VolumeSlider = ({ deckNumber, initialValue = 1, onVolumeChange }) => {
   const [volume, setVolume] = useState(initialValue);
@@ -70,6 +71,16 @@ const VolumeSlider = ({ deckNumber, initialValue = 1, onVolumeChange }) => {
         className={styles.slider}
       />
       {/* Dodanie pokrętła Filter */}
+       <Tooltip
+                    className={styles.tooltip}
+                    style={{ top: "242px", right: "35px", width: "15px", height: "15px" }}
+                    bubbleBgColor="#f1f1f1"
+                    iconColor="#000"
+                    title="FILTER knob"
+                    text="Shifting to the left activates the low-pass filter.</br> 
+                    Shifting to the right activates the high-pass filter.</br> 
+                    Setting the knob to the center deactivates the filter."
+                  />
       <Knob
         label="FILTER"
         value={deck?.filterValue ?? 0}

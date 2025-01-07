@@ -130,6 +130,16 @@ const Workspace = () => {
           loopColor="rgba(30, 144, 255, 0.2)"
           loopLineColor="#1E90FF"
         />
+        <Tooltip
+              className={styles.tooltip}
+              style={{ top: "160px", left: "10px", width: "15px", height: "15px" }}
+              bubbleBgColor="#f1f1f1"
+              iconColor="#000"
+              position="left"
+              title="Waveform"
+              text="The visual representation of the track, with the orange color representing deck 1's track and the green color representing deck 2's track.</br> 
+              The grid button allows you to manually adjust the grid to the waveform."
+            />
       </div>
 
       {/* Główna sekcja narzędzi (toolbar) */}
@@ -143,6 +153,16 @@ const Workspace = () => {
         <div className={styles.middleSection}>
           {/* EQ po lewej stronie */}
           <div className={styles.eqleft}>
+                          <Tooltip
+              className={styles.tooltip}
+              style={{ top: "3px", left: "3px", width: "15px", height: "15px" }}
+              bubbleBgColor="#f1f1f1"
+              iconColor="#000"
+              title="Equalizer"
+              text="<strong>Hi (High):</strong> Adjustment of high frequencies – increase to emphasize details and clarity, decrease to soften the sound.</br> 
+              <strong>Mid (Middle):</strong> Adjustment of mid frequencies – perfect for highlighting vocals or instruments in the mix.</br> 
+              <strong>Low (Bass):</strong> Adjustment of low frequencies – increase to add depth and power, decrease for a cleaner sound."
+            />
             <EQKnobs deckNumber={1} />
           </div>
 
@@ -157,12 +177,6 @@ const Workspace = () => {
                   initialValue={decks[1]?.volumeGain?.gain.value || 1}
                   onVolumeChange={handleVolumeChangeDeck1}
                 />
-                <Tooltip
-  iconColor="#ff5722"
-  bubbleBgColor="#f1f1f1"
-  title="Jak ustawić BPM?"
-  text="Kliknij na pole BPM, aby ręcznie wpisać wartość."
-/>
               </div>
 
               {/* Slider głośności prawego decka */}
@@ -182,6 +196,16 @@ const Workspace = () => {
 
           {/* EQ po prawej stronie */}
           <div className={styles.eqright}>
+          <Tooltip
+              className={styles.tooltip}
+              style={{ top: "3px", right: "3px", width: "15px", height: "15px" }}
+              bubbleBgColor="#f1f1f1"
+              iconColor="#000"
+              title="Equalizer"
+              text="<strong>Hi (High):</strong> Adjustment of high frequencies – increase to emphasize details and clarity, decrease to soften the sound.</br> 
+              <strong>Mid (Middle):</strong> Adjustment of mid frequencies – perfect for highlighting vocals or instruments in the mix.</br> 
+              <strong>Low (Bass):</strong> Adjustment of low frequencies – increase to add depth and power, decrease for a cleaner sound."
+            />
             <EQKnobs deckNumber={2} />
           </div>
         </div>

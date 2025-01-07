@@ -5,6 +5,7 @@ import AddFileModal from '../AddFile/AddFileModal';
 import styles from './FileManager.module.scss';
 import AddBox from '@mui/icons-material/AddBox';
 import Delete from '@mui/icons-material/DeleteForever';
+import Tooltip from '../ToolTip/ToolTip';
 
 const FileManager = ({ selectedPlaylist, onSongAdded }) => {
   const [directories, setDirectories] = useState({
@@ -106,6 +107,16 @@ const FileManager = ({ selectedPlaylist, onSongAdded }) => {
       {/* Uploaded Files */}
       <div className={styles.headerContainer}>
         <h3 className={styles.folderHeader}>
+                  <Tooltip
+            className={styles.tooltip}
+            style={{ top: "15px", left: "160px", width: "15px", height: "15px" }}
+            bubbleBgColor="#f1f1f1"
+            iconColor="#000"
+            position = "left"
+            title="Uploaded tracks"
+            text="This is a list of all uploaded files.</br>
+            To add song to playlist, double-click on it</br>"
+          />
           <div className={styles.folderHeaderLeft}>Uploaded Tracks</div>
           <div className={styles.folderHeaderRight}>
             <button onClick={openAddFile} className={styles.fileButton}><AddBox  /> Add file</button>

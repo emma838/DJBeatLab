@@ -1,6 +1,8 @@
 import React from 'react';
 import { useAudio } from '../../components/AudioManager/AudioManager';
 import styles from './BpmSlider.module.scss';
+import Tooltip from '../ToolTip/ToolTip';
+
 
 const BpmSlider = ({ deckNumber }) => {
   const { decks, updateBpm } = useAudio();
@@ -26,7 +28,17 @@ const BpmSlider = ({ deckNumber }) => {
 
   return (
     <div className={styles.bpmSliderContent}>
-      <div className={styles.label}>TEMPO</div>
+      <div className={styles.label}>PITCH</div>
+                      <Tooltip
+              className={styles.tooltip}
+              style={{ top: "5px", right: "5px", width: "15px", height: "15px" }}
+              bubbleBgColor="#f1f1f1"
+              iconColor="#000"
+                position = "right"
+              title="PITCH and BPM"
+              text="<strong>PITCH Fader</strong> allows you to change the playback speed/pitch of the track.</br>
+               <strong>BPM Value</strong> (beats per minute) determines the tempo of the track."
+            />
       <div className={styles.bpmSlider}>
         <div className={styles.scale}>
           <div className={`${styles.scaleMark} ${styles.top}`} />

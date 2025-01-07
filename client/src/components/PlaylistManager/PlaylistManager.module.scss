@@ -24,6 +24,7 @@
     width: 20%;
     gap: 10px;
     border-radius: 10px 0 0 10px;
+    position: relative;
   }
 
   .settingsTitle {
@@ -57,7 +58,7 @@
     font-size: 1rem;
     text-align: center;
     user-select: none;
-
+    position: relative;
   }
 
   .topBar p:nth-of-type(1){

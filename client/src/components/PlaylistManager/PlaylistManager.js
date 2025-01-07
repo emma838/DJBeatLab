@@ -10,6 +10,7 @@ import Delete from '@mui/icons-material/Delete';
 import Edit from '@mui/icons-material/Edit';
 import ArrowDropUp from '@mui/icons-material/ArrowDropUp';
 import ArrowDropDown from '@mui/icons-material/ArrowDropDown';
+import Tooltip from '../ToolTip/ToolTip';
 
 
 const PlaylistManager = ({ selectedPlaylist, setSelectedPlaylist, playlistUpdateTrigger, onAssignToDeck, deckAssignments  }) => {
@@ -208,6 +209,20 @@ const PlaylistManager = ({ selectedPlaylist, setSelectedPlaylist, playlistUpdate
     <div className={styles.playlistManagerContainer}>
       <div className={styles.settingsContainer}>
         <p className={styles.settingsTitle}>Playlists</p>
+        <Tooltip
+  className={styles.tooltip}
+  style={{ top: "12px", right: "10px", width: "15px", height: "15px" }}
+  bubbleBgColor="#f1f1f1"
+  iconColor="#000"
+  position = "right"
+  image="camelotImage"
+  title="PLAYLISTS"
+  text="<strong>Edit:</strong> - change selected playlist name</br>
+  <strong>Add:</strong> - create new playlist</br>
+  <strong>Delete:</strong> - delete selected playlist</br>
+  <strong>Deck:</strong> - choose deck to inser song to</br>
+  <strong>Key:</strong> - key notation of a song in Camelot system</br>"
+/>
         <div className={styles.settingsContent}>
         {/* Lista rozwijana z playlistami */}
         {editing ? (

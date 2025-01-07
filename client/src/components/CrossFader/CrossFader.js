@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import PropTypes from 'prop-types';
 import styles from './CrossFader.module.scss';
+import Tooltip from '../ToolTip/ToolTip';
 
 const Crossfader = ({ onCrossfadeChange }) => {
   const [position, setPosition] = useState(0.5); // Domyślnie ustawione na środek (0.5)
@@ -26,6 +27,18 @@ const Crossfader = ({ onCrossfadeChange }) => {
   return (
     <div className={styles.crossfaderContent}>
       <span>CROSSFADER</span>
+                    <Tooltip
+        className={styles.tooltip}
+        style={{ top: "10px", right: "105px", width: "15px", height: "15px" }}
+        bubbleBgColor="#f1f1f1"
+        iconColor="#000"
+          position = "right"
+        title="CROSSFADER"
+        text="Allows you to control the volume simultaneously for both decks.</br> 
+        <strong>Center position:</strong> Both decks are heard at the same volume level.</br>
+         <strong>Shift to the left:</strong> Increases the volume of deck 1 while decreasing the volume of deck 2.</br>
+         <strong>Shift to the right:</strong> Increases the volume of deck 2 while decreasing the volume of deck 1.</br>"
+      />
       <div className={styles.crossfader}>
         <div className={styles.scale}>
           <div className={`${styles.scaleMark} ${styles.top}`} />

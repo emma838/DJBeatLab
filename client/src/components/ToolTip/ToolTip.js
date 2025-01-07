@@ -1,8 +1,32 @@
 import React from "react";
-import PropTypes from "prop-types";
 import styles from "./ToolTip.module.scss";
+import camelotImg from '../../assets/camelotwheel.png';
 
-const Tooltip = ({ className, style, iconColor, bubbleBgColor, title, text, image }) => {
+// Mapa nazw obrazów do ich importów
+const imageMap = {
+  camelotImage: camelotImg,
+};
+
+const Tooltip = ({
+  className = "",
+  style = {},
+  iconColor = "#000",
+  bubbleBgColor = "#fff",
+  title,
+  text,
+  image = null,
+  position = "center",
+}) => {
+  const tooltipPositionStyle =
+    position === "left"
+      ? { left: "0%", transform: "translateX(0%)" }
+      : position === "right"
+      ? { left: "100%", transform: "translateX(-100%)" }
+      : { left: "50%", transform: "translateX(-50%)" }; // default: center
+
+  // Dynamiczne dopasowanie obrazu na podstawie nazwy przekazanej przez prop
+  const imageSrc = image ? imageMap[image] : undefined;
+
   return (
     <div
       className={`${styles.tooltipContainer} ${className}`}
@@ -11,31 +35,15 @@ const Tooltip = ({ className, style, iconColor, bubbleBgColor, title, text, imag
       <div className={styles.icon} style={{ color: iconColor }}>
         ?
       </div>
-      <div className={styles.tooltipBubble}>
-        <h4>{title}</h4>
-        <p>{text}</p>
-        {image && <img src={image} alt={title} />}
+      <div className={styles.tooltipBubble} style={tooltipPositionStyle}>
+        <div>
+          <h4>{title}</h4>
+          <p dangerouslySetInnerHTML={{ __html: text }}></p>
+        </div>
+        {imageSrc && <img src={imageSrc} alt={title} />}
       </div>
     </div>
   );
-};
-
-Tooltip.propTypes = {
-  className: PropTypes.string,
-  style: PropTypes.object,
-  iconColor: PropTypes.string,
-  bubbleBgColor: PropTypes.string,
-  title: PropTypes.string.isRequired,
-  text: PropTypes.string.isRequired,
-  image: PropTypes.string,
-};
-
-Tooltip.defaultProps = {
-  className: "",
-  style: {},
-  iconColor: "#000",
-  bubbleBgColor: "#fff",
-  image: null,
 };
 
 export default Tooltip;

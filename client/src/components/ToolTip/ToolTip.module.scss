@@ -21,16 +21,19 @@
     display: none;
     position: absolute;
     top: 110%;
-    left: 50%;
-    transform: translateX(-50%);
     padding: 10px;
     border-radius: 8px;
     color: #000;
-    background-color: #fff; /* Upewnij się, że tło jest w pełni nieprzezroczyste */
+    background-color: #fff;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-    z-index: 9999; /* Zwiększ z-index, np. do 9999 */
-    white-space: nowrap;
-    opacity: 1; /* Upewnij się, że opacity jest 1 */
+    z-index: 9999;
+    text-align: left;
+    max-width: 800px;
+    min-width: 500px;
+    width: auto;
+    white-space: normal;
+    word-wrap: break-word;
+    transition: opacity 0.2s ease-in-out;
   }
   
   .tooltipBubble h4 {
@@ -41,16 +44,21 @@
   .tooltipBubble p {
     margin: 0;
     font-size: 12px;
+    line-height: 1.4; /* Poprawiona czytelność */
   }
   
   .tooltipBubble img {
     margin-top: 5px;
-    max-width: 100%;
-    height: auto;
+    width: 200px;
+    margin: 0 auto;
     border-radius: 5px;
   }
   
   .tooltipContainer:hover .tooltipBubble {
-    display: block;
+    display: flex;
+    flex-direction: row;
+    justify-content: flex-start;
+    gap: 10px;
   }
+  
   
